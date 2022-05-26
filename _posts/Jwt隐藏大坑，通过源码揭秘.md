@@ -1,0 +1,300 @@
+---
+layout: post
+title:  "Jwt隐藏大坑，通过源码揭秘"
+date:   2022-05-26 19:39:24 +0800
+categories: cnblog
+---
+# 前言<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+ 
+JWT是目前最为流行的接口认证方案之一，有关JWT协议的详细内容，请参考：[https://jwt.io/introduction](https://jwt.io/introduction)
+ 
+今天分享一下在使用`JWT`在项目中遇到的一个问题，主要是一个协议的细节，非常容易被忽略，如果不是自己遇到，或者去看源码的实现，我估计至少80%的人都会栽在这里，下面来还原一下这个问题的过程，由于这个问题出现有一定的概率，不是每次都会出现，所以才容易掉坑里。
+ 
+# 集成JWT<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+ 
+在Asp.Net Core中集成`JWT`认证的方式在网络上随便一搜就能找到一堆，主要有两个步骤：
+ 
+1. 在IOC容器中注入依赖
+
+ <code-box id="code-TwrcYT"><button boxid="code-TwrcYT" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-TwrcYT pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-TwrcYT" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="language-c# hljs language-c">public <span class="hljs-type">void</span> <span class="hljs-title function_">ConfigureServices</span><span class="hljs-params">(IServiceCollection services)</span>
+{
+    <span class="hljs-comment">// 添加这一行添加jwt验证：</span>
+    services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =&gt; {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = <span class="hljs-literal">true</span>,<span class="hljs-comment">//是否验证Issuer</span>
+                ValidateAudience = <span class="hljs-literal">true</span>,<span class="hljs-comment">//是否验证Audience</span>
+                ValidateLifetime = <span class="hljs-literal">true</span>,<span class="hljs-comment">//是否验证失效时间</span>
+                ClockSkew = TimeSpan.FromSeconds(<span class="hljs-number">30</span>),
+                ValidateIssuerSigningKey = <span class="hljs-literal">true</span>,<span class="hljs-comment">//是否验证SecurityKey</span>
+                ValidAudience = Const.Domain,<span class="hljs-comment">//Audience</span>
+                ValidIssuer = Const.Domain,<span class="hljs-comment">//Issuer，这两项和前面签发jwt的设置一致</span>
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Const.SecurityKey))<span class="hljs-comment">//拿到SecurityKey</span>
+            };
+        });
+
+}
+</code></pre></code-box>
+1. 应用认证中间件
+
+ <code-box id="code-2r8cxs"><button boxid="code-2r8cxs" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-2r8cxs pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-2r8cxs" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="language-c# hljs language-c">public <span class="hljs-type">void</span> <span class="hljs-title function_">Configure</span><span class="hljs-params">(IApplicationBuilder app, IHostingEnvironment env)</span>
+{
+    <span class="hljs-comment">// 添加这一行 使用认证中间件</span>
+    app.UseAuthentication();
+
+    <span class="hljs-keyword">if</span> (env.IsDevelopment())
+    {
+        app.UseDeveloperExceptionPage();
+    }
+
+    app.UseMvc(routes =&gt;
+    {
+        routes.MapRoute(
+            name: <span class="hljs-string">"default"</span>,
+                template: <span class="hljs-string">"{controller=Home}/{action=Index}/{id?}"</span>);
+    });
+}
+</code></pre></code-box>
+1. 在Controller
+
+ <code-box id="code-biyKda"><button boxid="code-biyKda" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-biyKda pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-biyKda" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="language-c# hljs language-c">[Route(<span class="hljs-string">"api/[controller]"</span>)]
+[ApiController] <span class="hljs-comment">// 添加这一行</span>
+public <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyBaseController</span> :</span> ControllerBase
+{
+
+}
+</code></pre></code-box>
+1. 提供一个认证的接口，用于前端获取token
+
+ <code-box id="code-ih3wew"><button boxid="code-ih3wew" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-ih3wew pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-ih3wew" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="language-c# hljs language-c">[AllowAnonymous]
+[HttpGet]
+public IActionResult <span class="hljs-title function_">Get</span><span class="hljs-params">(<span class="hljs-built_in">string</span> userName, <span class="hljs-built_in">string</span> pwd)</span>
+{
+    <span class="hljs-keyword">if</span> (!<span class="hljs-built_in">string</span>.IsNullOrEmpty(userName) &amp;&amp; !<span class="hljs-built_in">string</span>.IsNullOrEmpty(pwd))
+    {
+        var claims = new[]
+        {
+            new Claim(JwtRegisteredClaimNames.Nbf,$<span class="hljs-string">"{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}"</span>) ,
+            new Claim (JwtRegisteredClaimNames.Exp,$<span class="hljs-string">"{new DateTimeOffset(DateTime.Now.AddMinutes(30)).ToUnixTimeSeconds()}"</span>),
+            new Claim(ClaimTypes.Name, userName)
+        };
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Const.SecurityKey));
+        var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+        var token = new JwtSecurityToken(
+            issuer: Const.Domain,
+            audience: Const.Domain,
+            claims: claims,
+            expires: DateTime.Now.AddMinutes(<span class="hljs-number">30</span>),
+            signingCredentials: creds);
+
+        <span class="hljs-keyword">return</span> Ok(new
+        {
+            token = new JwtSecurityTokenHandler().WriteToken(token)
+        });
+    }
+    <span class="hljs-keyword">else</span>
+    {
+        <span class="hljs-keyword">return</span> BadRequest(new { message = <span class="hljs-string">"username or password is incorrect."</span> });
+    }
+}
+</code></pre></code-box> 
+至此，你的应用已经完成了集成`JWT`认证。
+
+> > 本文为`Gui.H`原创文章，更多高质量博文，欢迎关注公众号`dotnet之美`。
+
+# 坑在哪里<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+ 
+直接上代码，下面这段代码是我用来能复现该大坑的示例，有空的可以按照该代码重现下面的问题。
+ <code-box id="code-BYSXRt"><button boxid="code-BYSXRt" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-BYSXRt pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-BYSXRt" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="language-C# hljs language-C">using Microsoft.IdentityModel.Tokens;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using System.Text;
+
+var SecurityKey = <span class="hljs-string">"MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDI2a2EJ7m872v0afyoSDJT2o1+SitIeJSWtLJU8/Wz2m7gStexajkeD+Lka6DSTy8gt9UwfgVQo6uKjVLG5Ex7PiGOODVqAEghBuS7JzIYU5RvI543nNDAPfnJsas96mSA7L/mD7RTE2drj6hf3oZjJpMPZUQI/B1Qjb5H3K3PNwIDAQAB"</span>;
+var Domain = <span class="hljs-string">"http://localhost:5000"</span>;
+
+var email = <span class="hljs-string">"username@qq.com"</span>;
+var userName = <span class="hljs-string">"阿哈"</span>;
+
+var claims = new[]
+{
+        new Claim(JwtRegisteredClaimNames.Nbf,$<span class="hljs-string">"{new DateTimeOffset(DateTime.Now).ToUnixTimeSeconds()}"</span>) ,
+        new Claim (JwtRegisteredClaimNames.Exp,$<span class="hljs-string">"{new DateTimeOffset(DateTime.Now.AddMinutes(30)).ToUnixTimeSeconds()}"</span>),
+        new Claim(<span class="hljs-string">"Name"</span>, userName),
+        new Claim(<span class="hljs-string">"Email"</span>, email),
+    };
+
+var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(SecurityKey));
+var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+var token = new JwtSecurityToken(
+    issuer: Domain,
+    audience: Domain,
+    claims: claims,
+    expires: DateTime.Now.AddMinutes(<span class="hljs-number">30</span>),
+    signingCredentials: creds);
+
+var JWTToken = new JwtSecurityTokenHandler().WriteToken(token);
+
+Console.WriteLine(JWTToken);
+
+Console.ReadLine();
+</code></pre></code-box> 
+上面代码运行的结果是：
+ <code-box id="code-ziRmDn"><button boxid="code-ziRmDn" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-ziRmDn pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-ziRmDn" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="hljs language-undefined">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6IkpXVCJ9.eyJuYmYiOiIxNjUzNDAwNjk0IiwiZXhwIjoxNjUzNDAyNDk0LCJOYW1lIjoi6Zi_5ZOIIiwiRW1haWwiOiJ1c2VybmFtZUBxcS5jb20iLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjUwMDAiLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUwMDAifQ.RBtP7zroK7YueGlDdZNHGy3tT8-xcGkf8ZyiTL81w2I
+</code></pre></code-box> 
+我们知道Token由三部分组成，使用`.`分割，如果是标准的Jwt协议加密的，那这三部分均为*Base64加密*(此处不准确，下文解释为什么)，也可以说就是明文，我们将三部分内容进行Base64解密看看。
+ 
+我们在线验证一下我们的Jwt是否符合标准：  
+ 打开网站：`https://jwt.io/`，选择顶部菜单的`Debugger`，将我们的token填进去：
+ 
+https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/306e90f311e6465491bc3d1cdf0adbed~tplv-k3u1fbpfcp-zoom-1.image  
+ 然后将代码中用的`SecurityKey`填到图中标记的位置
+ 
+https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/dccf11fbf8a643159d941c49286bfac5~tplv-k3u1fbpfcp-zoom-1.image  
+ 显示签名认证通过。
+ 
+***头***
+ <code-box id="code-WfbzpG"><button boxid="code-WfbzpG" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-WfbzpG pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-WfbzpG" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="hljs language-undefined">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCIsImN0eSI6IkpXVCJ9
+</code></pre></code-box> <code-box id="code-sH8ain"><button boxid="code-sH8ain" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-sH8ain pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-sH8ain" class="language-json" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="language-json hljs"><span class="hljs-punctuation">{</span>  <span class="hljs-attr">"alg"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"HS256"</span><span class="hljs-punctuation">,</span>  <span class="hljs-attr">"typ"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"JWT"</span><span class="hljs-punctuation">,</span>  <span class="hljs-attr">"cty"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"JWT"</span> <span class="hljs-punctuation">}</span>
+</code></pre></code-box> 
+***载荷***
+ <code-box id="code-DC7bbc"><button boxid="code-DC7bbc" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-DC7bbc pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-DC7bbc" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="hljs language-undefined">eyJuYmYiOiIxNjUzNDAwNjk0IiwiZXhwIjoxNjUzNDAyNDk0LCJOYW1lIjoi6Zi_5ZOIIiwiRW1haWwiOiJ1c2VybmFtZUBxcS5jb20iLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjUwMDAiLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUwMDAifQ
+</code></pre></code-box> <code-box id="code-Z4xtW4"><button boxid="code-Z4xtW4" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-Z4xtW4 pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-Z4xtW4" class="language-json" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="language-json hljs"><span class="hljs-punctuation">{</span>
+  <span class="hljs-attr">"nbf"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"1653400694"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"exp"</span><span class="hljs-punctuation">:</span> <span class="hljs-number">1653402494</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"Name"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"阿哈"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"Email"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"username@qq.com"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"iss"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"http://localhost:5000"</span><span class="hljs-punctuation">,</span>
+  <span class="hljs-attr">"aud"</span><span class="hljs-punctuation">:</span> <span class="hljs-string">"http://localhost:5000"</span>
+<span class="hljs-punctuation">}</span>
+</code></pre></code-box> 
+***签名***
+ <code-box id="code-rEi8Gt"><button boxid="code-rEi8Gt" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-rEi8Gt pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-rEi8Gt" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="hljs language-undefined">RBtP7zroK7YueGlDdZNHGy3tT8-xcGkf8ZyiTL81w2I
+</code></pre></code-box> 
+到目前未知一切都十分顺利。
+ 
+既然Token的内容前端直接可以通过base64解密出来，那在需要展示用户名的地方，我们就可以直接解析token的载荷，然后获得`Name`  
+ ,下面是使用在线base64工具解密上面的token载荷内容，可以看到用户名为`啊哈`。  
+ https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/533e8b9b7f2a4fc69be056a7ba1f007d~tplv-k3u1fbpfcp-zoom-1.image  
+ 逻辑没有任何问题，那就开始前端进行解析token中的用户名用于展示在个人中心吧。  
+ 下面是在`Vue3`框架和`Piana`中的演示，`window.atob`是浏览器自带base64decode的方法
+ <code-box id="code-YYcb7w"><button boxid="code-YYcb7w" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-YYcb7w pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-YYcb7w" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="hljs language-javascript"><span class="hljs-keyword">export</span> <span class="hljs-keyword">const</span> useUserStore = <span class="hljs-title function_">defineStore</span>({
+  <span class="hljs-attr">id</span>: <span class="hljs-string">'user'</span>,
+  <span class="hljs-attr">state</span>: <span class="hljs-function">() =&gt;</span> {
+    <span class="hljs-keyword">return</span> {
+      <span class="hljs-attr">token</span>: <span class="hljs-string">''</span>,
+    }
+  },
+  <span class="hljs-attr">getters</span>: {
+    <span class="hljs-attr">accessToken</span>: <span class="hljs-function">(<span class="hljs-params">state</span>) =&gt;</span> {
+      <span class="hljs-keyword">return</span> state.<span class="hljs-property">accesstoken</span> || <span class="hljs-variable language_">localStorage</span>.<span class="hljs-title function_">getItem</span>(<span class="hljs-string">"accesstoken"</span>);
+    },
+    <span class="hljs-comment">/**
+     * 获取token中解密后的用户信息
+     */</span>
+    <span class="hljs-title function_">userInfo</span>(<span class="hljs-params">state</span>) {
+      <span class="hljs-keyword">var</span> token = state.<span class="hljs-property">token</span> || <span class="hljs-variable language_">localStorage</span>.<span class="hljs-title function_">getItem</span>(<span class="hljs-string">"accesstoken"</span>);
+      <span class="hljs-keyword">if</span> (!token || token == <span class="hljs-string">''</span>) {
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;
+      }
+
+      <span class="hljs-keyword">var</span> json = <span class="hljs-variable language_">window</span>.<span class="hljs-title function_">atob</span>(token.<span class="hljs-title function_">split</span>(<span class="hljs-string">"."</span>)[<span class="hljs-number">1</span>]);
+      <span class="hljs-keyword">return</span> <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">parse</span>(json);
+    }
+  }
+})
+</code></pre></code-box> 
+在需要获取用户名的地方使用
+ <code-box id="code-KajtB4"><button boxid="code-KajtB4" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-KajtB4 pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-KajtB4" class="language-js" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="language-js hljs language-javascript"><span class="hljs-attr">computed</span>:{
+  ...<span class="hljs-title function_">mapState</span>(useUserStore, [<span class="hljs-string">"userInfo"</span>]),
+}
+</code></pre></code-box> 
+感觉一切都很优雅的写完了代码，但是实际运行会报错：  
+ ***这里为了方便是直接在浏览器的调式器中执行的***  
+ https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/d53f292a7e0d458482e6513778c3f29d~tplv-k3u1fbpfcp-zoom-1.image  
+ 报错的意思来看是说我们的字符串没用正确的加密（就是它说咱这个字符串不是合法的base64加密）。  
+ 可是我们通过一些在线base64解密工具，还有Jwt的debugger工具都能解密出来明文。而且这不是我第一次将token拿出来进行解密了，之前也都没问题。
+
+1. 是不是token有问题？  
+
+经过测试，调用接口完全不会有问题，只是前端解密时报错，排除token不合法。
+2. 前端的atob函数存在bug？  
+
+那我们在后端用c#的base64解密一下看看：  
+
+https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/1d4d73ec14734733ad9f11bac8cfdebd~tplv-k3u1fbpfcp-zoom-1.image  
+
+居然后端解密也报错了，头部解密成功，载荷部分解密异常，和前端报错一样都是说字符串不是合法的base64内容，不知道你是不是偶尔遇到过这个问题，如果没有，那你更要往下看了，不然以后遇到了，要耽误不少时间去排查了。
+
+# 查看源码探索问题原因<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+ 
+上面遇到的问题曾经花了我不少时间去排查，关键是有工具能解密的还有工具不能解密，一时不知道到底是谁的问题了，抱着试试看的态度，看看源码生成token三部分的字符串过程。
+
+1. 既然token是这个函数生成的，那就直接看它的实现，直接F12即可，这个包是不是框架自带的，所以能直接通过vs看源码，比较方便的。  
+ https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/fc781dddba74494da2ffddff5823f4f2~tplv-k3u1fbpfcp-zoom-1.image
+2. 源码如下，`encodedPayload`根据它的命名不难看出是机密后的载荷，我们需要看的是它如何加密的  
+ https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/03871027f0ca4da1959fa795cf604f19~tplv-k3u1fbpfcp-zoom-1.image
+3. 查看`jwtToken.EncodedPayload`这个属性怎么来的（F12）  
+ https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/82b4507a2b5d4ad1b2a85221839b32b0~tplv-k3u1fbpfcp-zoom-1.image  
+ 图中标记了三个数字：
+
+- 1. 上一步我们逆向找到加密后的属性`EncodedPayload`
+- 1. `EncodedPayload`属性里面用到了另一个属性`Payload`,我们需要找`Payload`哪里赋值的
+- 1. `Payload`是在构造函数中根据传参内容进行初始化的。
+
+1. 上一步我们已经锁定进加密的逻辑在`Payload.Base64UrlEncode()`中，看`JwtPayload`的类定义
+
+https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e6c64fd8432d48a281e513a4ab435c4e~tplv-k3u1fbpfcp-zoom-1.image  
+ 可以看出，载荷的加密和我们想象的一样简单，把`JwtPayload`对象转成`Json`，然后进行`Base64Url`加密  
+ 5. 现在只剩`Base64UrlEncoder.Encode`的实现能为我们揭秘了  
+ https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/99dda41469e743ba93cbbf768d8c181a~tplv-k3u1fbpfcp-zoom-1.image  
+ 整体看下类定义，我们调用的`Encode`按标记顺序，依次调用了三个重载方法，最终实现都标记为3的那个方法。  
+ 6. 不知道你有没有注意到这些内容  
+ https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/36e1f7315f7b4137a0c0297f05bfd7a3~tplv-k3u1fbpfcp-zoom-1.image  
+ 看到这里我恍然大悟了一点，再看看他这里面的decode方法
+ 
+https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/de2f95cb926649e78323ce47fb90be62~tplv-k3u1fbpfcp-zoom-1.image  
+ 看见了吧，我们因为是单纯的Base64加解密，其实不然，在进行`Convert.FromBase64String(decodedString)`解密前还需要进行一些字符串的替换,我赶紧看下上面出问题的载荷内容，发现其中有`_`这个字符，我赶紧将其进行替换成`+`,在次在尝试：
+ <code-box id="code-kzG7AE"><button boxid="code-kzG7AE" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-kzG7AE pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-kzG7AE" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="hljs language-cpp">eyJuYmYiOiIxNjUzNDAwNjk0IiwiZXhwIjoxNjUzNDAyNDk0LCJOYW1lIjoi6Zi_5ZOIIiwiRW1haWwiOiJ1c2VybmFtZUBxcS5jb20iLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjUwMDAiLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUwMDAifQ
+
+<span class="hljs-comment">// 替换后</span>
+eyJuYmYiOiIxNjUzNDAwNjk0IiwiZXhwIjoxNjUzNDAyNDk0LCJOYW1lIjoi6Zi+<span class="hljs-number">5</span>ZOIIiwiRW1haWwiOiJ1c2VybmFtZUBxcS5jb20iLCJpc3MiOiJodHRwOi8vbG9jYWxob3N0OjUwMDAiLCJhdWQiOiJodHRwOi8vbG9jYWxob3N0OjUwMDAifQ
+</code></pre></code-box> 
+果然如此，替换后解密成功了，只有一个汉字的编码问题。  
+ https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b2c63472062147d091e7757b0a9677e6~tplv-k3u1fbpfcp-zoom-1.image
+ 
+这下找到问题了，优化下前端的解密代码
+ <code-box id="code-PcwXB8"><button boxid="code-PcwXB8" type="button" class="clipboard code-copay-btn" data-clipboard-action="copy" data-clipboard-target="#code-PcwXB8 pre" aria-label="复制代码"><i class="iconfont icon-fuzhi1"></i></button><pre highlighted="true" boxid="code-PcwXB8" class="language-js" style="border-radius: 4px; background: rgb(245, 245, 250);"><code class="language-js hljs language-javascript"><span class="hljs-title function_">userInfo</span>(<span class="hljs-params">state</span>) {
+      <span class="hljs-keyword">var</span> token = state.<span class="hljs-property">token</span> || <span class="hljs-variable language_">localStorage</span>.<span class="hljs-title function_">getItem</span>(<span class="hljs-string">"accesstoken"</span>);
+      <span class="hljs-keyword">if</span> (!token || token == <span class="hljs-string">''</span>) {
+        <span class="hljs-keyword">return</span> <span class="hljs-literal">null</span>;
+      }
+      
+      token = token.<span class="hljs-title function_">replaceAll</span>(<span class="hljs-string">"_"</span>, <span class="hljs-string">"/"</span>).<span class="hljs-title function_">replaceAll</span>(<span class="hljs-string">"-"</span>, <span class="hljs-string">"+"</span>) <span class="hljs-comment">// 添加这一行</span>
+      <span class="hljs-keyword">var</span> json = <span class="hljs-variable language_">window</span>.<span class="hljs-title function_">atob</span>(token.<span class="hljs-title function_">split</span>(<span class="hljs-string">"."</span>)[<span class="hljs-number">1</span>]);
+      <span class="hljs-keyword">return</span> <span class="hljs-title class_">JSON</span>.<span class="hljs-title function_">parse</span>(json);
+    }
+</code></pre></code-box> 
+问题解决了。
+ 
+注意官方对加密过程的描述
+ 
+https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/0709257066a749fc8cc204478aae62b6~tplv-k3u1fbpfcp-zoom-1.image  
+ 哈哈，是不是草率了，并不是`Base64`加密~~
+ 
+# 总结<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+ 
+我们都以为Jwt三部分是用`Base64`加密，其实不完全对，因为他确切的加密方式是`Base64Url`加密，没有深入理解的我们只以为就是纯粹的base64,而且在大部分情况下确实是这样，更加坚定了我们这种错误认知。而只有当Base64加密后出现字符`+`或`/`时，才会有所不同，希望对大家有帮助。
+ 
+原文：[Jwt隐藏大坑，通过源码帮你揭秘](https://blog.beautyof.net/auth/2022/05/24/Jwt%E9%9A%90%E8%97%8F%E5%A4%A7%E5%9D%91-%E9%80%9A%E8%BF%87%E6%BA%90%E7%A0%81%E5%B8%AE%E4%BD%A0%E6%8F%AD%E7%A7%98.html)
+  
+ <nav id="articleDirectory" style="top: 293px; right: 0px; display: none;"><ul class="nav nav-pills"> <li class="nav-item"><a class="nav-link" href="#前言" goto="tid-cQJNrH" onclick="return false;">前言</a></li><li class="nav-item"><a class="nav-link" href="#集成jwt" goto="tid-ETpQcr" onclick="return false;">集成JWT</a></li><li class="nav-item"><a class="nav-link" href="#坑在哪里" goto="tid-MPTD2S" onclick="return false;">坑在哪里</a></li><li class="nav-item"><a class="nav-link" href="#查看源码探索问题原因" goto="tid-Wn6JjZ" onclick="return false;">查看源码探索问题原因</a></li><li class="nav-item"><a class="nav-link" href="#总结" goto="tid-Wz2SSi" onclick="return false;">总结</a></li> </ul> </nav> 
+
+\_\_EOF\_\_
+
+ <svg xmlns="http://www.w3.org/2000/svg" viewbox="0 0 147.78 155.96"> <path d="M10.5,99.81a1.9,1.9,0,0,0-.53-.09,1.66,1.66,0,0,0-1.64,1.65A1.64,1.64,0,0,0,10,103a1.57,1.57,0,0,0,.87-.25l26.76,26.82.45-1.08L11.52,101.91A1.65,1.65,0,0,0,10.5,99.81Zm-.13,2a.57.57,0,0,1-.8,0,.58.58,0,0,1-.17-.41.58.58,0,0,1,.57-.57h0a.57.57,0,0,1,.56.58A.55.55,0,0,1,10.37,101.77Z" style="fill:#c5c9e0"></path><path d="M56.15,117.58H39.06l0-.09a1.65,1.65,0,0,0-1.36-1H37.5a1.65,1.65,0,1,0,1.56,2.19H55.7L92.92,156h41.44v-1.08h-41Zm-18.25.94a.56.56,0,0,1-.79,0,.58.58,0,0,1-.17-.41.57.57,0,0,1,.56-.57h0a.58.58,0,0,1,.57.58A.54.54,0,0,1,37.9,118.52Z" style="fill:#c5c9e0"></path><path d="M23.52,50.32a1.65,1.65,0,0,0,1.55-1.11H55.28l48-48.13h31.06V0H102.85l-48,48.13H25.07a1.64,1.64,0,0,0-2.09-1,1.64,1.64,0,0,0,.54,3.2Zm0-2.21a.57.57,0,0,1,0,1.13.57.57,0,1,1,0-1.13Z" style="fill:#c5c9e0"></path><polygon points="102.86 0 102.86 0 102.86 0 102.86 0" style="fill:#c5c9e0"></polygon><path d="M107.72,12.14h26.64V11.07H107.27L57.4,61H3.09a1.66,1.66,0,0,0-1.45-.86H1.52A1.65,1.65,0,1,0,2.81,63a1.59,1.59,0,0,0,.45-.87H57.85ZM2.05,62.23a.57.57,0,0,1-.8,0,.58.58,0,0,1-.17-.41.57.57,0,0,1,.56-.57h.09a.57.57,0,0,1,.32,1Z" style="fill:#c5c9e0"></path><path d="M134.36,43.22V42.14h-22.3l-9.62,9.63a1.64,1.64,0,0,0-2.19.77,1.61,1.61,0,0,0-.17.71,1.65,1.65,0,1,0,3.29,0,1.61,1.61,0,0,0-.16-.72l9.3-9.32Zm-32.64,10.6a.57.57,0,0,1,0-1.13.57.57,0,0,1,0,1.13Z" style="fill:#c5c9e0"></path><path d="M147,52.3l-9,9H111.48a1.64,1.64,0,0,0-1.61-1.33h-.14a1.65,1.65,0,1,0,1.6,2.41h27.19l9.26-9.29L147,52.3Zm-37.15,9.85a.56.56,0,0,1-.56-.57h0a.56.56,0,0,1,.56-.56h0a.57.57,0,1,1,0,1.13Z" style="fill:#c5c9e0"></path><path d="M66.79,75.35l11,11.06h56.53V85.33H78.27l-11-11.06H49.49L37.12,86.67a1.64,1.64,0,0,0-2.09,1,1.61,1.61,0,0,0-.09.54,1.65,1.65,0,0,0,3.29,0,1.68,1.68,0,0,0-.26-.89l12-12ZM36.58,88.79a.57.57,0,1,1,.57-.56A.57.57,0,0,1,36.58,88.79Z" style="fill:#c5c9e0"></path><path d="M110.61,95.55,92.8,113.4a1.62,1.62,0,1,0,.77.76l17.49-17.53h23.31V95.55ZM92.49,115.28a.56.56,0,0,1-.8,0,.58.58,0,0,1-.17-.41.57.57,0,0,1,.57-.57h0a.58.58,0,0,1,.56.58A.55.55,0,0,1,92.49,115.28Z" style="fill:#c5c9e0"></path><path d="M97.89,122.3H76.62L64.2,109.85a1.65,1.65,0,0,0-.77-2.2,1.77,1.77,0,0,0-.72-.17h-.14a1.65,1.65,0,0,0,.15,3.29,1.58,1.58,0,0,0,.71-.17l12.74,12.77H98.34l17.48-17.52h18.54v-1.08h-19ZM63.12,109.53a.56.56,0,0,1-.8,0,.58.58,0,0,1-.17-.41.57.57,0,0,1,1.14,0A.54.54,0,0,1,63.12,109.53Z" style="fill:#c5c9e0"></path> </svg> 
+ 
+ https://pic.cnblogs.com/avatar/960145/20210713111443.png 
+ 
+ <item> <li> <b>本文作者：</b> <a href="https://www.cnblogs.com/springhgui" target="_blank">Gui.H</a> </li> <li> <b>本文链接：</b> <a href="https://www.cnblogs.com/springhgui/p/16307783.html" target="_blank">https://www.cnblogs.com/springhgui/p/16307783.html</a> </li> <li> <b>关于博主：</b> 评论和私信会在第一时间回复。或者<a href="https://msg.cnblogs.com/msg/send/springhgui" target="_blank">直接私信</a>我。 </li> <li> <b>版权声明：</b> 本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-nd/4.0/" alt="BY-NC-SA" title="BY-NC-SA" target="_blank">BY-NC-SA</a> 许可协议。转载请注明出处！ </li> <li> <b>声援博主：</b> 如果您觉得文章对您有帮助，可以点击文章右下角<strong><span style="color: #ff0000; font-size: 12pt;">【<a id="post-up" onclick="votePost(16307783,'Digg')" href="javascript:void(0);">推荐</a>】</span></strong>一下。 </li> </item>
