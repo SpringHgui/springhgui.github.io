@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "为什么Java有了synchronized之后还造了Lock锁这个轮子？"
-date:   2022-05-26 19:39:55 +0800
+date:   2022-05-26 19:47:55 +0800
 categories: cnblog
 ---
 众所周知，synchronized和Lock锁是java并发编程中两大利器，可以用来解决线程安全的问题。但是为什么Java有了synchronized之后还是提供了Lock接口这个api，难道仅仅只是重复造了轮子这么简单么？本文就来探讨一下这个问题。

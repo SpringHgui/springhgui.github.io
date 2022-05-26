@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "理解RESTful Api设计"
-date:   2022-05-26 19:39:15 +0800
+date:   2022-05-26 19:47:11 +0800
 categories: cnblog
 ---
 ## REST<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>

@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "SpringBoot 整合 RabbitMQ 实现消息可靠传输"
-date:   2022-05-26 19:40:09 +0800
+date:   2022-05-26 19:48:07 +0800
 categories: cnblog
 ---
 > 消息的可靠传输是面试必问的问题之一，保证消息的可靠传输主要在生产端开启 `comfirm` 模式，`RabbitMQ` 开启持久化，消费端关闭自动 `ack` 模式。

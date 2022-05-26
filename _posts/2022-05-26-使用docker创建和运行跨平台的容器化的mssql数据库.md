@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "使用docker创建和运行跨平台的容器化的mssql数据库"
-date:   2022-05-26 19:39:42 +0800
+date:   2022-05-26 19:47:43 +0800
 categories: cnblog
 ---
 我们一般启用sql server数据库要么选择安装SQL Server实例和管理工具（SSMS），要么用vs自带的数据库。如今net跨平台成为趋势，今天给大家介绍另一种我最近在玩的方式，即使用docker创建并启用sql数据库。
