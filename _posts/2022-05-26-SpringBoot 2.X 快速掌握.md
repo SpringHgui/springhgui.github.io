@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "SpringBoot 2.X 快速掌握"
-date:   2022-05-26 19:48:04 +0800
+date:   2022-05-26 20:48:22 +0800
 categories: cnblog
 ---
 > **目录**
@@ -56,25 +56,25 @@ categories: cnblog
 > 16.9、Redis实现 - 分布式定时任务  
 > 16.8、Quartz任务调度
 
-# 0、重写博文的原因<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 0、重写博文的原因
  
 - 当初我的SpringBoot系列的知识是采用分节来写的，即：每一个知识点为一篇博文，但是：最近我霉到家了，我发现有些博文神奇般地打不开了，害我去找当初的markdown笔记，但是方便的话还是在线版舒服，只要有网就可以访问，因此昨天晚上东拼西凑搞出了这篇SpringBoot基础系列知识
 
-# 1、什么是SpringBoot？<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 1、什么是SpringBoot？
  
-## 1.1、百度百科一下<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 1.1、百度百科一下
  
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211107224618301-1299888498.png)
 
-# 2、对SpringBoot快速上手<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 2、对SpringBoot快速上手
  
-## 2.1、通过官网来创建 - 了解<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 2.1、通过官网来创建 - 了解
  
 **这里面的创建方式不做过多说明，只需要在官网里面创建好了，然后下载解压，就可以了，我这里直接使用编辑器创建**  
  [springboot搭建项目官网](https://start.spring.io/)  
  ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211107224936097-2076800520.png)
 
-## 2.2、使用IDEA编辑器创建<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 2.2、使用IDEA编辑器创建
  
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211107225251957-503420277.png)
  
@@ -102,7 +102,7 @@ categories: cnblog
  
 **这样就创建成功了一个springboot项目**
 
-# 3、小彩蛋 - banner<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 3、小彩蛋 - banner
  
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211107231731869-1017574394.png)
 
@@ -121,13 +121,13 @@ categories: cnblog
 
     - 至于这个banner为什么可以启动，在下一篇小博客中说SpringBoot的原理图时，里面有
 
-# 4、了解yml语法<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 4、了解yml语法
 
 - **这玩意儿的语法就像如下图的类与属性的关系一样，层层递进的（ 注意：使用yml语法时，每句的结尾别有空格，容易出问题，另外：IDEA中采用tab缩进没问题，但是：在其他地方，如：linux中，使用yml语法时，别用tab缩进，也容易导致程序启动不起来 ）**
 
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211109002747288-1997522272.png)
  
-## 4.1、使用yml给实体类赋值<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 4.1、使用yml给实体类赋值
 
 - **准备工作：导入依赖**
 
@@ -143,7 +143,7 @@ categories: cnblog
 
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211109004121272-166992683.png)
 
-# 5、jsr303检验<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 5、jsr303检验
 
 - **jsr303这是数据检验的规范，基于这个的实现方式有好几个，自行百度一下，然后注解含义都是和下面列出来的差不多**
 
@@ -159,7 +159,7 @@ categories: cnblog
 
      空检查	@Null 验证对象是否为null	@NotNull 验证对象是否不为null, 无法查检长度为0的字符串	@NotBlank 检查约束字符串是不是Null还有被Trim的长度是否大于0,只对字符串,且会去掉前后空格.	@NotEmpty 检查约束元素是否为NULL或者是EMPTY.  Booelan检查	@AssertTrue 验证 Boolean 对象是否为 true	@AssertFalse 验证 Boolean 对象是否为 false  长度检查	@Size(min=, max=) 验证对象（Array,Collection,Map,String）长度是否在给定的范围之内	@Length(min=, max=) Validates that the annotated string is between min and max included.  日期检查	@Past 验证 Date 和 Calendar 对象是否在当前时间之前，验证成立的话被注释的元素一定是一个过去的日期	@Future 验证 Date 和 Calendar 对象是否在当前时间之后 ，验证成立的话被注释的元素一定是一个将来的日期	@Pattern 验证 String 对象是否符合正则表达式的规则，被注释的元素符合制定的正则表达式，regexp:正则表达式 flags: 指定 Pattern.Flag 的数组，表示正则表达式的相关选项。  数值检查	建议使用在Stirng,Integer类型，不建议使用在int类型上，因为表单值为“”时无法转换为int，但可以转换为Stirng为”“,Integer为null	@Min 验证 Number 和 String 对象是否大等于指定的值	@Max 验证 Number 和 String 对象是否小等于指定的值	@DecimalMax 被标注的值必须不大于约束中指定的最大值. 这个约束的参数是一个通过BigDecimal定义的最大值的字符串表示.小数存在精度	@DecimalMin 被标注的值必须不小于约束中指定的最小值. 这个约束的参数是一个通过BigDecimal定义的最小值的字符串表示.小数存在精度	@Digits 验证 Number 和 String 的构成是否合法	@Digits(integer=,fraction=) 验证字符串是否是符合指定格式的数字，interger指定整数精度，fraction指定小数精度。	@Range(min=, max=) 被指定的元素必须在合适的范围内	@Range(min=10000,max=50000,message=”range.bean.wage”)	@Valid 递归的对关联对象进行校验, 如果关联对象是个集合或者数组,那么对其中的元素进行递归校验,如果是一个map,则对其中的值部分进行校验.(是否进行递归验证)	@CreditCardNumber信用卡验证	@Email 验证是否是邮件地址，如果为null,不进行验证，算通过验证。	@ScriptAssert(lang= ,script=, alias=)	@URL(protocol=,host=, port=,regexp=, flags=) 
 
-# 6、yml多环境配置<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 6、yml多环境配置
  
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211109004938826-1787458632.png)
  
@@ -167,17 +167,17 @@ categories: cnblog
  
 **还有一种标准的配置，即：采用多个yml文件，如：`application-test.yml 就是测试环境的配置`、`appilication-dev.yml 就是开发环境的配置`、`appilication-pro.yml 就是生产环境配置`**
  
-# 7、设置默认首页<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 7、设置默认首页
 
 - **这是SpringBoot + thmeleaf响应式编程的技术，现在前后端分离，这种东西其实没什么鸟用**
 
-## 7.1、页面在static目录中时<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 7.1、页面在static目录中时
 
 - **直接在controller中编写跳转地址即可**  
 
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211128212407027-333475167.png)
 
-## 7.2、页面在templates模板引擎中时<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 7.2、页面在templates模板引擎中时
  
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211109133750225-758000023.png)
 
@@ -193,7 +193,7 @@ categories: cnblog
 
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211109134014640-2019915261.png)
 
-# 8、简单认识thymeleaf<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 8、简单认识thymeleaf
 
 - **这是SpringBoot + thmeleaf响应式编程的技术，现在前后端分离，这种东西其实没什么鸟用**
 
@@ -201,7 +201,7 @@ categories: cnblog
 
 - [https://www.thymeleaf.org/doc/tutorials/3.0/usingthymeleaf.html](https://www.thymeleaf.org/doc/tutorials/3.0/usingthymeleaf.html)
 
-## 8.1、什么是thymeleaf？<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 8.1、什么是thymeleaf？
  
 一张图看明白：
 
@@ -220,7 +220,7 @@ categories: cnblog
     - 模板引擎的作用就是我们来写一个页面模板，比如有些值，是动态的，我们写一些表达式。而这些值从哪来？就是我们在后台封装一些数据。然后把这个模板和这个数据交给模板引擎，模板引擎按照我们封装的数据把这表达式解析出来、填充到我们指定的位置，然后把这个数据最终生成一个我们想要的内容从而最后显示出来，这就是模板引擎。
     - 不管是jsp还是其他模板引擎，都是这个思想。只不过，不同模板引擎之间，他们可能语法有点不一样。其他的就不介绍了，这里主要介绍一下SpringBoot给我们推荐的Thymeleaf模板引擎，这模板引擎，是一个高级语言的模板引擎，他的这个语法更简单。而且功能更强大
 
-## 8.2、thymeleaf的取数据方式<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 8.2、thymeleaf的取数据方式
 
 - 官网中有说明  
 
@@ -235,7 +235,7 @@ categories: cnblog
     - 链接 URL 表达式： @{...}
     - 片段表达式： ~{...}
 
-## 8.3、在springboot中使用thymeleaf<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 8.3、在springboot中使用thymeleaf
 
 > **依赖**
 
@@ -260,9 +260,9 @@ categories: cnblog
  ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211109221353092-159239037.png)
 - 成功跳过去了
 
-## 8.4、延伸：传输数据<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 8.4、延伸：传输数据
  
-### 8.4.1、开胃菜<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 8.4.1、开胃菜
 
 - 参照官网来(  这里只演示 变量表达式： ${...}，其他的都是一样的原理 )
 
@@ -284,7 +284,7 @@ categories: cnblog
 
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211109223324936-1199656829.png)
 
-### 8.4.2、开整<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 8.4.2、开整
  
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211109231643156-1412317335.png)
 
@@ -302,7 +302,7 @@ categories: cnblog
 
 **其他的玩法都差不多**
 
-# 9、静态资源处理方式<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 9、静态资源处理方式
 
 - **在前面玩了thymeleaf，在resources中还有一个目录是static**
 
@@ -315,7 +315,7 @@ categories: cnblog
 
 - **通过上述的源码发现两个东西：`webjars` 和 `getStaticLocations()`**
 
-## 9.1、webjars的方式处理静态资源<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 9.1、webjars的方式处理静态资源
 
 - **webjars的官网：[https://www.webjars.org/all](https://www.webjars.org/all)**
 - 进去之后：里面就是各种各样的jar包
@@ -352,7 +352,7 @@ categories: cnblog
 
 - **发现有四种方式可以放静态资源，那就来测试一下**
 
-### 9.1.1、resources/ static/ public的优先级<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 9.1.1、resources/ static/ public的优先级
  
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211110011908681-1459280420.png)
 
@@ -369,7 +369,7 @@ categories: cnblog
 
 - **发现static目录其次**
 
-#### 9.1.1.1、总结:resources、static、public优先级<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+#### 9.1.1.1、总结:resources、static、public优先级
 
 - **resources目录下的优先级最高**
 - **其次是static**
@@ -381,9 +381,9 @@ categories: cnblog
 - static放置静态访问的页面，如：登录、注册....
 - resources，应该说是templates，放置动态资源，如：用户管理.....
 
-# 10、整合jdbc、druid、druid实现日志监控<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 10、整合jdbc、druid、druid实现日志监控
  
-## 10.1、整合jdbc、druid<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 10.1、整合jdbc、druid
 
 > **依赖**
 
@@ -396,7 +396,7 @@ categories: cnblog
 > **测试**  
 >  ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211112002413988-1100740182.png)
 
-## 10.2、整合druid<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 10.2、整合druid
 
 > **依赖**
 
@@ -409,7 +409,7 @@ categories: cnblog
 > **测试**  
 >  ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211112002745520-98530422.png)
 
-## 10.3、druid实现日志监控<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 10.3、druid实现日志监控
 
 - **注意点：需要web启动器支持**
 
@@ -425,11 +425,11 @@ categories: cnblog
  
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211112003549338-1603058434.png)
 
-# 11、整合mybatis<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 11、整合mybatis
 
 - **注：复杂sql使用xml，简单sql使用注解**
 
-## 11.1、xml版<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 11.1、xml版
 
 > **导入依赖**
 
@@ -459,7 +459,7 @@ categories: cnblog
 
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211112014038688-1747157731.png)
 
-## 11.2、注解版<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 11.2、注解版
 
 - 和ssm整合中的玩法一样，只改动一个地方即可，就是不需要xml了
 - **直接在dao层 / mapper的接口方法头上用`@insert()` 、 `@delete()` 、 `@update() `、` @select()`注解，然后小括号中编写sql字符串即可**
@@ -470,7 +470,7 @@ categories: cnblog
 
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211112015742806-475167256.png)
 
-# 12、整合pageHelper分页插件<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 12、整合pageHelper分页插件
 
 > **依赖**
 
@@ -480,12 +480,12 @@ categories: cnblog
 
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211112015651292-1765133115.png)
 
-# 13、集成swagger<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 13、集成swagger
 
 - 理论知识滤过，自行百度百科swagger是什么
 - **swagger的常见注解和解读网址：[http://c.biancheng.net/view/5533.html](http://c.biancheng.net/view/5533.html)**
 
-## 13.1、快速上手<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 13.1、快速上手
 
 > **导入依赖**
 
@@ -525,12 +525,12 @@ categories: cnblog
  
 ![截图](https://img2020.cnblogs.com/blog/2421736/202111/2421736-20211113173701249-1470607925.png)
 
-## 13.2、结语<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 13.2、结语
 
 - **以上的内容是入门，其他的注解开发时自行摸索吧！**
 - **还有一种，比swagger更好，就是：Apifox / ApiPost / eolink，自行下载安装包，安装之后玩一下**
 
-# 14、集成JPA<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 14、集成JPA
 
 > **数据库表字段信息**
 
@@ -578,7 +578,7 @@ categories: cnblog
  
 **生成出来了，完成**
 
-# 15、集成mybatis-plus<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 15、集成mybatis-plus
 
 - **mybatis-plus官网地址：[https://baomidou.com/guide/](https://baomidou.com/guide/)**
 
@@ -609,17 +609,17 @@ categories: cnblog
 
 **其他的知识，在mybatis-plus官网中都有**
 
-# 15、分布式本地缓存技术ehcache<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 15、分布式本地缓存技术ehcache
 
 - **还有一种比较流行的是`Caffeine`这个东西要更简单一点，而且不需要借助xml文件，而ehcache需要借助xml文件**
 
-## 15.1、Ehcache介绍<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 15.1、Ehcache介绍
 
 - Ehacahe是一个比较成熟的Java缓存框架，最早从hibernate发展而来，是进程中的缓存系统，它提供了用内存、磁盘文件存储，以及分布式存储方式等多种灵活的cache管理方案
 
-## 15.2、ehcache常用注解<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 15.2、ehcache常用注解
  
-### 15.2.1、@CacheConfig注解<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 15.2.1、@CacheConfig注解
 
 - **用于标准在类上，可以存放该类中所有缓存的公有属性( 如：设置缓存名字 )**
 
@@ -627,7 +627,7 @@ categories: cnblog
 
 - **当然：这个注解其实可以使用`@Cacheable`来代替**
 
-### 15.2.2、@Cacheable注解( 读数据时 ) - 用得最多<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 15.2.2、@Cacheable注解( 读数据时 ) - 用得最多
 
 - **应用到读取数据的方法上，如：查找数据的方法，使用了之后可以做到先从本地缓存中读取数据，若是没有在调用此注解下的方法去数据库中读取数据，当然：还可以将数据库中读取的数据放到用此注解配置的指定缓存中**
 
@@ -659,13 +659,13 @@ categories: cnblog
     - **作用：指定使用哪个缓存解析器**
     - **需要通过`org.springframewaork.cache.interceptor.CacheResolver`接口来实现自己的缓存解析器**
 
-### 15.2.3、@CachePut注解 ( 写数据时 )<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 15.2.3、@CachePut注解 ( 写数据时 )
 
 - **用在`写数据`的方法上，如：新增 / 修改方法，调用方法时会自动把对应的数据放入缓存，`@CachePut`的参数和`@Cacheable`差不多**
 
      @CachePut(value="user", key = "#userId")public User save(User user) {	users.add(user);	return user;} 
 
-### 15.2.4、@CacheEvict注解 ( 删除数据时 )<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 15.2.4、@CacheEvict注解 ( 删除数据时 )
 
 - **用在删除数据的方法上，调用方法时会从缓存中移除相应的数据**
 
@@ -675,15 +675,15 @@ categories: cnblog
     - **allEntries：**默认为false，当为true时，会移除缓存中该注解该属性所在的方法的所有数据
     - **beforeInvocation：**默认为false，在调用方法之后移除数据，当为true时，会在调用方法之前移除数据
 
-### 15.2.5、@Cacheing组合注解 - 推荐<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 15.2.5、@Cacheing组合注解 - 推荐
 
      @Caching(	put = {		@CachePut(value = "user", key = "#userId"),		@CachePut(value = "user", key = "#username"),		@CachePut(value = "user", key = "#userAge"),	}) 
 
 - **指的是：将userId、username、userAge放到名为user的缓存中存起来**
 
-## 15.3、SpringBoot集成Ehcache<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 15.3、SpringBoot集成Ehcache
  
-### 15.3.1、配置Ehache<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 15.3.1、配置Ehache
 
 > **依赖**
 
@@ -703,7 +703,7 @@ categories: cnblog
 
      <ehcache name="myCache">    <!--缓存磁盘保存路径-->    <diskStore path = "D:/test/cache"/>     <!--默认的缓存配置        maxElementsInMemory 缓存最大数目        eternal 对象是否永久有效 一旦设置了，那么timeout将不再起作用        timeToIdleSeconds 设置对象在实效前能允许的闲置时间（ 单位：秒 ），默认值是0，即：可闲置时间无穷大                            仅当eternal=“false"对象不是永久有效时使用        timeToLiveSeconds 设置对象失效前能允许的存活时间（ 单位：秒 ）                             最大时间介于创建时间和失效时间之间        maxElementsOnDisk 磁盘最大缓存个数        diskExpiryThreadIntervalSeconds 磁盘失效时，线程运行时间间隔，默认是120秒        memoryStoreEvictionPolicy 当达到设定的maxElementsInMemory限制时，Ehcache将会根据指定的策略去清理内存                                    默认策略是LRU( 即：最近最少使用策略 ）                                    还可以设定的策略：                                        FIFO    先进先出策略                                        LFU     最近最少被访问策略                                        LRU     最近最少使用策略                                                    缓存的元素有一个时间戳，当缓存容量满了，同时又需要腾出地方来缓存新的元素时，                                                    那么现有缓存元素中的时间戳 离 当前时间最远的元素将被清出缓存     -->    <defaultCache            maxElementsInMemory="10000"            eternal="false"            timeToIdleSeconds="120"            timeToLiveSeconds="120"            maxElementsOnDisk="10000000"            diskExpiryThreadIntervalSeconds="120"            memoryStoreEvictionPolicy="LRU"/>     <!--下面的配置是自定义缓存配置，可以复制粘贴，用多套        name 起的缓存名        overflowToDisk 当系统宕机时，数据是否保存到上面配置的<diskStore path = "D:/test/cache"/>磁盘中        diskPersistent 是否缓存虚拟机重启期数据         另外的配置项：            clearOnFlush  内存数量最大时是否清除            diskSpoolBufferSizeMB 设置diskStore( 即：磁盘缓存 )的缓冲区大小，默认是30MB                                    每个Cache都应该有自己的一个缓冲区    -->    <cache        name="users"        eternal="false"        maxElementsInMemory="100"        overflowToDisk="false"        diskPersistent="false"        timeToIdleSeconds="0"        timeToLiveSeconds="300"        memoryStoreEvictionPolicy="LRU"    /></ehcache> 
 
-### 15.3.2、在项目中使用ehcahe<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 15.3.2、在项目中使用ehcahe
 
 - **使用常用的`@Cacheable`注解举例**
 
@@ -719,9 +719,9 @@ categories: cnblog
 
 **其他的注解也都是差不多的**
 
-# 16、定时任务<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+# 16、定时任务
  
-## 16.1、小顶堆数据结构<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 16.1、小顶堆数据结构
 
 - **就是一个完全二叉树，同时这个二叉树遵循一个规则，根节点存的值永远小于两个子节点存的值**
 
@@ -741,21 +741,21 @@ categories: cnblog
     - **取数据的方式：从底向上。**即：从最底层开始，若比找寻的值小，那就找父节点，父节点也比所找寻数值小，继续找父节点的父节点.，要是比父节点大，那就找相邻兄弟节点嘛.........依次类推，最后就可以找到所找寻的数据了
     - **存数据的方式：自底向上、逐渐上浮**。即：从最底层开始，要存的值 和 父节点相比，比父节点小的话，那存的值就和父节点存的值进行换位.....以此类推
 
-## 16.2、时间轮算法<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 16.2、时间轮算法
  
 ![image](https://img2022.cnblogs.com/blog/2421736/202205/2421736-20220525200337422-1065587790.png)
 
-## 16.3、基础型时间轮<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 16.3、基础型时间轮
 
 - **模仿时钟，24个刻度( 数组，每一个刻度作为数组的下标 ），每一个刻度后面就是一个链表，这个链表中放对应的定时任务，到了指定时间点就把后面链表中的任务全部遍历出来执行**
 - 缺点：当要弄年、月、秒这种就又要再加轮子，这样就很复杂了，因此：此种方式只适合记一天24小时的定时任务，涉及到年月秒就不行了
 
-## 16.4、round型时间轮<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 16.4、round型时间轮
 
 - **在前面基础型时间轮的基础上，在每一个刻度的位置再加一个round值（ 每个刻度后面还是一个链表存定时任务 ），round值记录的就是实际需求的值，如：一周，那round值就为7，当然这个round值可以是1，也可以是30....，每一次遍历时钟数组的那24个刻度时，遍历到某一个刻度，那么就让round值减1，直到round值为0时，就表示24数组中当前这个刻度存的定时任务该执行了**
 - 缺点：需要让round值减1，那么就是需要对时间轮进行遍历，如：定时任务应该是4号执行，但是3号遍历时间轮时，定时任务并不执行，而此时也需要遍历时间轮从而让round值减1，这浪费了性能
 
-## 16.5、分量时间轮<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 16.5、分量时间轮
 
 - **后续的定时任务框架就是基于这个做的，如：Spring中有一个@Scheduleed( cron = "x x x x ...." )注解，它的这个cron时间表达式就是基于这种分量时间轮**
 - 使用多个轮子
@@ -764,7 +764,7 @@ categories: cnblog
     - 先遍历天伦中的刻度，若今天是0 -30中要执行定时任务的那一天，那么天轮的刻度指向的就是时轮
     - 然后再去遍历时轮中对应的那个刻度，从而找到这个刻度后面的链表，将链表遍历出来，执行定时任务
 
-## 16.6、Timer定时任务<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 16.6、Timer定时任务
 
 - **底层原理就是：小顶堆，只是它的底层用了一个taskQueue任务队列来充当小顶堆中的哪个数组，存取找的逻辑都是和小顶堆一样的**
 - **有着弊端：**
@@ -777,7 +777,7 @@ categories: cnblog
 
     package com.tuling.timer; import java.util.Date;import java.util.Timer;import java.util.TimerTask; public class TimerTest {     public static void main(String[] args) {        Timer t = new Timer();// 任务启动        for (int i=0; i<2; i++){            TimerTask task = new FooTimerTask("foo"+i);            t.scheduleAtFixedRate(task,new Date(),2000);// 任务添加   10s 5次   4 3            // 预设的执行时间nextExecutorTime 12:00:00   12:00:02  12:00:04            // schedule  真正的执行时间 取决上一个任务的结束时间  ExecutorTime   03  05  08  丢任务（少执行了次数）            // scheduleAtFixedRate  严格按照预设时间 12:00:00   12:00:02  12:00:04（执行时间会乱）            // 单线程  任务阻塞  任务超时        }    }} class FooTimerTask extends TimerTask {     private String name;     public FooTimerTask(String name) {        this.name = name;    }     public void run() {        try {            System.out.println("name="+name+",startTime="+new Date());            Thread.sleep(3000);            System.out.println("name="+name+",endTime="+new Date());             // 因为是单线程，所以解决办法：使用线程池执行        } catch (InterruptedException e) {            e.printStackTrace();        }    }}  
 
-## 16.7、定时任务线程池<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 16.7、定时任务线程池
 
 - **底层原理就是timer + 线程池来做到的**
 - **如下的`Executors.newScheduledThreadPool(5);`创建线程池的方法在高并发情况下，最好别用**
@@ -786,7 +786,7 @@ categories: cnblog
 
     package com.tuling.pool; import java.util.Date;import java.util.concurrent.Executors;import java.util.concurrent.ScheduledExecutorService;import java.util.concurrent.TimeUnit; public class ScheduleThreadPoolTest {     public static void main(String[] args) {        // 这种线程池叫做垃圾 - 了解即可        // 缺点：允许的请求队列长度为 Integer.MAX_VALUE，可能会堆积大量的请求，从而导致 OOM        ScheduledExecutorService scheduledThreadPool = Executors.newScheduledThreadPool(5);        for (int i=0;i<2;i++){             scheduledThreadPool.scheduleAtFixedRate(new Task("task-"+i),0,2, TimeUnit.SECONDS);        }    }}class Task implements Runnable{     private String name;     public Task(String name) {        this.name = name;    }     public void run() {        try {            System.out.println("name="+name+",startTime="+new Date());            Thread.sleep(3000);            System.out.println("name="+name+",endTime="+new Date());         } catch (InterruptedException e) {            e.printStackTrace();        }    }} 
 
-## 16.8、@Scheduled注解实现<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 16.8、@Scheduled注解实现
 
 - **这玩意儿是Spring提供的**
 - **缺点就是其定时间不能动态更改，它适用于具有固定任务周期的任务**
@@ -836,11 +836,11 @@ categories: cnblog
 
     “0 0 12 * * ?”				每天中午12点触发 “0 15 10 ? * *”				每天上午10:15触发“0 15 10 * * ?”“0 15 10 * * ? *” “0 15 10 * * ? 2005”		2005年的每天上午10:15 触发 “0 0/5 14 * * ?”			在每天下午2点到下午2:55期间的每5分钟触发 “0 0-5 14 * * ?”			在每天下午2点到下午2:05期间的每1分钟触发 “0 10,44 14 ? 3 WED”		每年三月的星期三的下午2:10和2:44触发 “0 15 10 ? * MON-FRI”		周一至周五的上午10:15触发 “0 15 10 ? * 6L”			每月的最后一个星期五上午10:15触发 “0 15 10 ? * 6L 2002-2005”	2002年至2005年的每月的最后一个星期五上午10:15触发 “0 15 10 ? * 6#3”			每月的第三个星期五上午10:15触发 0 23-7/2，8 * * *		   晚上11点到早上8点之间每两个小时，早上八点 0 11 4 * 1-3				每个月的4号和每个礼拜的礼拜一到礼拜三的早上11点 
 
-## 16.9、Redis实现 - 分布式定时任务<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 16.9、Redis实现 - 分布式定时任务
 
 - **前面的方式都是单机的**
 
-### 16.8.1、zset实现<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 16.8.1、zset实现
 
 > **逻辑**
 
@@ -849,7 +849,7 @@ categories: cnblog
 
     import redis.clients.jedis.Jedis;import utils.JedisUtils;import java.time.Instant;import java.util.Set; public class DelayQueueExample {    // zset key    private static final String _KEY = "myTaskQueue";     public static void main(String[] args) throws InterruptedException {        Jedis jedis = JedisUtils.getJedis();        // 30s 后执行        long delayTime = Instant.now().plusSeconds(30).getEpochSecond();        jedis.zadd(_KEY, delayTime, "order_1");        // 继续添加测试数据        jedis.zadd(_KEY, Instant.now().plusSeconds(2).getEpochSecond(), "order_2");        jedis.zadd(_KEY, Instant.now().plusSeconds(2).getEpochSecond(), "order_3");        jedis.zadd(_KEY, Instant.now().plusSeconds(7).getEpochSecond(), "order_4");        jedis.zadd(_KEY, Instant.now().plusSeconds(10).getEpochSecond(), "order_5");        // 开启定时任务队列        doDelayQueue(jedis);    }     /**     * 定时任务队列消费     * @param jedis Redis 客户端     */    public static void doDelayQueue(Jedis jedis) throws InterruptedException {        while (true) {            // 当前时间            Instant nowInstant = Instant.now();            long lastSecond = nowInstant.plusSeconds(-1).getEpochSecond(); // 上一秒时间            long nowSecond = nowInstant.getEpochSecond();            // 查询当前时间的所有任务            Set<String> data = jedis.zrangeByScore(_KEY, lastSecond, nowSecond);            for (String item : data) {                // 消费任务                System.out.println("消费：" + item);            }            // 删除已经执行的任务            jedis.zremrangeByScore(_KEY, lastSecond, nowSecond);            Thread.sleep(1000); // 每秒查询一次        }    }} 
 
-### 16.8.2、键空间实现<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 16.8.2、键空间实现
 
 > **逻辑**
 
@@ -859,13 +859,13 @@ categories: cnblog
 
     import redis.clients.jedis.Jedis;import redis.clients.jedis.JedisPubSub;import utils.JedisUtils; public class TaskExample {    public static final String _TOPIC = "__keyevent@0__:expired"; // 订阅频道名称    public static void main(String[] args) {        Jedis jedis = JedisUtils.getJedis();        // 执行定时任务        doTask(jedis);    }     /**     * 订阅过期消息，执行定时任务     * @param jedis Redis 客户端     */    public static void doTask(Jedis jedis) {        // 订阅过期消息        jedis.psubscribe(new JedisPubSub() {            @Override            public void onPMessage(String pattern, String channel, String message) {                // 接收到消息，执行定时任务                System.out.println("收到消息：" + message);            }        }, _TOPIC);    }} 
 
-## 16.8、Quartz任务调度<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 16.8、Quartz任务调度
 
 - **组成结构图如下：需要时自行摸索即可**
 
 ![image](https://img2022.cnblogs.com/blog/2421736/202205/2421736-20220526103943111-725195983.png)
 
-### 16.8.1.简单示例<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 16.8.1.简单示例
 
 > **依赖**
 
@@ -886,3 +886,5 @@ categories: cnblog
 作者：[紫邪情](https://www.cnblogs.com/xiegongzi/)  
 欢迎任何形式的转载，但请务必注明出处。  
 限于本人水平，如果文章和代码有表述不当之处，还请不吝赐教。
+> 作者:紫邪情
+> 原文:https://www.cnblogs.com/xiegongzi/p/16312315.html

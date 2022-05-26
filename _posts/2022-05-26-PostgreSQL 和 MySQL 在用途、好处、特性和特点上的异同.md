@@ -1,14 +1,14 @@
 ---
 layout: post
 title:  "PostgreSQL 和 MySQL 在用途、好处、特性和特点上的异同"
-date:   2022-05-26 19:47:31 +0800
+date:   2022-05-26 20:47:47 +0800
 categories: cnblog
 ---
-## PostgreSQL 和 MySQL 在用途、好处、特性和特点上的异同。<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## PostgreSQL 和 MySQL 在用途、好处、特性和特点上的异同。
  
 PostgreSQL 和 MySQL 是将数据组织成表的[关系数据库](https://www.ibm.com/cloud/learn/relational-databases)。这些表可以根据每个表共有的数据链接或关联。关系数据库使您的企业能够更好地了解可用数据之间的关系，并帮助获得新的见解以做出更好的决策或发现新的机会。
  
-## PostgreSQL 和 MySQL 有何相似之处？<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## PostgreSQL 和 MySQL 有何相似之处？
  
 PostgreSQL 和 MySQL 都依赖于 SQL（结构化查询语言），这是与管理系统交互的标准语言。SQL 允许使用具有简单结构的几行源代码连接表，大多数非技术员工可以快速学习。
  
@@ -18,7 +18,7 @@ MySQL 和 PostgreSQL 都支持 JavaScript Object Notation (JSON) 来存储和传
  
 除了传统的支持机制外，这两个数据库都提供强大的社区支持。
  
-## 什么是 PostgreSQL？<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 什么是 PostgreSQL？
  
 [PostgreSQL](https://www.ibm.com/cloud/learn/postgresql)，也称为 Postgres，是一种开源关系数据库，因其可靠性、灵活性和对开放技术标准的支持而享有盛誉。PostgreSQL 支持非关系和关系数据类型。它被称为当今可用的最兼容、最稳定和最成熟的关系数据库之一，并且可以轻松处理复杂的查询。
  
@@ -28,13 +28,13 @@ PostgreSQL 的特性包括：
 - 使用 pgBackRest 等工具记录对数据库的所有更改的预写日志 (WAL)。
 - 用于创建和保留自定义子例程的[存储过程。](https://www.ibm.com/support/knowledgecenter/en/ssw_ibm_i_74/sqlp/rbafysproeg.htm)
 
-## PostgreSQL是如何使用的？<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## PostgreSQL是如何使用的？
  
 PostgreSQL 是一个“一刀切”的解决方案，适用于许多寻求经济高效的方法来改进其数据库管理系统 (DBMS) 的企业。它具有足够的可扩展性和多功能性，可以通过强大的扩展生态系统快速支持各种专业用例，涵盖时间序列数据类型和地理空间分析等工作。作为开源数据库解决方案构建的 PostgreSQL 完全不受许可限制、供应商锁定的可能性或过度部署的风险。PostgreSQL 通过对象关系数据库管理系统 (ORDBMS) 进行管理。
  
 PostgreSQL 为负责管理业务活动的[在线事务处理 (OLTP)](https://www.ibm.com/cloud/learn/oltp)协议的企业数据库管理员提供了理想的解决方案，包括电子商务、客户关系管理系统 (CRM) 和财务分类帐。它也是管理接收、创建和生成的数据分析的理想选择。
  
-## PostgreSQL 的好处<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## PostgreSQL 的好处
  
 这些是 PostgreSQL 的一些主要优点：
 
@@ -44,7 +44,7 @@ PostgreSQL 为负责管理业务活动的[在线事务处理 (OLTP)](https://www
 - **业务连续性**，通过跨服务器的异步或同步复制方法提供高可用性服务。
 - 通过开源数据库管理技术实现**更大的灵活性和成本效益的创新。**
 
-## 什么是 MySQL 数据库？<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 什么是 MySQL 数据库？
  
 MySQL — 一种快速、可靠、可扩展且易于使用的开源关系数据库系统 — 旨在处理关键任务、高负载的生产应用程序。它是一种常见且易于启动的数据库，内存、磁盘和 CPU 利用率较低，由关系数据库管理系统 (RDMS) 管理。MySQL Community Edition 是一个由活跃的在线社区支持的免费下载版本。
  
@@ -54,13 +54,13 @@ MySQL 功能包括所有 SQL 标准命令以及事务和 ACID 合规性（代表
  
 MariaDB 经常与 MySQL 混淆，它是 MySQL 的一个开源分支，速度更快，提供更多存储引擎 (12)，但功能有限。MySQL 和 MariaDB 使用的存储引擎都是 InnoDB。InnoDB 提供标准的 ACID 兼容特性。与 MySQL 不同，MariaDB 不支持数据屏蔽或动态列。
  
-## MySQL是如何使用的？<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## MySQL是如何使用的？
  
 MySQL 通常用作 Web 数据库来存储各种信息类型，从单个信息数据点到为组织提供的产品或服务的完整列表。它是[LAMP](https://www.ibm.com/cloud/learn/lamp-stack-explained)（Linux 操作系统、Apache HTTP 服务器、MySQL RDBMS 和 PHP 编程语言）的基础组件，这是一种有助于创建[API](https://www.ibm.com/cloud/learn/api)、Web 应用程序和网站的软件堆栈模型。
  
 MySQL Workbench 是一个单一的、集成的可视化 SQL 平台，用于 MySQL 数据库的创建、开发、设计和管理。
  
-## MySQL的好处<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## MySQL的好处
  
 MySQL 为市场提供了许多好处，包括：
 
@@ -69,7 +69,7 @@ MySQL 为市场提供了许多好处，包括：
 - **可扩展性**和对在小空间内无限存储增长的支持。
 - **支持事务处理的灵活开源框架**，但不如 NoSQL 等非关系数据库灵活。
 
-## PostgreSQL vs MySQL：有什么区别？<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## PostgreSQL vs MySQL：有什么区别？
  
 PostgreSQL 和 MySQL 之间有很多不同之处。特性、功能和优势方面的一些差异如下：
 
@@ -105,3 +105,5 @@ PostgreSQL 和 MySQL 之间有很多不同之处。特性、功能和优势方�
     - **PostgreSQL**：是的——hstore 和用户定义的 tdtaa
 
 总之，PostgreSQL 和 MySQL 都有不同的用途，它们之间的选择取决于企业目标和资源。一般来说，PostgreSQL 是一个更强大、更高级的数据库管理系统，非常适合需要在大型环境中快速执行复杂查询的组织。但是，对于预算和空间更受限制的公司来说，MySQL 是一个理想的解决方案。
+> 作者:初见洞洞拐
+> 原文:https://www.cnblogs.com/chujian007/p/16310090.html

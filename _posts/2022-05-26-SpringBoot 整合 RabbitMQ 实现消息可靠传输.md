@@ -1,12 +1,12 @@
 ---
 layout: post
 title:  "SpringBoot 整合 RabbitMQ 实现消息可靠传输"
-date:   2022-05-26 19:48:07 +0800
+date:   2022-05-26 20:48:27 +0800
 categories: cnblog
 ---
 > 消息的可靠传输是面试必问的问题之一，保证消息的可靠传输主要在生产端开启 `comfirm` 模式，`RabbitMQ` 开启持久化，消费端关闭自动 `ack` 模式。
 
-## 环境配置<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 环境配置
  
 `SpringBoot` 整合 `RabbitMQ` 实现消息的发送。
  
@@ -83,7 +83,7 @@ categories: cnblog
 
 说明消息已经被成功接收。
  
-## 消息丢失分析<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 消息丢失分析
  
 ![file](https://img2022.cnblogs.com/other/2448954/202205/2448954-20220525072857587-552494278.png)
  
@@ -95,7 +95,7 @@ categories: cnblog
 
 `RabbitMQ` 从生产端、储存端、消费端都对可靠性传输做很好的支持。
  
-## 生产阶段<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 生产阶段
  
 生产阶段通过**请求确认机制**，来确保消息的可靠传输。当发送消息到 RabbitMQ 服务器 之后，RabbitMQ 收到消息之后，给发送返回一个请求确认，表示RabbitMQ 服务器已成功的接收到了消息。
 
@@ -160,7 +160,7 @@ categories: cnblog
     【cause】null
     【发送成功】
 
-### 生产端模拟消息丢失<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 生产端模拟消息丢失
  
 这里有两个方案：
 
@@ -194,7 +194,7 @@ categories: cnblog
     【message】product message
     【replyCode】312
 
-## RabbitMQ<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## RabbitMQ
  
 开启队列持久化，创建的队列和交换机**默认配置是持久化**的。首先把队列和交换机设置正确，修改消费监听的队列，使得**消息存放在队列里**。
  
@@ -217,7 +217,7 @@ categories: cnblog
 
 重启之后，队列的消息还存在。
  
-## 消费端<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 消费端
  
 消费端默认开始 `ack` 自动确认模式，当队列消息被消费者接收，不管有没有被消费端消息，都自动删除队列中的消息。所以为了确保消费端能成功消费消息，将自动模式改成手动确认模式：
  
@@ -270,8 +270,10 @@ categories: cnblog
 `multiple` 设置成 `true`，把后面的队列都清理掉了:  
  ![file](https://img2022.cnblogs.com/other/2448954/202205/2448954-20220525072858320-473434918.png)
  
-## 源码<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+## 源码
  
 [https://github.com/jeremylai7/springboot-learning/tree/master/spring-rabbitmq](https://github.com/jeremylai7/springboot-learning/tree/master/spring-rabbitmq)
  
 **如果觉得文章对你有帮助的话，请点个推荐吧!**
+> 作者:小码code
+> 原文:https://www.cnblogs.com/jeremylai7/p/16307934.html

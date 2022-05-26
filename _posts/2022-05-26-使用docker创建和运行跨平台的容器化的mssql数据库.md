@@ -1,7 +1,7 @@
 ---
 layout: post
 title:  "使用docker创建和运行跨平台的容器化的mssql数据库"
-date:   2022-05-26 19:47:43 +0800
+date:   2022-05-26 20:47:58 +0800
 categories: cnblog
 ---
 我们一般启用sql server数据库要么选择安装SQL Server实例和管理工具（SSMS），要么用vs自带的数据库。如今net跨平台成为趋势，今天给大家介绍另一种我最近在玩的方式，即使用docker创建并启用sql数据库。
@@ -18,13 +18,13 @@ categories: cnblog
  
 在接下来的内容中我们来试着添加一个**基于docker的数据库容器镜像**。
  
-### 1.开启虚拟化服务<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 1.开启虚拟化服务
  
 在安装docker之前，需要确保虚拟化服务是开启状态。右键win图标，选择应用和功能（或者打开控制面板），点击程序和功能-启用或关闭windows功能，勾选Hyper-V，点击确定开启功能。（如果是win10家庭版的话，是看不到Hyper-V选项的，比较麻烦，需要修改注册表，但网上有教程，可以搜索并按照教程做）
  
 ![](https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525105140436-1308426411.png)
  
-### 2.安装Docker desktop<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 2.安装Docker desktop
  
 在docker官网根据需要选择下载安装程序，我们选择windows版本。安装完成以后docker会自动启动，任务栏会有一个鲸鱼图标，表明docker正在运行。
  
@@ -38,7 +38,7 @@ categories: cnblog
  
 ![](https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525110353043-2134905481.png)
  
-###  3.部署本地mssql数据库 <button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+###  3.部署本地mssql数据库 
  
 第一步：拉取 SQL Server 2019 Linux 容器镜像，打开命令行，输入docker pull mcr.microsoft.com/mssql/server:2019-latest
  
@@ -68,7 +68,7 @@ SA\_PASSWORD=MyStrongPwd!2#表示账户名sa，密码MyStrongPwd!2#
  
 ![](https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525144958972-500228301.png)
  
-### 4.使用VS验证<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 4.使用VS验证
  
 打开vs的SQL Server对象资源管理器，点击左上角添加 SQL Server按钮，输入信息，点击连接
  
@@ -79,3 +79,5 @@ SA\_PASSWORD=MyStrongPwd!2#表示账户名sa，密码MyStrongPwd!2#
 ![](https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525141923418-1365685550.png)
 
 因为还没有创建数据库，所以只能看到系统数据库，下一篇我们将使用EFCore创建并初始化数据库。
+> 作者:飏大神
+> 原文:https://www.cnblogs.com/YKAndXLL520/p/16311541.html

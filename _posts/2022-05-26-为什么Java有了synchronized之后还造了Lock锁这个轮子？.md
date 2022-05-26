@@ -1,18 +1,18 @@
 ---
 layout: post
 title:  "为什么Java有了synchronized之后还造了Lock锁这个轮子？"
-date:   2022-05-26 19:47:55 +0800
+date:   2022-05-26 20:48:23 +0800
 categories: cnblog
 ---
 众所周知，synchronized和Lock锁是java并发编程中两大利器，可以用来解决线程安全的问题。但是为什么Java有了synchronized之后还是提供了Lock接口这个api，难道仅仅只是重复造了轮子这么简单么？本文就来探讨一下这个问题。
  
 谈到这个问题，其实很多同学第一反应都会说，Lock锁的性能比synchronized好，synchronized属于重量级的锁。但是在JDK 1.6版本之后，JDK对synchronized进行了一系列性能的优化，synchronized的性能其实有了大大的提升（如果不清楚的同学可以看一下 [synchronized真的很重么？](https://mp.weixin.qq.com/s?__biz=Mzg5MDczNDI0Nw==&amp;amp;mid=2247484124&amp;amp;idx=1&amp;amp;sn=8133290e6dd4c55a310c3d4be1ce0fd7&amp;amp;chksm=cfd95114f8aed802fbdcff8990082ef96195e6b9dcfaf357fc23a0f85045622b8cdaddead1f4&amp;token=667506015&amp;lang=zh_CN#rd)这篇文章，文章内详细的说明JDK对synchronized做了哪些优化），那么既然性能不是问题，那么主要的问题是什么呢？
  
-### synchronized抢占锁的特性<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### synchronized抢占锁的特性
  
 我们先来看一下synchronized抢占锁的特性。synchronized在抢占锁的时候，如果抢占不到，线程直接就进入阻塞状态了，而线程进入阻塞状态，其实什么也干不了，也释放不了线程已经占有的资源，并且也无法主动或者被动打断阻塞获取锁的操作，只有等别的线程释放锁之后才会被唤醒来重新获取锁。
  
-### synchronized阻塞获取锁产生的问题<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### synchronized阻塞获取锁产生的问题
  
 那synchronized这种获取锁阻塞的特性，有什么问题么？其实有一种很重要的问题，那就是会产生死锁的问题。
  
@@ -20,7 +20,7 @@ categories: cnblog
  
 举个例子来说，线程1先对加A加锁，线程2对B加锁。代码运行到某一时刻，线程1需要对B加锁，但是此时B的锁已经被线程2占有，于是线程1就会阻塞，与此同时线程2同时也需要对A加锁，发现A已经被线程1持有，也会进入阻塞，于是线程1和线程2都在等对方释放资源，就产生了死锁的问题，并且由于synchronized阻塞的特性，线程无法主动或者被动停止阻塞，势必会导致这个死锁永远无法通过主动或者人为干预（其它线程干预）来解决。
  
-### 那么有什么好的办法来解决阻塞导致死锁的问题呢？<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 那么有什么好的办法来解决阻塞导致死锁的问题呢？
  
 我们分析一下死锁产生的问题主要是线程都在相互等待其它线程释放资源导致的，基于这个问题我们思考一下，如果一个线程获取不到锁，然后就停止获取锁，不阻塞，或者是阻塞一会就不再阻塞，又或是阻塞过程中被其他线程打断，那样这是不是就不是产生死锁的问题了。
  
@@ -46,7 +46,7 @@ Lock接口的实现有很多，但基本上都是基于Java的AQS的实现来完
  
 Lock接口的一个实现ReentrantLock就是基于AQS实现来讲的，这里就不继续展开讲解ReentrantLock的实现原理，如果有感兴趣的同学，可以看一下 [一文带你看懂Java中的Lock锁底层AQS到底是如何实现的](https://mp.weixin.qq.com/s?__biz=Mzg5MDczNDI0Nw==&amp;amp;mid=2247484115&amp;amp;idx=1&amp;amp;sn=ae26f9eff454497d6aec66a276b5f3e6&amp;amp;chksm=cfd9511bf8aed80d3ef0e319c8b53b436cb1a294081ace96362524ce12a0d60b2785c72473cf&amp;token=667506015&amp;lang=zh_CN#rd) 这篇文章，文章是基于ReentrantLock来讲解AQS的加锁和释放锁的原理。
  
-### 总结<button class="cnblogs-toc-button" title="显示目录导航" aria-expanded="false"></button>
+### 总结
  
 好了，到这里其实大家应该知道了，为什么需要Lock锁，因为synchronized获取不到锁的时候会阻塞，并且阻塞不可被打断的特性会导致可能会产生死锁的问题，为了解决这个问题，Java就提供了Lock锁的实现，从主动放弃获取锁或者被动放弃获取锁的方式，解决一直阻塞可能产生的死锁问题。
  
@@ -66,3 +66,5 @@ Lock接口的一个实现ReentrantLock就是基于AQS实现来讲的，这里就
 扫码关注公众号，及时干货不错过，公众号致力于通过画图加上通俗易懂的语言讲解技术，让技术更加容易学习。
 
 ![](https://img2022.cnblogs.com/blog/2880613/202205/2880613-20220526131552959-1264596689.jpg)
+> 作者:三友的java日记
+> 原文:https://www.cnblogs.com/zzyang/p/16313085.html
