@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>在 .NET 中使用 FixedTimeEquals 应对计时攻击 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="在 .NET 中使用 FixedTimeEquals 应对计时攻击" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="计时攻击 在计算机安全中，计时攻击（Timing attack）是旁道攻击 （Side-channel attack） 的一种，而旁道攻击是根据计算机处理过程发出的信息进行分析，包括耗时，声音，功耗等等，这和一般的暴力破解或者利用加密算法本身的弱点进行攻击是不一样的。 举个例子 假如您有一个后端 webapi， GetConfig 接口用来获取配置信息，调用时需要在 Header 中传入一个秘钥，然后判断是否正确并进行返回，如下" />
+<meta property="og:description" content="计时攻击 在计算机安全中，计时攻击（Timing attack）是旁道攻击 （Side-channel attack） 的一种，而旁道攻击是根据计算机处理过程发出的信息进行分析，包括耗时，声音，功耗等等，这和一般的暴力破解或者利用加密算法本身的弱点进行攻击是不一样的。 举个例子 假如您有一个后端 webapi， GetConfig 接口用来获取配置信息，调用时需要在 Header 中传入一个秘钥，然后判断是否正确并进行返回，如下" />
+<link rel="canonical" href="/cnblog/2022/06/01/%E5%9C%A8.NET%E4%B8%AD%E4%BD%BF%E7%94%A8FixedTimeEquals%E5%BA%94%E5%AF%B9%E8%AE%A1%E6%97%B6%E6%94%BB%E5%87%BB.html" />
+<meta property="og:url" content="/cnblog/2022/06/01/%E5%9C%A8.NET%E4%B8%AD%E4%BD%BF%E7%94%A8FixedTimeEquals%E5%BA%94%E5%AF%B9%E8%AE%A1%E6%97%B6%E6%94%BB%E5%87%BB.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-06-01T11:45:15+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="在 .NET 中使用 FixedTimeEquals 应对计时攻击" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-06-01T11:45:15+00:00","datePublished":"2022-06-01T11:45:15+00:00","description":"计时攻击 在计算机安全中，计时攻击（Timing attack）是旁道攻击 （Side-channel attack） 的一种，而旁道攻击是根据计算机处理过程发出的信息进行分析，包括耗时，声音，功耗等等，这和一般的暴力破解或者利用加密算法本身的弱点进行攻击是不一样的。 举个例子 假如您有一个后端 webapi， GetConfig 接口用来获取配置信息，调用时需要在 Header 中传入一个秘钥，然后判断是否正确并进行返回，如下","headline":"在 .NET 中使用 FixedTimeEquals 应对计时攻击","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/06/01/%E5%9C%A8.NET%E4%B8%AD%E4%BD%BF%E7%94%A8FixedTimeEquals%E5%BA%94%E5%AF%B9%E8%AE%A1%E6%97%B6%E6%94%BB%E5%87%BB.html"},"url":"/cnblog/2022/06/01/%E5%9C%A8.NET%E4%B8%AD%E4%BD%BF%E7%94%A8FixedTimeEquals%E5%BA%94%E5%AF%B9%E8%AE%A1%E6%97%B6%E6%94%BB%E5%87%BB.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">在 .NET 中使用 FixedTimeEquals 应对计时攻击</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-06-01T11:45:15+00:00" itemprop="datePublished">Jun 1, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h2 id="计时攻击">计时攻击</h2>
+
+<p>在计算机安全中，计时攻击（Timing attack）是旁道攻击 （Side-channel attack） 的一种，而旁道攻击是根据计算机处理过程发出的信息进行分析，包括耗时，声音，功耗等等，这和一般的暴力破解或者利用加密算法本身的弱点进行攻击是不一样的。</p>
+
+<h2 id="举个例子">举个例子</h2>
+
+<p>假如您有一个后端 webapi， GetConfig 接口用来获取配置信息，调用时需要在 Header 中传入一个秘钥，然后判断是否正确并进行返回，如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>X-Api-Key: x123
+
+[HttpGet]
+public IActionResult GetConfig()
+{
+    var key = Request.Headers["X-Api-Key"].FirstOrDefault();
+    if (key != "x123")
+    {
+        return Unauthorized();
+    }
+
+    return Ok(configuration);
+}  
+</code></pre></div></div>
+
+<p>注意，这里我们为了判断两个字符串相等，通常会使用 == 或者 != ,  实际上背后使用了 String 的 Equals() 方法，如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// Determines whether two Strings match.
+public static bool Equals(string? a, string? b)
+{
+    if (object.ReferenceEquals(a, b))
+    {
+        return true;
+    }
+
+    if (a is null || b is null || a.Length != b.Length)
+    {
+        return false;
+    }
+
+    return EqualsHelper(a, b);
+}
+</code></pre></div></div>
+
+<p>而内部又使用了 SequenceEqual() 方法</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[MethodImpl(MethodImplOptions.AggressiveInlining)]
+private static bool EqualsHelper(string strA, string strB)
+{
+    Debug.Assert(strA != null);
+    Debug.Assert(strB != null);
+    Debug.Assert(strA.Length == strB.Length);
+
+    return SpanHelpers.SequenceEqual(
+            ref Unsafe.As&lt;char, byte&gt;(ref strA.GetRawStringData()),
+            ref Unsafe.As&lt;char, byte&gt;(ref strB.GetRawStringData()),
+            ((uint)strA.Length) * sizeof(char));
+}
+</code></pre></div></div>
+
+<p>大概的逻辑是，先判断两个字符串长度是否一致，如果不是，直接返回 false，然后循环字符串进行逐位对比，一旦发现不相同，直接返回 false，伪代码如下</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public bool Equals(string str1, string str2)
+{
+    if (str1.Length != str2.Length) 
+    {
+        return false;
+    } 
+
+    for (var i = 0; i &lt; str1.Length; i++)
+    {
+        if (str1[i] != str2[i])
+        {
+            return false;
+        }
+    } 
+
+    return true;
+}
+</code></pre></div></div>
+
+<p>这里有一个问题是，如果字符串第一位不相同，直接就返回 false，如果最后一位不相同，那就需要遍历到最后，然后返回 false。不一样的字符串，计算的时长可能不一致。</p>
+
+<h2 id="尝试破解">尝试破解</h2>
+
+<p>假如用户知道了我们的秘钥的固定长度是 4 位。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /GetConfig  
+X-Api-Key：a000
+Cost: 2ns
+</code></pre></div></div>
+
+<p>本次耗时了 2ns, 接下来又输入 b000, c000….</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>GET /GetConfig  
+X-Api-Key：b000
+Cost: 2ns
+ 
+GET /GetConfig  
+X-Api-Key：c000
+Cost: 2ns 
+
+...
+
+GET /GetConfig  
+X-Api-Key：x000
+Cost: 4ns
+</code></pre></div></div>
+
+<p>直到输入了 x000,  发现其他的耗时都是 2ns, 而这里是 4ns，大概率判定第一位是 x。</p>
+
+<p>注意，这里的测试进行了放大，可能每个 case 分别调用了 100 次，然后统计了 P50（中位数）得出的结果。</p>
+
+<p>然后用同样的方法，测试第二位，第三位….., 最终破解拿到了秘钥。</p>
+
+<h2 id="使用固定时间的算法">使用固定时间的算法</h2>
+
+<p>虽然看上去有点扯，但确实是真实存在的，包括大名鼎鼎的针对 TLS 的 Lucky 13 攻击，有兴趣的同学可以看一下。在安全性要求比较高的场景中，确实要考虑到计时攻击，当涉及到安全时，还是宁可信其有。</p>
+
+<p>所以我们的算法的执行耗时应该是固定的，不应该在不匹配时，就立即返回，我们尝试改造一下代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public bool Equals(string str1, string str2)
+{
+    if (str1.Length != str2.Length)
+    {
+        return false;
+    }
+
+    bool reult = true;
+
+    for (var i = 0; i &lt; str1.Length; i++)
+    {
+        if (str1[i] != str2[i])
+        {
+            reult = false;
+        }
+    }
+
+    return reult;
+}
+</code></pre></div></div>
+
+<p>不管怎么样，都会遍历完整个字符串，然后返回结果，看上去没什么问题，时间总是固定的，但在现代的 CPU 和 .NET 上却不是的，因为我们要考虑到分支预测，特别是 if 条件。</p>
+
+<p>好吧，那我们调整一下代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public bool Equals(string str1, string str2)
+{
+    if (str1.Length != str2.Length)
+    {
+        return false;
+    }
+
+    bool reult = true;
+
+    for (var i = 0; i &lt; str1.Length; i++)
+    { 
+       reult &amp;= str1[i] == str2[i]; 
+    }
+
+    return reult;
+}
+</code></pre></div></div>
+
+<p>我们用了运算符 &amp;，来代替 If,  只有全部为 true 时，才会返回 true，其中任意一个字符不匹配，就会返回 false，看上去不错。</p>
+
+<p>但是，还有一些问题，对于bool类型的 result （true/false）,  我们的 .NET JIT 和 x86 指令执行仍然会进行一些优化，我们再调整一下代码</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public bool Equals(string str1, string str2)
+{
+    if (str1.Length != str2.Length)
+    {
+        return false;
+    }
+
+    int reult = 0;
+
+    for (var i = 0; i &lt; str1.Length; i++)
+    { 
+       reult |= str1[i] ^ str2[i]; 
+    }
+
+    return reult == 0;
+}
+</code></pre></div></div>
+
+<table>
+  <tbody>
+    <tr>
+      <td>我们把 bool 改成了 int 类型，然后使用了运算符 ^ 和</td>
+      <td>，同样的，只有字符串全部匹配时，result 为 0，,才会返回 true, 其中任意一个不匹配，result 就不为 0，会返回 false。</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>最后，为了防止 JIT 对我们的代码进行其他的优化，我们可以加一个特性，告诉 JIT 不要管它，就像这样</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+public bool Equals(string str1, string str2)
+{
+    if (str1.Length != str2.Length)
+    {
+        return false;
+    }
+
+    int reult = 0;
+
+    for (var i = 0; i &lt; str1.Length; i++)
+    { 
+       reult |= str1[i] ^ str2[i]; 
+    }
+
+    return reult == 0;
+} 
+</code></pre></div></div>
+
+<p>上面我们实现了一个针对字符串比较的固定时间的算法，来应对计时攻击。</p>
+
+<p>实际上， 从 .NET Core 2.1  开始就已经做了内置支持，我们可以直接使用 FixedTimeEquals 方法,  看一下它的实现</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[MethodImpl(MethodImplOptions.NoInlining | MethodImplOptions.NoOptimization)]
+public static bool FixedTimeEquals(ReadOnlySpan&lt;byte&gt; left, ReadOnlySpan&lt;byte&gt; right)
+{ 
+    if (left.Length != right.Length)
+    {
+        return false;
+    }
+
+    int length = left.Length;
+    int accum = 0;
+
+    for (int i = 0; i &lt; length; i++)
+    {
+        accum |= left[i] - right[i];
+    }
+
+    return accum == 0;
+}
+</code></pre></div></div>
+
+<p>现在用起来也很方便：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>var result = CryptographicOperations.FixedTimeEquals(
+   Encoding.UTF8.GetBytes(str1), Encoding.UTF8.GetBytes(str2)
+); 
+</code></pre></div></div>
+
+<h2 id="总结">总结</h2>
+
+<p>在安全性比较高的场景中，应该要考虑到计时攻击，可以使用固定时间的算法来应对。在其他的开发语言中，也都有本文中类似的算法，而在 .NET 中，现在我们可以直接使用 CryptographicOperations.FixedTimeEquals。
+ <img src="https://blog-1259586045.cos.ap-shanghai.myqcloud.com/wechat_logo_s1.png" alt="" /></p>
+<blockquote>
+  <p>作者:SpringLeee<br />
+原文:https://www.cnblogs.com/myshowtime/p/16333938.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/06/01/%E5%9C%A8.NET%E4%B8%AD%E4%BD%BF%E7%94%A8FixedTimeEquals%E5%BA%94%E5%AF%B9%E8%AE%A1%E6%97%B6%E6%94%BB%E5%87%BB.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

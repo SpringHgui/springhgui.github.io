@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>.Net分表分库动态化处理 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content=".Net分表分库动态化处理" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="介绍 本期主角:ShardingCore 一款ef-core下高性能、轻量级针对分表分库读写分离的解决方案，具有零依赖、零学习成本、零业务代码入侵 我不是efcore怎么办 这边肯定有小伙伴要问有没有不是efcore的,我这边很确信的和你讲有并且适应所有的ADO.NET包括sqlhelper ShardingConnector 一款基于ado.net下的高性能分表分库解决方案目前已有demo案例，这个框架你可以认为是.Net版本的ShardingSphere但是目前仅实现了ShardingSphere-JDBC,后续我将会实现ShardingSphere-Proxy希望各位.Neter多多关注 背景 最近有个小伙伴来问我,分表下他有一批数据,这个数据是白天可能会相对比较频繁数据录入,但是到了晚上可能基本上就没有对应的数据了,因为看到了我的框架,本来想以按小时来实现分表但是这么以来可能会导致一天有24张表,表多的情况下还导致了数据分布不均匀,这是一个很严重的问题因为可能以24小时制会让8-17这几张白天的表数据很多,但是晚上和凌晨的表基本没有数据,没有数据其实意味着这些表其实不需要去查询,基于这个情况想来问我应该如何实现这个自定义的路由。 听了他的需求,其实我这边又进行了一次确认,针对这个场景更多的其实是这个小伙伴需要的是按需分片，实时建表，来保证需要的数据进行合理的插入，那么我们应该如何在ShardingCore下实现这么一个需求呢，废话不多说直接开始吧~~~ 创建项目 本次需求我们以mysql作为测试数据库，然后使用efcore6作为数据库驱动orm来实现怎么处理才能达到这个效果的分表分库（本次只涉及分表）。 新建一个项目 添加依赖" />
+<meta property="og:description" content="介绍 本期主角:ShardingCore 一款ef-core下高性能、轻量级针对分表分库读写分离的解决方案，具有零依赖、零学习成本、零业务代码入侵 我不是efcore怎么办 这边肯定有小伙伴要问有没有不是efcore的,我这边很确信的和你讲有并且适应所有的ADO.NET包括sqlhelper ShardingConnector 一款基于ado.net下的高性能分表分库解决方案目前已有demo案例，这个框架你可以认为是.Net版本的ShardingSphere但是目前仅实现了ShardingSphere-JDBC,后续我将会实现ShardingSphere-Proxy希望各位.Neter多多关注 背景 最近有个小伙伴来问我,分表下他有一批数据,这个数据是白天可能会相对比较频繁数据录入,但是到了晚上可能基本上就没有对应的数据了,因为看到了我的框架,本来想以按小时来实现分表但是这么以来可能会导致一天有24张表,表多的情况下还导致了数据分布不均匀,这是一个很严重的问题因为可能以24小时制会让8-17这几张白天的表数据很多,但是晚上和凌晨的表基本没有数据,没有数据其实意味着这些表其实不需要去查询,基于这个情况想来问我应该如何实现这个自定义的路由。 听了他的需求,其实我这边又进行了一次确认,针对这个场景更多的其实是这个小伙伴需要的是按需分片，实时建表，来保证需要的数据进行合理的插入，那么我们应该如何在ShardingCore下实现这么一个需求呢，废话不多说直接开始吧~~~ 创建项目 本次需求我们以mysql作为测试数据库，然后使用efcore6作为数据库驱动orm来实现怎么处理才能达到这个效果的分表分库（本次只涉及分表）。 新建一个项目 添加依赖" />
+<link rel="canonical" href="/cnblog/2022/05/30/.Net%E5%88%86%E8%A1%A8%E5%88%86%E5%BA%93%E5%8A%A8%E6%80%81%E5%8C%96%E5%A4%84%E7%90%86.html" />
+<meta property="og:url" content="/cnblog/2022/05/30/.Net%E5%88%86%E8%A1%A8%E5%88%86%E5%BA%93%E5%8A%A8%E6%80%81%E5%8C%96%E5%A4%84%E7%90%86.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-30T09:02:06+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content=".Net分表分库动态化处理" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-30T09:02:06+00:00","datePublished":"2022-05-30T09:02:06+00:00","description":"介绍 本期主角:ShardingCore 一款ef-core下高性能、轻量级针对分表分库读写分离的解决方案，具有零依赖、零学习成本、零业务代码入侵 我不是efcore怎么办 这边肯定有小伙伴要问有没有不是efcore的,我这边很确信的和你讲有并且适应所有的ADO.NET包括sqlhelper ShardingConnector 一款基于ado.net下的高性能分表分库解决方案目前已有demo案例，这个框架你可以认为是.Net版本的ShardingSphere但是目前仅实现了ShardingSphere-JDBC,后续我将会实现ShardingSphere-Proxy希望各位.Neter多多关注 背景 最近有个小伙伴来问我,分表下他有一批数据,这个数据是白天可能会相对比较频繁数据录入,但是到了晚上可能基本上就没有对应的数据了,因为看到了我的框架,本来想以按小时来实现分表但是这么以来可能会导致一天有24张表,表多的情况下还导致了数据分布不均匀,这是一个很严重的问题因为可能以24小时制会让8-17这几张白天的表数据很多,但是晚上和凌晨的表基本没有数据,没有数据其实意味着这些表其实不需要去查询,基于这个情况想来问我应该如何实现这个自定义的路由。 听了他的需求,其实我这边又进行了一次确认,针对这个场景更多的其实是这个小伙伴需要的是按需分片，实时建表，来保证需要的数据进行合理的插入，那么我们应该如何在ShardingCore下实现这么一个需求呢，废话不多说直接开始吧~~~ 创建项目 本次需求我们以mysql作为测试数据库，然后使用efcore6作为数据库驱动orm来实现怎么处理才能达到这个效果的分表分库（本次只涉及分表）。 新建一个项目 添加依赖","headline":".Net分表分库动态化处理","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/30/.Net%E5%88%86%E8%A1%A8%E5%88%86%E5%BA%93%E5%8A%A8%E6%80%81%E5%8C%96%E5%A4%84%E7%90%86.html"},"url":"/cnblog/2022/05/30/.Net%E5%88%86%E8%A1%A8%E5%88%86%E5%BA%93%E5%8A%A8%E6%80%81%E5%8C%96%E5%A4%84%E7%90%86.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">.Net分表分库动态化处理</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-30T09:02:06+00:00" itemprop="datePublished">May 30, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h2 id="介绍">介绍</h2>
+
+<p>本期主角:<a href="https://github.com/dotnetcore/sharding-core"><code class="language-plaintext highlighter-rouge">ShardingCore</code></a>  一款ef-core下高性能、轻量级针对分表分库读写分离的解决方案，具有零依赖、零学习成本、零业务代码入侵</p>
+
+<h2 id="我不是efcore怎么办">我不是efcore怎么办</h2>
+
+<p>这边肯定有小伙伴要问有没有不是efcore的,我这边很确信的和你讲有并且适应所有的ADO.NET包括sqlhelper<br />
+ <a href="https://github.com/xuejmnet/ShardingConnector"><code class="language-plaintext highlighter-rouge">ShardingConnector</code></a> 一款基于ado.net下的高性能分表分库解决方案目前已有demo案例，这个框架你可以认为是.Net版本的<code class="language-plaintext highlighter-rouge">ShardingSphere</code>但是目前仅实现了<code class="language-plaintext highlighter-rouge">ShardingSphere-JDBC</code>,后续我将会实现<code class="language-plaintext highlighter-rouge">ShardingSphere-Proxy</code>希望各位.Neter多多关注</p>
+
+<h2 id="背景">背景</h2>
+
+<p>最近有个小伙伴来问我,分表下他有一批数据,这个数据是白天可能会相对比较频繁数据录入,但是到了晚上可能基本上就没有对应的数据了,因为看到了我的框架,本来想以按小时来实现分表但是这么以来可能会导致一天有24张表,表多的情况下还导致了数据分布不均匀,这是一个很严重的问题因为可能以24小时制会让8-17这几张白天的表数据很多,但是晚上和凌晨的表基本没有数据,没有数据其实意味着这些表其实不需要去查询,基于这个情况想来问我应该如何实现这个自定义的路由。</p>
+
+<p>听了他的需求,其实我这边又进行了一次确认,针对这个场景更多的其实是这个小伙伴需要的是按需分片，实时建表，来保证需要的数据进行合理的插入，那么我们应该如何在<a href="https://github.com/dotnetcore/sharding-core"><code class="language-plaintext highlighter-rouge">ShardingCore</code></a>下实现这么一个需求呢，废话不多说直接开始吧~~~</p>
+
+<h2 id="创建项目">创建项目</h2>
+
+<p>本次需求我们以mysql作为测试数据库，然后使用efcore6作为数据库驱动orm来实现怎么处理才能达到这个效果的分表分库（本次只涉及分表）。</p>
+
+<h3 id="新建一个项目">新建一个项目</h3>
+
+<p>添加依赖</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>//请安装最新版本第一个版本号6代表efcore的版本号
+Install-Package ShardingCore -Version 6.4.3.4
+
+Install-Package Microsoft.EntityFrameworkCore.SqlServer -Version 6.0.1
+</code></pre></div></div>
+
+<p>新建一个对象表,配置对应的数据库映射关系并且关联到dbcontext</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>//创建数据库对象
+    public class OrderByHour
+    {
+        public string Id { get; set; }
+        public DateTime CreateTime { get; set; }
+        public string Name { get; set; }
+    }
+//映射对象结构到数据库
+    public class OrderByHourMap:IEntityTypeConfiguration&lt;OrderByHour&gt;
+    {
+        public void Configure(EntityTypeBuilder&lt;OrderByHour&gt; builder)
+        {
+            builder.HasKey(o =&gt; o.Id);
+            builder.Property(o =&gt; o.Id).IsRequired().HasMaxLength(50);
+            builder.Property(o =&gt; o.Name).IsRequired().HasMaxLength(128);
+            builder.ToTable(nameof(OrderByHour));
+        }
+    }
+//创建dbcontext为efcore所用上下文
+    public class DefaultDbContext:AbstractShardingDbContext,IShardingTableDbContext
+    {
+        public DefaultDbContext(DbContextOptions&lt;DefaultDbContext&gt; options) : base(options)
+        {
+        }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+            modelBuilder.ApplyConfiguration(new OrderByHourMap());
+        }
+
+        public IRouteTail RouteTail { get; set; }
+    }
+</code></pre></div></div>
+
+<p>到这边其实只需要启动时候依赖注入</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>services.AddDbContext&lt;DefaultDbContext&gt;(o=&gt;o.UseMySql(xxxx));
+</code></pre></div></div>
+
+<p>那么efcore就可以运行了,这么一看其实并没有很复杂而且<code class="language-plaintext highlighter-rouge">IEntityTypeConfiguration</code>也不是必须的,efcore允许使用attribute来实现<br />
+ 当然<code class="language-plaintext highlighter-rouge">DefaultDbContext:AbstractShardingDbContext,IShardingTableDbContext</code>这一部分在原生efcore中应该是<code class="language-plaintext highlighter-rouge">DefaultDbContext:DbContext</code></p>
+
+<h3 id="创建分片路由">创建分片路由</h3>
+
+<p>首先我们来看一下<code class="language-plaintext highlighter-rouge">ShardingCore</code>针对分片路由的自定义情况的分析，通过文档我们可以了解到，如果想要使用自定义路由那么你只需要自己新建一个路由并且继承实现<code class="language-plaintext highlighter-rouge">AbstractShardingOperatorVirtualTableRoute</code>,当然这是分表的，分库是<code class="language-plaintext highlighter-rouge">AbstractShardingOperatorVirtualDataSourceRoute</code>.</p>
+
+<p>接下来我们新建一个路由并且实现分表操作。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    public class orderByHourRoute : AbstractShardingOperatorVirtualTableRoute&lt;OrderByHour, DateTime&gt;
+    {
+        public override string ShardingKeyToTail(object shardingKey)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override List&lt;string&gt; GetAllTails()
+        {
+            throw new NotImplementedException();
+        }
+
+        public override void Configure(EntityMetadataTableBuilder&lt;OrderByHour&gt; builder)
+        {
+            throw new NotImplementedException();
+        }
+
+        public override Expression&lt;Func&lt;string, bool&gt;&gt; GetRouteToFilter(DateTime shardingKey, ShardingOperatorEnum shardingOperator)
+        {
+            throw new NotImplementedException();
+        }
+    }
+</code></pre></div></div>
+
+<p>接下来我们依次来实现并且说明各个接口。</p>
+
+<ul>
+  <li>ShardingKeyToTail:将你的对象转成数据库的后缀尾巴,比如你是按月分片，那么你的分片值大概率是datetime，那么只需要<code class="language-plaintext highlighter-rouge">datetime.ToString("yyyyMM")</code>就可以获取到分片后缀</li>
+  <li>GetAllTails:返回集合,集合是数据库现有的当前表的所有后缀,仅程序启动时被调用,这个接口就是需要你返回当前数据库中当前表在系统里面有多少张表，然后返回这些表的后缀</li>
+  <li>Configure:配置当前对象按什么字段分片</li>
+  <li>GetRouteToFilter:因为<code class="language-plaintext highlighter-rouge">ShardingCore</code>内存有当前所有表的后缀,假设后缀为list集合，返回的<code class="language-plaintext highlighter-rouge">Expression&lt;Func&lt;string, bool&gt;&gt;</code>在经过<code class="language-plaintext highlighter-rouge">And</code>、<code class="language-plaintext highlighter-rouge">Or</code>后的组合进行<code class="language-plaintext highlighter-rouge">Compile()</code>,然后对<code class="language-plaintext highlighter-rouge">list.Where(expression.Compile()).ToList()</code>就可以返回对应的本次查询的后缀信息</li>
+</ul>
+
+<p>废话不多说针对这个条件我们直接开始操作完成路由的实现</p>
+
+<h3 id="路由的编写">路由的编写</h3>
+
+<p>1.ShardingKeyToTail:因为我们是按小时分表所以格式化值后缀我们采用日期格式化</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>//因为分片建是DateTime类型所以直接强转
+        public override string ShardingKeyToTail(object shardingKey)
+        {
+            var dateTime = (DateTime)shardingKey;
+            return ShardingKeyFormat(dateTime);
+        }
+        private string ShardingKeyFormat(DateTime dateTime)
+        {
+            var tail = $"{dateTime:yyyyMMddHH}";
+
+            return tail;
+        }
+</code></pre></div></div>
+
+<p>2.Configure:分表配置</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        public override void Configure(EntityMetadataTableBuilder&lt;OrderByHour&gt; builder)
+        {
+            builder.ShardingProperty(o =&gt; o.CreateTime);
+        }
+</code></pre></div></div>
+
+<p>3.GetRouteToFilter:路由比较，因为是时间字符串的后缀具有和按年，按月等相似的属性所以我们直接参考默认路由来实现</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        public override Expression&lt;Func&lt;string, bool&gt;&gt; GetRouteToFilter(DateTime shardingKey, ShardingOperatorEnum shardingOperator)
+        {
+            var t = ShardingKeyFormat(shardingKey);
+            switch (shardingOperator)
+            {
+                case ShardingOperatorEnum.GreaterThan:
+                case ShardingOperatorEnum.GreaterThanOrEqual:
+                    return tail =&gt; String.Compare(tail, t, StringComparison.Ordinal) &gt;= 0;
+                case ShardingOperatorEnum.LessThan:
+                {
+                    var currentHourBeginTime = new DateTime(shardingKey.Year,shardingKey.Month,shardingKey.Day,shardingKey.Hour,0,0);
+                    //处于临界值 不应该被返回
+                    if (currentHourBeginTime == shardingKey)
+                        return tail =&gt; String.Compare(tail, t, StringComparison.Ordinal) &lt; 0;
+                    return tail =&gt; String.Compare(tail, t, StringComparison.Ordinal) &lt;= 0;
+                }
+                case ShardingOperatorEnum.LessThanOrEqual:
+                    return tail =&gt; String.Compare(tail, t, StringComparison.Ordinal) &lt;= 0;
+                case ShardingOperatorEnum.Equal: return tail =&gt; tail == t;
+                default:
+                {
+                    return tail =&gt; true;
+                }
+            }
+        }
+</code></pre></div></div>
+
+<p>4.<code class="language-plaintext highlighter-rouge">GetAllTails</code>:比较特殊我们因为并不是连续生成的所以没办法使用起始时间然后一直推到当前时间来实现后缀的返回，只能依靠ado.net的能力读取数据库然后返回对应的表后缀，当然你也可以使用redis等三方工具来存储</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>//1.构造函数注入 IVirtualDataSourceManager&lt;DefaultDbContext&gt; virtualDataSourceManager
+
+//2/mysql的ado.net读取数据库表（sqlserver和mysql有差异自行百度或者查看ShardingCore的SqlServerTableEnsureManager类）
+        private const string CurrentTableName = nameof(OrderByHour);
+        private const string Tables = "Tables";
+        private const string TABLE_SCHEMA = "TABLE_SCHEMA";
+        private const string TABLE_NAME = "TABLE_NAME";
+
+        private readonly ConcurrentDictionary&lt;string, object?&gt; _tails = new ConcurrentDictionary&lt;string, object?&gt;();
+        /// &lt;summary&gt;
+        /// 如果你是非mysql数据库请自行实现这个方法返回当前类在数据库已经存在的后缀
+        /// 仅启动时调用
+        /// &lt;/summary&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        public override List&lt;string&gt; GetAllTails()
+        {
+            //启动寻找有哪些表后缀
+            using (var connection = new MySqlConnection(_virtualDataSourceManager.GetCurrentVirtualDataSource().DefaultConnectionString))
+            {
+                connection.Open();
+                var database = connection.Database;
+                
+                using (var dataTable = connection.GetSchema(Tables))
+                {
+                    for (int i = 0; i &lt; dataTable.Rows.Count; i++)
+                    {
+                        var schema = dataTable.Rows[i][TABLE_SCHEMA];
+                        if (database.Equals($"{schema}", StringComparison.OrdinalIgnoreCase))
+                        {
+                            var tableName = dataTable.Rows[i][TABLE_NAME]?.ToString()??string.Empty;
+                            if (tableName.StartsWith(CurrentTableName, StringComparison.OrdinalIgnoreCase))
+                            {
+                                //如果没有下划线那么需要CurrentTableName.Length有下划线就要CurrentTableName.Length+1
+                                _tails.TryAdd(tableName.Substring(CurrentTableName.Length),null);
+                            }
+                        }
+                    }
+                }
+            }
+            return _tails.Keys.ToList();
+        }
+</code></pre></div></div>
+
+<h3 id="动态创建添加表">动态创建添加表</h3>
+
+<p>到目前为止我们已经完成了路由的静态分片的处理，但是还有一点需要处理就是如何在插入值得时候判断当前有没有对应的数据库表是否需要创建等操作</p>
+
+<p>查看<code class="language-plaintext highlighter-rouge">AbstractShardingOperatorVirtualTableRoute</code>分表抽象类的父类我们发现当前抽象类有两个地方会调用路由的获取判断方法</p>
+
+<ul>
+  <li>DoRouteWithPredicate:使用条件路由也就是where后面的表达式</li>
+  <li>RouteWithValue:使用值路由也就是我们的新增和修改整个对象的时候会被调用</li>
+</ul>
+
+<p>所以通过上述流程的梳理我们可以知道只需要在<code class="language-plaintext highlighter-rouge">RouteWithValue</code>处进行动手脚即可，又因为我们需要动态建表所以我们可以参考默认路由的自动建表的代码进行参考<br />
+ <code class="language-plaintext highlighter-rouge">AbstractShardingAutoCreateOperatorVirtualTableRoute</code>下的<code class="language-plaintext highlighter-rouge">ExecuteAsync</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        private readonly IVirtualDataSourceManager&lt;DefaultDbContext&gt; _virtualDataSourceManager;
+        private readonly IVirtualTableManager&lt;DefaultDbContext&gt; _virtualTableManager;
+        private readonly IShardingTableCreator&lt;DefaultDbContext&gt; _shardingTableCreator;
+        private readonly ConcurrentDictionary&lt;string, object?&gt; _tails = new ConcurrentDictionary&lt;string, object?&gt;();
+        private readonly object _lock = new object();
+
+        public OrderByHourRoute(IVirtualDataSourceManager&lt;DefaultDbContext&gt; virtualDataSourceManager,IVirtualTableManager&lt;DefaultDbContext&gt; virtualTableManager, IShardingTableCreator&lt;DefaultDbContext&gt; shardingTableCreator)
+        {
+            _virtualDataSourceManager = virtualDataSourceManager;
+            _virtualTableManager = virtualTableManager;
+            _shardingTableCreator = shardingTableCreator;
+        }
+
+        public override IPhysicTable RouteWithValue(List&lt;IPhysicTable&gt; allPhysicTables, object shardingKey)
+        {
+            var shardingKeyToTail = ShardingKeyToTail(shardingKey);
+
+            if (!_tails.TryGetValue(shardingKeyToTail,out var _))
+            {
+                lock (_lock)
+                {
+                    if (!_tails.TryGetValue(shardingKeyToTail,out var _))
+                    {
+                        var virtualTable = _virtualTableManager.GetVirtualTable(typeof(OrderByHour));
+//必须先执行AddPhysicTable在进行CreateTable
+                        _virtualTableManager.AddPhysicTable(virtualTable, new DefaultPhysicTable(virtualTable, shardingKeyToTail));
+                        try
+                        {
+                            _shardingTableCreator.CreateTable&lt;OrderByHour&gt;(_virtualDataSourceManager.GetCurrentVirtualDataSource().DefaultDataSourceName, shardingKeyToTail);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("尝试添加表失败" + ex);
+                        }
+
+                        _tails.TryAdd(shardingKeyToTail,null);
+                    }
+                }
+            }
+
+            var needRefresh = allPhysicTables.Count != _tails.Count;
+            if (needRefresh)
+            {
+                var virtualTable = _virtualTableManager.GetVirtualTable(typeof(OrderByHour));
+                //修复可能导致迭代器遍历时添加的bug
+                var keys = _tails.Keys.ToList();
+                foreach (var tail in keys)
+                {
+                    var hashSet = allPhysicTables.Select(o=&gt;o.Tail).ToHashSet();
+                    if (!hashSet.Contains(tail))
+                    {
+                        var tables = virtualTable.GetAllPhysicTables();
+                        var physicTable = tables.FirstOrDefault(o=&gt;o.Tail==tail);
+                        if (physicTable!= null)
+                        {
+                            allPhysicTables.Add(physicTable);
+                        }
+                    }
+                }
+            }
+            var physicTables = allPhysicTables.Where(o =&gt; o.Tail== shardingKeyToTail).ToList();
+            if (physicTables.IsEmpty())
+            {
+                throw new ShardingCoreException($"sharding key route not match {EntityMetadata.EntityType} -&gt; [{EntityMetadata.ShardingTableProperty.Name}] -&gt;【{shardingKey}】 all tails -&gt;[{string.Join(",", allPhysicTables.Select(o=&gt;o.FullName))}]");
+            }
+
+            if (physicTables.Count &gt; 1)
+                throw new ShardingCoreException($"more than one route match table:{string.Join(",", physicTables.Select(o =&gt; $"[{o.FullName}]"))}");
+            return physicTables[0];
+        }
+</code></pre></div></div>
+
+<p>通过和父类的比较我们只是在对应的根据值判断当前系统是否存在xx表如果不存在就在<code class="language-plaintext highlighter-rouge">ShardingCore</code>上插入<code class="language-plaintext highlighter-rouge">AddPhysicTable</code>然后<code class="language-plaintext highlighter-rouge">CreateTable</code>最后<code class="language-plaintext highlighter-rouge">_tails.TryAdd(shardingKeyToTail,null);</code></p>
+
+<p><code class="language-plaintext highlighter-rouge">needRefresh</code>处的代码需要针对如果当前需要和传入的全量表进行匹配因为新加的表后缀不在全量表里面所以需要先进行对其的处理然后再进行执行</p>
+
+<h3 id="启动配置必不可少">启动配置必不可少</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ILoggerFactory efLogger = LoggerFactory.Create(builder =&gt;
+{
+    builder.AddFilter((category, level) =&gt; category == DbLoggerCategory.Database.Command.Name &amp;&amp; level == LogLevel.Information).AddConsole();
+});
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+
+builder.Services.AddControllers();
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+builder.Services.AddShardingDbContext&lt;DefaultDbContext&gt;()
+    .AddEntityConfig(o =&gt;
+    {
+        o.ThrowIfQueryRouteNotMatch = false;
+        o.CreateShardingTableOnStart = true;
+        o.EnsureCreatedWithOutShardingTable = true;
+        o.AddShardingTableRoute&lt;OrderByHourRoute&gt;();
+    })
+    .AddConfig(o =&gt;
+    {
+        o.ConfigId = "c1";
+        o.AddDefaultDataSource("ds0", "server=127.0.0.1;port=3306;database=shardingTest;userid=root;password=root;");
+        o.UseShardingQuery((conn, b) =&gt;
+        {
+            b.UseMySql(conn, new MySqlServerVersion(new Version())).UseLoggerFactory(efLogger);
+        });
+        o.UseShardingTransaction((conn, b) =&gt;
+        {
+            b.UseMySql(conn, new MySqlServerVersion(new Version())).UseLoggerFactory(efLogger);
+        });
+        o.ReplaceTableEnsureManager(sp=&gt;new MySqlTableEnsureManager&lt;DefaultDbContext&gt;());
+    }).EnsureConfig();
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+app.Services.GetRequiredService&lt;IShardingBootstrapper&gt;().Start();
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
+</code></pre></div></div>
+
+<h3 id="最后我们直接启动运行调试代码">最后我们直接启动运行调试代码</h3>
+
+<p><img src="https://img2022.cnblogs.com/blog/1346660/202205/1346660-20220529213037232-625943210.png" alt="" /></p>
+
+<p>当我们插入一个没有的时间对应的框架会帮我们对应的创建表并且插入数据<br />
+ <img src="https://img2022.cnblogs.com/blog/1346660/202205/1346660-20220529213147961-1568381873.png" alt="" /><br />
+ 这个思路就是可以保证需要的时候就创建表不需要就不创建<br />
+ <img src="https://img2022.cnblogs.com/blog/1346660/202205/1346660-20220529215139407-320120805.png" alt="" /></p>
+
+<h2 id="最后的最后">最后的最后</h2>
+
+<p><a href="https://github.com/dotnetcore/sharding-core/tree/main/samples/Sample.AutoCreateIfPresent">demo地址</a> <a href="https://github.com/dotnetcore/sharding-core/tree/main/samples/Sample.AutoCreateIfPresent">https://github.com/dotnetcore/sharding-core/tree/main/samples/Sample.AutoCreateIfPresent</a></p>
+
+<p>您都看到这边了确定不点个star或者赞吗,一款.Net不得不学的分库分表解决方案,简单理解为sharding-jdbc在.net中的实现并且支持更多特性和更优秀的数据聚合,拥有原生性能的97%,并且无业务侵入性,支持未分片的所有efcore原生查询</p>
+
+<ul>
+  <li><a href="https://github.com/xuejmnet/sharding-core">github地址</a> <a href="https://github.com/xuejmnet/sharding-core">https://github.com/xuejmnet/sharding-core</a></li>
+  <li><a href="https://gitee.com/dotnetchina/sharding-core">gitee地址</a> <a href="https://gitee.com/dotnetchina/sharding-core">https://gitee.com/dotnetchina/sharding-core</a>
+    <blockquote>
+      <p>作者:薛家明<br />
+原文:https://www.cnblogs.com/xuejiaming/p/16021112.html</p>
+    </blockquote>
+  </li>
+</ul>
+
+  </div><a class="u-url" href="/cnblog/2022/05/30/.Net%E5%88%86%E8%A1%A8%E5%88%86%E5%BA%93%E5%8A%A8%E6%80%81%E5%8C%96%E5%A4%84%E7%90%86.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

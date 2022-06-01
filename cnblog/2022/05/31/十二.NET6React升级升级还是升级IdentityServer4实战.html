@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>（十二）.NET6 + React ：升级！升级！还是***升级！！！+ IdentityServer4实战 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="（十二）.NET6 + React ：升级！升级！还是***升级！！！+ IdentityServer4实战" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="一、前言# 此篇内容较多，我是一步一个脚印(坑)，以至于写了好久，主要是这几部分：后台升级 .NET6  VS2022、前台升级Ant Design Pro V5 、前后台联调 IdentityServer4 实战，以及各部分在Linux环境下部署等等。 二、后台升级.NET6# WebApi和类库都升级到.NET6，依赖包都升级到6.0以上最新，好像没什么感知，略感easy。（附一张写完后最新的项目结构图） https://img2022.cnblogs.com/blog/1780813/202204/1780813-20220422101400332-1039947071.pnghttps://img2022.cnblogs.com/blog/1780813/202204/1780813-20220422100156239-58634689.pnghttps://img2022.cnblogs.com/blog/1780813/202205/1780813-20220530121416228-147030239.png 三、IdentityServer4实战# 1、用户管理# 还好上篇持久化已经做了90%的工作，不过是在Demo里面，现在搬到主项目里来，用户部分、客户端配置部分根据实际情况稍加改动。" />
+<meta property="og:description" content="一、前言# 此篇内容较多，我是一步一个脚印(坑)，以至于写了好久，主要是这几部分：后台升级 .NET6  VS2022、前台升级Ant Design Pro V5 、前后台联调 IdentityServer4 实战，以及各部分在Linux环境下部署等等。 二、后台升级.NET6# WebApi和类库都升级到.NET6，依赖包都升级到6.0以上最新，好像没什么感知，略感easy。（附一张写完后最新的项目结构图） https://img2022.cnblogs.com/blog/1780813/202204/1780813-20220422101400332-1039947071.pnghttps://img2022.cnblogs.com/blog/1780813/202204/1780813-20220422100156239-58634689.pnghttps://img2022.cnblogs.com/blog/1780813/202205/1780813-20220530121416228-147030239.png 三、IdentityServer4实战# 1、用户管理# 还好上篇持久化已经做了90%的工作，不过是在Demo里面，现在搬到主项目里来，用户部分、客户端配置部分根据实际情况稍加改动。" />
+<link rel="canonical" href="/cnblog/2022/05/31/%E5%8D%81%E4%BA%8C.NET6React%E5%8D%87%E7%BA%A7%E5%8D%87%E7%BA%A7%E8%BF%98%E6%98%AF%E5%8D%87%E7%BA%A7IdentityServer4%E5%AE%9E%E6%88%98.html" />
+<meta property="og:url" content="/cnblog/2022/05/31/%E5%8D%81%E4%BA%8C.NET6React%E5%8D%87%E7%BA%A7%E5%8D%87%E7%BA%A7%E8%BF%98%E6%98%AF%E5%8D%87%E7%BA%A7IdentityServer4%E5%AE%9E%E6%88%98.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-31T08:40:52+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="（十二）.NET6 + React ：升级！升级！还是***升级！！！+ IdentityServer4实战" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-31T08:40:52+00:00","datePublished":"2022-05-31T08:40:52+00:00","description":"一、前言# 此篇内容较多，我是一步一个脚印(坑)，以至于写了好久，主要是这几部分：后台升级 .NET6  VS2022、前台升级Ant Design Pro V5 、前后台联调 IdentityServer4 实战，以及各部分在Linux环境下部署等等。 二、后台升级.NET6# WebApi和类库都升级到.NET6，依赖包都升级到6.0以上最新，好像没什么感知，略感easy。（附一张写完后最新的项目结构图） https://img2022.cnblogs.com/blog/1780813/202204/1780813-20220422101400332-1039947071.pnghttps://img2022.cnblogs.com/blog/1780813/202204/1780813-20220422100156239-58634689.pnghttps://img2022.cnblogs.com/blog/1780813/202205/1780813-20220530121416228-147030239.png 三、IdentityServer4实战# 1、用户管理# 还好上篇持久化已经做了90%的工作，不过是在Demo里面，现在搬到主项目里来，用户部分、客户端配置部分根据实际情况稍加改动。","headline":"（十二）.NET6 + React ：升级！升级！还是***升级！！！+ IdentityServer4实战","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/31/%E5%8D%81%E4%BA%8C.NET6React%E5%8D%87%E7%BA%A7%E5%8D%87%E7%BA%A7%E8%BF%98%E6%98%AF%E5%8D%87%E7%BA%A7IdentityServer4%E5%AE%9E%E6%88%98.html"},"url":"/cnblog/2022/05/31/%E5%8D%81%E4%BA%8C.NET6React%E5%8D%87%E7%BA%A7%E5%8D%87%E7%BA%A7%E8%BF%98%E6%98%AF%E5%8D%87%E7%BA%A7IdentityServer4%E5%AE%9E%E6%88%98.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">（十二）.NET6 + React ：升级！升级！还是***升级！！！+ IdentityServer4实战</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-31T08:40:52+00:00" itemprop="datePublished">May 31, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h2 id="一前言">一、前言#</h2>
+
+<p><strong>此篇内容较多，我是一步一个脚印(坑)，以至于写了好久，主要是这几部分：后台升级 <a href="https://dotnet.microsoft.com/zh-cn/download">.NET6</a>  <a href="https://visualstudio.microsoft.com/zh-hans/downloads/">VS2022</a>、前台升级<a href="https://pro.ant.design/zh-CN/">Ant Design Pro V5</a> 、前后台联调 IdentityServer4 实战，以及各部分在Linux环境下部署等等。</strong></p>
+
+<h2 id="二后台升级net6">二、后台升级.NET6#</h2>
+
+<p><strong>WebApi和类库都升级到.NET6，依赖包都升级到6.0以上最新，好像没什么感知，略感easy。（附一张写完后最新的项目结构图）</strong><br />
+ https://img2022.cnblogs.com/blog/1780813/202204/1780813-20220422101400332-1039947071.pnghttps://img2022.cnblogs.com/blog/1780813/202204/1780813-20220422100156239-58634689.pnghttps://img2022.cnblogs.com/blog/1780813/202205/1780813-20220530121416228-147030239.png</p>
+
+<h2 id="三identityserver4实战">三、IdentityServer4实战#</h2>
+
+<h4 id="1用户管理">1、用户管理#</h4>
+
+<p><strong>还好<a href="https://www.cnblogs.com/WinterSir/p/16087298.html">上篇持久化</a>已经做了90%的工作，不过是在<a href="https://github.com/WinterSir/IdentityServer4.GrantTypesDemo">Demo</a>里面，现在搬到主项目里来，用户部分、客户端配置部分根据实际情况稍加改动。</strong></p>
+
+<blockquote>
+  <p>这里需要解释一下，用户、角色管理这块可以用Identity进行管理，也可以在业务系统里管理，id4只做登录鉴权，这里只是举个例子，ApplicationUser继承IdentityUser，定义字段UserInfoId关联UserInfo表，具体需求根据项目实际情况来设计。</p>
+</blockquote>
+
+<p>https://img2022.cnblogs.com/blog/1780813/202204/1780813-20220423135935026-1500801190.pnghttps://img2022.cnblogs.com/blog/1780813/202205/1780813-20220528164047845-1795345249.pnghttps://img2022.cnblogs.com/blog/1780813/202204/1780813-20220423162459503-1228161340.png</p>
+
+<h4 id="2配置修改">2、配置修改#</h4>
+
+<p><strong>简化、授权码是给React前端用的，混合模式给 Mvc 客户端用的（一个空.NET6 Mvc项目，也搬到主项目了，具体的可以看代码）</strong><br />
+ https://img2022.cnblogs.com/blog/1780813/202205/1780813-20220528211459000-1170320134.png</p>
+
+<h4 id="3数据迁移">3、数据迁移#</h4>
+
+<p><strong>依次在程序包管理器控制台输入迁移命令，其他表结构数据相同就不贴了，<a href="https://www.cnblogs.com/WinterSir/p/16087298.html">上篇持久化</a>过程都有详细步骤和结果。</strong><br />
+ https://img2022.cnblogs.com/blog/1780813/202205/1780813-20220528164605841-112275738.png</p>
+
+<h2 id="四前台升级-ant-design-pro-v5">四、前台升级 Ant Design Pro V5#</h2>
+
+<p><strong>前台升级 Ant Design Pro V5，<a href="https://www.cnblogs.com/WinterSir/p/13979030.html">之前</a>用的是V5预览版，已经是一年前的事情了。。。我反思。。。😅</strong></p>
+
+<h4 id="1安装组件-oidc-client">1、安装组件 oidc-client#</h4>
+
+<p><strong>cnpm install <a href="https://github.com/IdentityModel/oidc-client-js">oidc-client</a> –save，新建认证服务类 auth.ts ，跟后台 IdentityServer4 认证服务配合使用。</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import { Log, User, UserManager } from 'oidc-client';
+
+export class AuthService {
+    public userManager: UserManager;
+    constructor() {
+        // const clientRoot = 'http://localhost:8000/';
+        const clientRoot = 'https://homejok.wintersir.com/';        
+        const settings = {
+            authority: 'https://login.wintersir.com',
+            //client_id: 'antdview',
+            //response_type: 'id_token token',
+            client_id: 'antdviewcode',
+            client_secret: 'antdviewcode',
+            response_type: 'code',
+            redirect_uri: `${clientRoot}callback`,
+            post_logout_redirect_uri: `${clientRoot}`,
+            // silent_redirect_uri: `${clientRoot}silent-renew.html`,
+            scope: 'openid profile HomeJokScope'
+        };
+        this.userManager = new UserManager(settings);
+
+        Log.logger = console;
+        Log.level = Log.WARN;
+    }
+
+    public login(): Promise&lt;void&gt; {
+        //记录跳转登录前的路由
+        return this.userManager.signinRedirect({ state: window.location.href });
+    }
+
+    public signinRedirectCallback(): Promise&lt;User&gt; {
+        return this.userManager.signinRedirectCallback();
+    }
+
+    public logout(): Promise&lt;void&gt; {
+        return this.userManager.signoutRedirect();
+    }
+
+    public getUser(): Promise&lt;User | null&gt; {
+        return this.userManager.getUser();
+    }
+
+    public renewToken(): Promise&lt;User&gt; {
+        return this.userManager.signinSilent();
+    }
+}
+</code></pre></div></div>
+
+<h4 id="2登录认证设置">2、登录认证设置#</h4>
+
+<p><strong>修改app.tsx，初始化认证服务类，判断登录状态，设置请求后台拦截器，添加 headers 和 token</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import type { Settings as LayoutSettings } from '@ant-design/pro-layout';
+import { PageLoading } from '@/components/PageLoading';
+import type { RequestConfig, RunTimeLayoutConfig } from 'umi';
+import { history, Link } from 'umi';
+import RightContent from '@/components/RightContent';
+import { BookOutlined, LinkOutlined } from '@ant-design/icons';
+import { AuthService } from '@/utils/auth';
+
+const isDev = process.env.NODE_ENV === 'development';
+
+const authService: AuthService = new AuthService();
+
+/** 获取用户信息比较慢的时候会展示一个 loading */
+export const initialStateConfig = {
+    loading: &lt;PageLoading /&gt;
+};
+
+/**
+ * @see  https://umijs.org/zh-CN/plugins/plugin-initial-state
+ * */
+export async function getInitialState(): Promise&lt;{
+    settings?: Partial&lt;LayoutSettings&gt;;
+}&gt; {
+    const init = localStorage.getItem('init');
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    if (!token &amp;&amp; !init &amp;&amp; !user) {
+        localStorage.setItem('init', 'true');
+        authService.login();
+    }
+    return {
+        settings: {}
+    };
+}
+
+// ProLayout 支持的api https://procomponents.ant.design/components/layout
+export const layout: RunTimeLayoutConfig = ({ initialState }) =&gt; {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    return {
+        rightContentRender: () =&gt; &lt;RightContent /&gt;,
+        disableContentMargin: false,
+        waterMarkProps: {
+            //content: initialState?.currentUser?.name,
+        },
+        // footerRender: () =&gt; &lt;Footer /&gt;,
+        onPageChange: () =&gt; {
+            const { location } = history;
+            if (!token &amp;&amp; !user &amp;&amp; location.pathname != "/callback") {
+                authService.login();
+            }
+        },
+        links: isDev
+            ? [
+                &lt;Link to="/umi/plugin/openapi" target="_blank"&gt;
+                    &lt;LinkOutlined /&gt;
+                    &lt;span&gt;OpenAPI 文档&lt;/span&gt;
+                &lt;/Link&gt;,
+                &lt;Link to="/~docs"&gt;
+                    &lt;BookOutlined /&gt;
+                    &lt;span&gt;业务组件文档&lt;/span&gt;
+                &lt;/Link&gt;,
+            ]
+            : [],
+        menuHeaderRender: undefined,
+        // 自定义 403 页面
+        // unAccessible: &lt;div&gt;unAccessible&lt;/div&gt;,
+        ...initialState?.settings,
+        //防止未登录闪屏菜单问题
+        pure: token ? false : true 
+    }
+};
+
+const authHeaderInterceptor = (url: string, options: RequestOptionsInit) =&gt; {
+    const token = localStorage.getItem('token');
+    const authHeader = { Accept: 'application/json', 'Content-Type': 'application/json', Authorization: 'Bearer ' + token };
+    return {
+        url: `${url}`,
+        options: { ...options, interceptors: true, headers: authHeader },
+    };
+};
+export const request: RequestConfig = {
+    //timeout: 10000,
+    // 新增自动添加AccessToken的请求前拦截器
+    requestInterceptors: [authHeaderInterceptor],
+};
+</code></pre></div></div>
+
+<h4 id="3登录回调获取用户登出">3、登录回调、获取用户、登出#</h4>
+
+<p><strong>（1）添加callback.tsx，这是登录成功的回调地址，保存登录状态token、user等，跳转页面。</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import { message, Result, Spin } from 'antd';
+import React, { useEffect, useRef, useState } from 'react';
+import { AuthService } from '@/utils/auth';
+import { useRequest } from 'umi';
+import { login } from '@/services/accountService';
+
+const authService: AuthService = new AuthService();
+
+const callback: React.FC = () =&gt; {
+    const [msg, setMsg] = useState('玩命登录中......');
+    const authRedirect = useRef("/");
+    const { run, loading } = useRequest(login, {
+        manual: true,
+        onSuccess: (result, params) =&gt; {
+            if (result &amp;&amp; result.responseData) {
+                localStorage.setItem('user', JSON.stringify(result.responseData));
+                window.location.href = authRedirect.current;
+            } else {
+                setMsg('登录失败，即将跳转重新登录......');
+                setTimeout(() =&gt; {
+                    localStorage.removeItem('init');
+                    localStorage.removeItem('token');
+                    window.location.href = authRedirect.current;
+                }, 3000);
+            }
+        },
+        onError: (error) =&gt; {
+            message.error(error.message);
+        }
+    });
+    useEffect(() =&gt; {
+        authService.signinRedirectCallback().then(auth =&gt; {
+            authRedirect.current = auth.state;
+            localStorage.setItem('token', auth.access_token);
+            run({ account: auth.profile.sub });
+        })
+    }, [])
+
+    return (
+        &lt;&gt;
+            &lt;Result status="success" title={&lt;Spin spinning={loading} tip={msg}&gt;&lt;/Spin&gt;} /&gt;
+        &lt;/&gt;
+    )
+};
+
+export default callback;
+</code></pre></div></div>
+
+<p><strong>（2）accountService.tsx <a href="https://umijs.org/zh-CN">Umi</a>的useRequest、Request 配合使用</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import { request } from 'umi';
+export async function login(payload: { account: string }, options?: { [key: string]: any }) {
+    return request('/api/Account/Login', {
+        method: 'POST',
+        params: payload,
+        ...(options || {}),
+    });
+}
+</code></pre></div></div>
+
+<p><strong>AvatarDropdown.tsx 登出核心方法</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>const onMenuClick = useCallback(
+  (event: MenuInfo) =&gt; {
+    const { key } = event;
+    if (key === 'logout') {
+      localStorage.removeItem('init');
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      authService.logout();
+      return;
+    }
+    history.push(`/account/${key}`);
+  },
+  [],
+);
+</code></pre></div></div>
+
+<h4 id="4自定义其他配置">4、自定义其他配置#</h4>
+
+<p><strong>如：PageLoading 等待框组件、defaultSettings.ts 颜色、图标等配置项、routes.ts 路由，详细见代码。</strong></p>
+
+<h2 id="五linux服务器部署">五、Linux服务器部署#</h2>
+
+<h4 id="1net6-环境">1、.NET6 环境#</h4>
+
+<p><strong>坑1有CentOS7安装.NET6的步骤，其他linux版本<a href="https://docs.microsoft.com/zh-cn/dotnet/core/install/linux">参考</a></strong></p>
+
+<h4 id="2服务资源分配">2、服务资源分配#</h4>
+
+<p><strong>因为只有一台服务器，用nginx进行转发：React前端端口80，IdentityServer4端口5000，WebApi资源端口8000，Mvc网站端口9000</strong><br />
+ https://img2022.cnblogs.com/blog/1780813/202205/1780813-20220530144333924-463697186.png<strong>启动命令分两步，举个栗子：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cd /指定目录
+nohup dotnet ./BKYL.WEB.API.dll &amp;
+</code></pre></div></div>
+
+<h4 id="3nginx配置https">3、nginx配置https#</h4>
+
+<p><strong>因为全部使用了https，所有域名、二级域名都搞了ssl证书，一一对应，通过 nginx 配置部署，贴上nginx.conf关键部分以供参考。</strong></p>
+
+<blockquote>
+  <p>如何设置二级域名、申请ssl证书、nginx配置ssl证书，网上资料很多，不再赘述，有需要的可以私</p>
+</blockquote>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>server {
+  listen       80;
+  server_name  *.wintersir.com;
+  
+  rewrite ^(.*)$ https://$host$1;
+  #charset koi8-r;
+  error_page   500 502 503 504  /50x.html;
+  location = /50x.html {
+      root   html;
+  }     
+}
+ 
+server {
+  listen       443 ssl;
+  server_name  www.wintersir.com wintersir.com;
+  ssl_certificate      /app/nginx/conf/index/cert.pem;
+  ssl_certificate_key  /app/nginx/conf/index/cert.key;
+  ssl_session_cache    shared:SSL:1m;
+  ssl_session_timeout  5m;
+  ssl_ciphers  HIGH:!aNULL:!MD5;
+  ssl_prefer_server_ciphers  on;
+  location / {
+    root   /app/wintersir/index;
+    index  index.html index.htm;
+  }
+}
+
+server {
+  listen       443 ssl;
+  server_name  homejok.wintersir.com;
+  ssl_certificate      /app/nginx/conf/view/cert.pem;
+  ssl_certificate_key  /app/nginx/conf/view/cert.key;
+  ssl_session_cache    shared:SSL:1m;
+  ssl_session_timeout  5m;
+  ssl_ciphers  HIGH:!aNULL:!MD5;
+  ssl_prefer_server_ciphers  on;
+  location / {
+  
+    proxy_set_header X-Forearded-Proto $scheme;
+    proxy_set_header Host $http_host;		
+    proxy_set_header X-Real-IP $remote_addr;		
+    
+    add_header 'Access-Control-Allow-Origin' "$http_origin";		
+    add_header 'Access-Control-Allow-Credentials' 'true';		
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';		
+    add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since,Content-Type';
+  
+    root   /app/wintersir/view;
+    index  index.html index.htm;
+  }
+  
+  location /api/ {
+  
+    proxy_set_header X-Forearded-Proto $scheme;
+    proxy_set_header Host $http_host;		
+    proxy_set_header X-Real-IP $remote_addr;		
+    
+    add_header 'Access-Control-Allow-Origin' "$http_origin";		
+    add_header 'Access-Control-Allow-Credentials' 'true';		
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';		
+    add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since,Content-Type';
+    proxy_pass https://www.wintersir.com:8000;
+  }
+}
+ 
+server {
+  listen       443 ssl;
+  server_name  mvc.wintersir.com;
+  ssl_certificate      /app/nginx/conf/mvc/cert.pem;
+  ssl_certificate_key  /app/nginx/conf/mvc/cert.key;
+  ssl_session_cache    shared:SSL:1m;
+  ssl_session_timeout  5m;
+  ssl_ciphers  HIGH:!aNULL:!MD5;
+  ssl_prefer_server_ciphers  on;
+  location / {
+    proxy_set_header X-Forearded-Proto $scheme;
+    proxy_set_header Host $http_host;		
+    proxy_set_header X-Real-IP $remote_addr;		
+    add_header 'Access-Control-Allow-Origin' "$http_origin";		
+    add_header 'Access-Control-Allow-Credentials' 'true';		
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';		
+    add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since,Content-Type';
+    proxy_pass https://www.wintersir.com:9000/;
+  }
+}
+
+server {
+  isten       443 ssl;
+  server_name  login.wintersir.com;
+ 
+  ssl_certificate      /app/nginx/conf/login/cert.pem;
+  ssl_certificate_key  /app/nginx/conf/login/cert.key;
+ 
+  ssl_session_cache    shared:SSL:1m;
+  ssl_session_timeout  5m;
+ 
+  ssl_ciphers  HIGH:!aNULL:!MD5;
+  ssl_prefer_server_ciphers  on;
+ 
+  location / {
+  
+    if ($request_method = 'OPTIONS') { 
+       add_header 'Access-Control-Allow-Origin' "$http_origin";
+       add_header 'Access-Control-Allow-Credentials' 'true';
+       add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+       add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since,Content-Type';
+       return 200; 
+    }
+  
+    proxy_set_header X-Forearded-Proto $scheme;
+    proxy_set_header Host $http_host;		
+    proxy_set_header X-Real-IP $remote_addr;		
+    add_header 'Access-Control-Allow-Origin' "$http_origin";		
+    add_header 'Access-Control-Allow-Credentials' 'true';		
+    add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';		
+    add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since,Content-Type';
+    proxy_pass https://www.wintersir.com:5000/;
+  }
+}
+</code></pre></div></div>
+
+<h2 id="六效果图">六、效果图#</h2>
+
+<h4 id="1react前端">1、React前端#</h4>
+
+<p>https://img2022.cnblogs.com/blog/1780813/202205/1780813-20220530143323826-348525557.gif</p>
+
+<h4 id="2mvc网站测试">2、Mvc网站测试#</h4>
+
+<p>https://img2022.cnblogs.com/blog/1780813/202205/1780813-20220530143329034-2012384505.gif</p>
+
+<h2 id="七各种踩坑">七、各种踩坑#</h2>
+
+<h4 id="1centos8不支持-net6">1、CentOS8不支持 .NET6#</h4>
+
+<p><strong>当初阿里云装了CentOS8，现在想哭，边哭边装CentOS7.9，把数据库、nginx等环境又都装一遍（前几篇都有）😂</strong><br />
+ <strong>CentOS7 安装 .NET6 <a href="https://docs.microsoft.com/zh-cn/dotnet/core/install/linux-centos">官方教程</a> ，分别执行以下命令，中间输入了两次y</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>sudo rpm -Uvh https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
+sudo yum install dotnet-sdk-6.0
+</code></pre></div></div>
+
+<h4 id="2nginx传输数据过大转发跨域">2、nginx传输数据过大、转发跨域#</h4>
+
+<p><strong>简单模式 token 等信息带在了回调页面url里，nginx 502 无法跳转，解决<a href="https://stackoverflow.com/questions/48964429/net-core-behind-nginx-returns-502-bad-gateway-after-authentication-by-identitys">参考</a>，nginx http 添加以下代码：</strong><br />
+ https://img2022.cnblogs.com/blog/1780813/202204/1780813-20220427224436345-683266032.png</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>proxy_buffer_size   128k;
+proxy_buffers   4 256k;
+proxy_busy_buffers_size   256k;
+large_client_header_buffers 4 16k;
+</code></pre></div></div>
+
+<p><strong>处理proxy_pass转发：</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>proxy_set_header X-Forearded-Proto $scheme;
+proxy_set_header Host $http_host;		
+proxy_set_header X-Real-IP $remote_addr;
+add_header 'Access-Control-Allow-Origin' "$http_origin";		
+add_header 'Access-Control-Allow-Credentials' 'true';		
+add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';		
+add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since,Content-Type';
+</code></pre></div></div>
+
+<p><strong>处理OPTIONS预检</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>if ($request_method = 'OPTIONS') { 
+  add_header 'Access-Control-Allow-Origin' "$http_origin";
+  add_header 'Access-Control-Allow-Credentials' 'true';
+  add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS';
+  add_header 'Access-Control-Allow-Headers' 'Authorization,Content-Type,Accept,Origin,User-Agent,DNT,Cache-Control,X-Mx-ReqToken,Keep-Alive,X-Requested-With,If-Modified-Since,Content-Type';
+  return 200; 
+}
+</code></pre></div></div>
+
+<h4 id="3js客户端token传输授权">3、js客户端token传输、授权#</h4>
+
+<p><strong>js（react、vue等）客户端需要在授权服务配置时，设置允许将token通过浏览器传递 AllowAccessTokensViaBrowser = true，客户端设置禁用了授权页面，登录鉴权后直接跳回对应 RequireConsent = false</strong><br />
+ https://img2022.cnblogs.com/blog/1780813/202204/1780813-20220428093759500-353565832.png</p>
+
+<h4 id="4前端统一接口返回格式">4、前端统一接口返回格式#</h4>
+
+<p><strong>Umi框架默认格式与后台接口返回不一致就会导致获取不到，config.ts 加上以下代码，就可以使用后台自定义返回的数据格式了</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>request: {
+    dataField: ""  //忽略框架处理
+}
+</code></pre></div></div>
+
+<h4 id="5postlogoutredirecturis无效">5、PostLogoutRedirectUris无效#</h4>
+
+<p><strong>本以为配置了退出跳转路由就OK了，结果还是得自己加代码手动跳转，在授权服务中AccountController，Logout方法</strong><br />
+ https://img2022.cnblogs.com/blog/1780813/202205/1780813-20220528221038792-482411485.png</p>
+
+<h4 id="6efcore连接数据库偶尔异常an-exception-has-been-raised-that-is-likely-due-to-a-transient-failure">6、EFCore连接数据库偶尔异常：An exception has been raised that is likely due to a transient failure.#</h4>
+
+<p><strong>查资料说是ssl问题，连接字符串server改成https的，不太确定，大佬懂的可以说一下</strong></p>
+
+<h2 id="八前人栽树后人乘凉">八、前人栽树，后人乘凉#</h2>
+
+<p><a href="https://github.com/skoruba/react-oidc-client-js">https://github.com/skoruba/react-oidc-client-js</a></p>
+
+<h2 id="九代码已上传">九、代码已上传#</h2>
+
+<p><a href="https://github.com/wintersir">https://github.com/wintersir</a></p>
+
+<h2 id="十后续">十、后续#</h2>
+
+<p><strong>后面学习要往容器、微服务方向走了，Docker、Jenkins、DDD 等等，想学哪个学哪个，写了也不一定学，哈哈~~~，还是那句话：</strong></p>
+
+<h2 id="写在最后">写在最后#</h2>
+
+<p><strong>博客名：WinterSir，<a href="https://www.cnblogs.com/WinterSir/p/13942849.html">学习目录 https://www.cnblogs.com/WinterSir/p/13942849.html</a></strong></p>
+<blockquote>
+  <p>作者:冬先生<br />
+原文:https://www.cnblogs.com/WinterSir/p/16147929.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/31/%E5%8D%81%E4%BA%8C.NET6React%E5%8D%87%E7%BA%A7%E5%8D%87%E7%BA%A7%E8%BF%98%E6%98%AF%E5%8D%87%E7%BA%A7IdentityServer4%E5%AE%9E%E6%88%98.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>聊聊 C# 中的多态底层 (虚方法调用) 是怎么玩的 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="聊聊 C# 中的多态底层 (虚方法调用) 是怎么玩的" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="最近在看 C++ 的虚方法调用实现原理，大概就是说在 class 的首位置存放着一个指向 vtable array 指针数组 的指针，而 vtable array 中的每一个指针元素指向的就是各自的 虚方法，实现方式很有意思，哈哈，现在我很好奇 C# 中如何实现的。 一： C# 中的多态玩法 1. 一个简单的 C# 例子 为了方便说明，我就定义一个 Person 类和一个 Chinese 类，详细代码如下：" />
+<meta property="og:description" content="最近在看 C++ 的虚方法调用实现原理，大概就是说在 class 的首位置存放着一个指向 vtable array 指针数组 的指针，而 vtable array 中的每一个指针元素指向的就是各自的 虚方法，实现方式很有意思，哈哈，现在我很好奇 C# 中如何实现的。 一： C# 中的多态玩法 1. 一个简单的 C# 例子 为了方便说明，我就定义一个 Person 类和一个 Chinese 类，详细代码如下：" />
+<link rel="canonical" href="/cnblog/2022/06/01/%E8%81%8A%E8%81%8AC%E4%B8%AD%E7%9A%84%E5%A4%9A%E6%80%81%E5%BA%95%E5%B1%82%E8%99%9A%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8%E6%98%AF%E6%80%8E%E4%B9%88%E7%8E%A9%E7%9A%84.html" />
+<meta property="og:url" content="/cnblog/2022/06/01/%E8%81%8A%E8%81%8AC%E4%B8%AD%E7%9A%84%E5%A4%9A%E6%80%81%E5%BA%95%E5%B1%82%E8%99%9A%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8%E6%98%AF%E6%80%8E%E4%B9%88%E7%8E%A9%E7%9A%84.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-06-01T11:45:54+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="聊聊 C# 中的多态底层 (虚方法调用) 是怎么玩的" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-06-01T11:45:54+00:00","datePublished":"2022-06-01T11:45:54+00:00","description":"最近在看 C++ 的虚方法调用实现原理，大概就是说在 class 的首位置存放着一个指向 vtable array 指针数组 的指针，而 vtable array 中的每一个指针元素指向的就是各自的 虚方法，实现方式很有意思，哈哈，现在我很好奇 C# 中如何实现的。 一： C# 中的多态玩法 1. 一个简单的 C# 例子 为了方便说明，我就定义一个 Person 类和一个 Chinese 类，详细代码如下：","headline":"聊聊 C# 中的多态底层 (虚方法调用) 是怎么玩的","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/06/01/%E8%81%8A%E8%81%8AC%E4%B8%AD%E7%9A%84%E5%A4%9A%E6%80%81%E5%BA%95%E5%B1%82%E8%99%9A%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8%E6%98%AF%E6%80%8E%E4%B9%88%E7%8E%A9%E7%9A%84.html"},"url":"/cnblog/2022/06/01/%E8%81%8A%E8%81%8AC%E4%B8%AD%E7%9A%84%E5%A4%9A%E6%80%81%E5%BA%95%E5%B1%82%E8%99%9A%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8%E6%98%AF%E6%80%8E%E4%B9%88%E7%8E%A9%E7%9A%84.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">聊聊 C# 中的多态底层 (虚方法调用) 是怎么玩的</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-06-01T11:45:54+00:00" itemprop="datePublished">Jun 1, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>最近在看 <code class="language-plaintext highlighter-rouge">C++</code> 的虚方法调用实现原理，大概就是说在 class 的首位置存放着一个指向 <code class="language-plaintext highlighter-rouge">vtable array</code> 指针数组 的指针，而 <code class="language-plaintext highlighter-rouge">vtable array</code> 中的每一个指针元素指向的就是各自的 <code class="language-plaintext highlighter-rouge">虚方法</code>，实现方式很有意思，哈哈，现在我很好奇 C# 中如何实现的。</p>
+
+<h2 id="一-c-中的多态玩法">一： C# 中的多态玩法</h2>
+
+<h3 id="1-一个简单的-c-例子">1. 一个简单的 C# 例子</h3>
+
+<p>为了方便说明，我就定义一个 Person 类和一个 Chinese 类，详细代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            Person person = new Chinese();
+
+            person.SayHello();
+
+            Console.ReadLine();
+        }
+    }
+
+    public class Person
+    {
+        public virtual void SayHello()
+        {
+            Console.WriteLine("sayhello");
+        }
+    }
+
+    public class Chinese: Person
+    {
+        public override void SayHello()
+        {
+            Console.WriteLine("chinese");
+        }
+    }
+}
+</code></pre></div></div>
+
+<h3 id="2-汇编代码分析">2. 汇编代码分析</h3>
+
+<p>接下来用 windbg 在 <code class="language-plaintext highlighter-rouge">person.SayHello()</code> 处下一个断点，观察一下它的反汇编代码：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>D:\net6\ConsoleApplication2\ConsoleApp1\Program.cs @ 9:
+05cf21b3 b93c5dce05      mov     ecx,5CE5D3Ch (MT: ConsoleApp1.Chinese)
+05cf21b8 e8030f89fa      call    005830c0 (JitHelp: CORINFO_HELP_NEWSFAST)
+05cf21bd 8945f4          mov     dword ptr [ebp-0Ch],eax
+05cf21c0 8b4df4          mov     ecx,dword ptr [ebp-0Ch]
+05cf21c3 e820fbffff      call    05cf1ce8 (ConsoleApp1.Chinese..ctor(), mdToken: 0600000A)
+05cf21c8 8b4df4          mov     ecx,dword ptr [ebp-0Ch]
+05cf21cb 894df8          mov     dword ptr [ebp-8],ecx
+
+D:\net6\ConsoleApplication2\ConsoleApp1\Program.cs @ 11:
+&gt;&gt;&gt; 05cf21ce 8b4df8          mov     ecx,dword ptr [ebp-8]
+05cf21d1 8b45f8          mov     eax,dword ptr [ebp-8]
+05cf21d4 8b00            mov     eax,dword ptr [eax]
+05cf21d6 8b4028          mov     eax,dword ptr [eax+28h]
+05cf21d9 ff5010          call    dword ptr [eax+10h]
+05cf21dc 90              nop
+</code></pre></div></div>
+
+<p>从汇编代码看，逻辑非常清晰，大体步骤如下：</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">eax,dword ptr [ebp-8]</code></li>
+</ol>
+
+<p>从栈上(ebp-8)处获取 person 在堆上的首地址，如果不相信的话，可以用 <code class="language-plaintext highlighter-rouge">!do 027ea88c</code> 试试看。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:000&gt; dp ebp-8 L1
+0057f300  027ea88c
+
+0:000&gt; !do 027ea88c
+Name:        ConsoleApp1.Chinese
+MethodTable: 05ce5d3c
+EEClass:     05cd3380
+Size:        12(0xc) bytes
+File:        D:\net6\ConsoleApplication2\ConsoleApp1\bin\x86\Debug\net6.0\ConsoleApp1.dll
+Fields:
+None
+</code></pre></div></div>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">eax,dword ptr [eax]</code></li>
+</ol>
+
+<p>如果大家了解 <code class="language-plaintext highlighter-rouge">实例</code> 在堆上的内存布局的话，应该知道，这个首地址存放的就是 <code class="language-plaintext highlighter-rouge">methodtable</code> 指针,我们可以用 <code class="language-plaintext highlighter-rouge">!dumpmt 05ce5d3c</code> 来验证下。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:000&gt; dp 027ea88c L1
+027ea88c  05ce5d3c
+
+0:000&gt; !dumpmt 05ce5d3c
+EEClass:         05cd3380
+Module:          05addb14
+Name:            ConsoleApp1.Chinese
+mdToken:         02000007
+File:            D:\net6\ConsoleApplication2\ConsoleApp1\bin\x86\Debug\net6.0\ConsoleApp1.dll
+BaseSize:        0xc
+ComponentSize:   0x0
+DynamicStatics:  false
+ContainsPointers false
+Slots in VTable: 6
+Number of IFaces in IFaceMap: 0
+</code></pre></div></div>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">eax,dword ptr [eax+28h]</code></li>
+</ol>
+
+<p>那这句话是什么意思呢？如果你了解 CoreCLR 的话，你应该知道 methedtable 是由一个 <code class="language-plaintext highlighter-rouge">class MethodTable</code> 类来承载的，所以它取了 methodtable 偏移 <code class="language-plaintext highlighter-rouge">0x28</code>  位置的一个字段，那这个偏移字段是什么呢？ 我们先用 <code class="language-plaintext highlighter-rouge">dt</code> 把 methodtable 结构给导出来。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:000&gt; dt 05ce5d3c MethodTable
+coreclr!MethodTable
+   =7ad96bc8 s_pMethodDataCache : 0x00639ec8 MethodDataCache
+   =7ad96bc4 s_fUseParentMethodData : 0n1
+   =7ad96bcc s_fUseMethodDataCache : 0n1
+   +0x000 m_dwFlags        : 0xc
+   +0x004 m_BaseSize       : 0x74088
+   +0x008 m_wFlags2        : 5
+   +0x00a m_wToken         : 0
+   +0x00c m_wNumVirtuals   : 0x5ccc
+   +0x00e m_wNumInterfaces : 0x5ce
+   +0x010 m_pParentMethodTable : IndirectPointer&lt;MethodTable *&gt;
+   +0x014 m_pLoaderModule  : PlainPointer&lt;Module *&gt;
+   +0x018 m_pWriteableData : PlainPointer&lt;MethodTableWriteableData *&gt;
+   +0x01c m_pEEClass       : PlainPointer&lt;EEClass *&gt;
+   +0x01c m_pCanonMT       : PlainPointer&lt;unsigned long&gt;
+   +0x020 m_pPerInstInfo   : PlainPointer&lt;PlainPointer&lt;Dictionary *&gt; *&gt;
+   +0x020 m_ElementTypeHnd : 0
+   +0x020 m_pMultipurposeSlot1 : 0
+   +0x024 m_pInterfaceMap  : PlainPointer&lt;InterfaceInfo_t *&gt;
+   +0x024 m_pMultipurposeSlot2 : 0x5ce5d68
+   =7ad04c78 c_DispatchMapSlotOffsets : [0]  " $ (System.Private.CoreLib.dll"
+   =7ad04c70 c_NonVirtualSlotsOffsets : [0]  " $ ($((, $ (System.Private.CoreLib.dll"
+   =7ad04c60 c_ModuleOverrideOffsets : [0]  " $ ($((,$((,(,,0 $ ($((, $ (System.Private.CoreLib.dll"
+   =7ad12838 c_OptionalMembersStartOffsets : [0]  "(((((((,(((,(,,0(((,(,,0(,,0,004"
+</code></pre></div></div>
+
+<p>从 methodtable 的布局图来看, <code class="language-plaintext highlighter-rouge">eax+28h</code> 是 <code class="language-plaintext highlighter-rouge">m_pMultipurposeSlot2</code> 结构的第二个字段了，因为第一个字段是 <code class="language-plaintext highlighter-rouge">虚方法表指针</code>，如果要验证的话，也很简单，用 <code class="language-plaintext highlighter-rouge">!dumpmt -md 05ce5d3c</code> 把所有的方法给导出来，然后结合 <code class="language-plaintext highlighter-rouge">dp 05ce5d3c</code> 看下 0x5ce5d68 之后是不是许多的方法。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:000&gt; !dumpmt -md 05ce5d3c
+EEClass:         05cd3380
+Module:          05addb14
+Name:            ConsoleApp1.Chinese
+mdToken:         02000007
+File:            D:\net6\ConsoleApplication2\ConsoleApp1\bin\x86\Debug\net6.0\ConsoleApp1.dll
+BaseSize:        0xc
+ComponentSize:   0x0
+DynamicStatics:  false
+ContainsPointers false
+Slots in VTable: 6
+Number of IFaces in IFaceMap: 0
+--------------------------------------
+MethodDesc Table
+   Entry MethodDe    JIT Name
+02610028 02605568   NONE System.Object.Finalize()
+02610030 02605574   NONE System.Object.ToString()
+02610038 02605580   NONE System.Object.Equals(System.Object)
+02610050 026055ac   NONE System.Object.GetHashCode()
+05CF1CE0 05ce5d24   NONE ConsoleApp1.Chinese.SayHello()
+05CF1CE8 05ce5d30    JIT ConsoleApp1.Chinese..ctor()
+0:000&gt; dp 05ce5d3c L10
+05ce5d3c  00000200 0000000c 00074088 00000005
+05ce5d4c  05ce5ccc 05addb14 05ce5d7c 05cd3380
+05ce5d5c  05cf1ce8 00000000 05ce5d68 02610028
+05ce5d6c  02610030 02610038 02610050 05cf1ce0
+</code></pre></div></div>
+
+<p>仔细看输出，上面的 <code class="language-plaintext highlighter-rouge">05ce5d68</code> 后面的 <code class="language-plaintext highlighter-rouge">02610028</code> 就是 <code class="language-plaintext highlighter-rouge">System.Object.Finalize()</code> 方法，<code class="language-plaintext highlighter-rouge">02610030</code> 对应着 <code class="language-plaintext highlighter-rouge">System.Object.ToString()</code> 方法。</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">call    dword ptr [eax+10h]</code></li>
+</ol>
+
+<p>有了前面的基础，这句话就好理解了，它是从 <code class="language-plaintext highlighter-rouge">m_pMultipurposeSlot2</code> 结构中找 <code class="language-plaintext highlighter-rouge">SayHello</code> 所在的单元指针位置，然后做 call 调用。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:000&gt; !U 05cf1ce0
+Unmanaged code
+05cf1ce0 e88f9dde74      call    coreclr!PrecodeFixupThunk (7aadba74)
+05cf1ce5 5e              pop     esi
+05cf1ce6 0001            add     byte ptr [ecx],al
+05cf1ce8 e913050000      jmp     05cf2200
+05cf1ced 5f              pop     edi
+05cf1cee 0300            add     eax,dword ptr [eax]
+05cf1cf0 245d            and     al,5Dh
+05cf1cf2 ce              into
+05cf1cf3 0500000000      add     eax,0
+05cf1cf8 0000            add     byte ptr [eax],al
+</code></pre></div></div>
+
+<p>从汇编看，它还是一段 <code class="language-plaintext highlighter-rouge">桩代码</code>，言外之意就是该方法没有被 JIT 编译，如果编译完了，这里的 <code class="language-plaintext highlighter-rouge">05CF1CE0 05ce5d24   NONE ConsoleApp1.Chinese.SayHello()</code>  的 Entry (05CF1CE0) 也会被同步修改，验证一下很简单，我们继续 go 代码让其编译完成，然后再 dumpmt 。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:008&gt; !dumpmt -md 05ce5d3c
+EEClass:         05cd3380
+Module:          05addb14
+Name:            ConsoleApp1.Chinese
+mdToken:         02000007
+File:            D:\net6\ConsoleApplication2\ConsoleApp1\bin\x86\Debug\net6.0\ConsoleApp1.dll
+BaseSize:        0xc
+ComponentSize:   0x0
+DynamicStatics:  false
+ContainsPointers false
+Slots in VTable: 6
+Number of IFaces in IFaceMap: 0
+--------------------------------------
+MethodDesc Table
+   Entry MethodDe    JIT Name
+02610028 02605568   NONE System.Object.Finalize()
+02610030 02605574   NONE System.Object.ToString()
+02610038 02605580   NONE System.Object.Equals(System.Object)
+02610050 026055ac   NONE System.Object.GetHashCode()
+05CF2270 05ce5d24    JIT ConsoleApp1.Chinese.SayHello()
+05CF1CE8 05ce5d30    JIT ConsoleApp1.Chinese..ctor()
+
+0:008&gt; dp 05ce5d3c L10
+05ce5d3c  00000200 0000000c 00074088 00000005
+05ce5d4c  05ce5ccc 05addb14 05ce5d7c 05cd3380
+05ce5d5c  05cf1ce8 00000000 05ce5d68 02610028
+05ce5d6c  02610030 02610038 02610050 05cf2270
+</code></pre></div></div>
+
+<p>此时可以看到它由 <code class="language-plaintext highlighter-rouge">05cf1ce0</code> 变成了 <code class="language-plaintext highlighter-rouge">05cf2270</code>， 这个就是 JIT 编译后的方法代码，我们用 !U 反编译下。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:008&gt; !U 05cf2270
+Normal JIT generated code
+ConsoleApp1.Chinese.SayHello()
+ilAddr is 05E720D5 pImport is 008F6E88
+Begin 05CF2270, size 27
+
+D:\net6\ConsoleApplication2\ConsoleApp1\Program.cs @ 28:
+&gt;&gt;&gt; 05cf2270 55              push    ebp
+05cf2271 8bec            mov     ebp,esp
+05cf2273 50              push    eax
+05cf2274 894dfc          mov     dword ptr [ebp-4],ecx
+05cf2277 833d74dcad0500  cmp     dword ptr ds:[5ADDC74h],0
+05cf227e 7405            je      05cf2285
+05cf2280 e8cb2bf174      call    coreclr!JIT_DbgIsJustMyCode (7ac04e50)
+05cf2285 90              nop
+
+D:\net6\ConsoleApplication2\ConsoleApp1\Program.cs @ 29:
+05cf2286 8b0d74207e04    mov     ecx,dword ptr ds:[47E2074h] ("chinese")
+05cf228c e8dffbffff      call    05cf1e70
+05cf2291 90              nop
+
+D:\net6\ConsoleApplication2\ConsoleApp1\Program.cs @ 30:
+05cf2292 90              nop
+05cf2293 8be5            mov     esp,ebp
+05cf2295 5d              pop     ebp
+05cf2296 c3              ret
+</code></pre></div></div>
+
+<p>终于这就是多态下的 <code class="language-plaintext highlighter-rouge">ConsoleApp1.Chinese.SayHello</code> 方法啦。</p>
+
+<h3 id="3-总结">3. 总结</h3>
+
+<p>本质上来说，CoreCLR 也是 C++ 写的，所以也逃不过用 <code class="language-plaintext highlighter-rouge">虚表</code> 来实现多态的玩法， 不过玩法也稍微复杂了一些，希望本篇对大家有帮助。</p>
+<blockquote>
+  <p>作者:一线码农<br />
+原文:https://www.cnblogs.com/huangxincheng/p/16333775.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/06/01/%E8%81%8A%E8%81%8AC%E4%B8%AD%E7%9A%84%E5%A4%9A%E6%80%81%E5%BA%95%E5%B1%82%E8%99%9A%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8%E6%98%AF%E6%80%8E%E4%B9%88%E7%8E%A9%E7%9A%84.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

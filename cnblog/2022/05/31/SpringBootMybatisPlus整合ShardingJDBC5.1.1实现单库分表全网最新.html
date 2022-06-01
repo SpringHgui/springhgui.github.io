@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>SpringBoot+Mybatis-Plus整合Sharding-JDBC5.1.1实现单库分表【全网最新】 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="SpringBoot+Mybatis-Plus整合Sharding-JDBC5.1.1实现单库分表【全网最新】" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="一、前言 小编最近一直在研究关于分库分表的东西，前几天docker安装了mycat实现了分库分表，但是都在说mycat的bug很多。很多人还是倾向于shardingsphere，其实他是一个全家桶，有JDBC、Proxy 和 Sidecar组成，小编今天以最简单的JDBC来简单整合一下！ 现在最新版已经是5.1.1，经过一天的研究用于解决了所有问题，完成了单库分表！！ 想了解4.0.0版本的可以看一下小编刚刚写的：SpringBoot+Mybatis-Plus整合Sharding-JDBC4.0.0实现单库分表 如果想看mycat的可以看一下小编之前写的文章哈：Docker安装Mycat和Mysql进行水平分库分表实战 二、踩过的坑 1. 数据源问题 不要使用druid-spring-boot-starter这个依赖，启动会有问题" />
+<meta property="og:description" content="一、前言 小编最近一直在研究关于分库分表的东西，前几天docker安装了mycat实现了分库分表，但是都在说mycat的bug很多。很多人还是倾向于shardingsphere，其实他是一个全家桶，有JDBC、Proxy 和 Sidecar组成，小编今天以最简单的JDBC来简单整合一下！ 现在最新版已经是5.1.1，经过一天的研究用于解决了所有问题，完成了单库分表！！ 想了解4.0.0版本的可以看一下小编刚刚写的：SpringBoot+Mybatis-Plus整合Sharding-JDBC4.0.0实现单库分表 如果想看mycat的可以看一下小编之前写的文章哈：Docker安装Mycat和Mysql进行水平分库分表实战 二、踩过的坑 1. 数据源问题 不要使用druid-spring-boot-starter这个依赖，启动会有问题" />
+<link rel="canonical" href="/cnblog/2022/05/31/SpringBootMybatisPlus%E6%95%B4%E5%90%88ShardingJDBC5.1.1%E5%AE%9E%E7%8E%B0%E5%8D%95%E5%BA%93%E5%88%86%E8%A1%A8%E5%85%A8%E7%BD%91%E6%9C%80%E6%96%B0.html" />
+<meta property="og:url" content="/cnblog/2022/05/31/SpringBootMybatisPlus%E6%95%B4%E5%90%88ShardingJDBC5.1.1%E5%AE%9E%E7%8E%B0%E5%8D%95%E5%BA%93%E5%88%86%E8%A1%A8%E5%85%A8%E7%BD%91%E6%9C%80%E6%96%B0.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-31T08:42:27+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="SpringBoot+Mybatis-Plus整合Sharding-JDBC5.1.1实现单库分表【全网最新】" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-31T08:42:27+00:00","datePublished":"2022-05-31T08:42:27+00:00","description":"一、前言 小编最近一直在研究关于分库分表的东西，前几天docker安装了mycat实现了分库分表，但是都在说mycat的bug很多。很多人还是倾向于shardingsphere，其实他是一个全家桶，有JDBC、Proxy 和 Sidecar组成，小编今天以最简单的JDBC来简单整合一下！ 现在最新版已经是5.1.1，经过一天的研究用于解决了所有问题，完成了单库分表！！ 想了解4.0.0版本的可以看一下小编刚刚写的：SpringBoot+Mybatis-Plus整合Sharding-JDBC4.0.0实现单库分表 如果想看mycat的可以看一下小编之前写的文章哈：Docker安装Mycat和Mysql进行水平分库分表实战 二、踩过的坑 1. 数据源问题 不要使用druid-spring-boot-starter这个依赖，启动会有问题","headline":"SpringBoot+Mybatis-Plus整合Sharding-JDBC5.1.1实现单库分表【全网最新】","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/31/SpringBootMybatisPlus%E6%95%B4%E5%90%88ShardingJDBC5.1.1%E5%AE%9E%E7%8E%B0%E5%8D%95%E5%BA%93%E5%88%86%E8%A1%A8%E5%85%A8%E7%BD%91%E6%9C%80%E6%96%B0.html"},"url":"/cnblog/2022/05/31/SpringBootMybatisPlus%E6%95%B4%E5%90%88ShardingJDBC5.1.1%E5%AE%9E%E7%8E%B0%E5%8D%95%E5%BA%93%E5%88%86%E8%A1%A8%E5%85%A8%E7%BD%91%E6%9C%80%E6%96%B0.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">SpringBoot+Mybatis-Plus整合Sharding-JDBC5.1.1实现单库分表【全网最新】</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-31T08:42:27+00:00" itemprop="datePublished">May 31, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h2 id="一前言">一、前言</h2>
+
+<p>小编最近一直在研究关于分库分表的东西，前几天docker安装了mycat实现了分库分表，但是都在说mycat的bug很多。很多人还是倾向于<code class="language-plaintext highlighter-rouge">shardingsphere</code>，其实他是一个全家桶，有<code class="language-plaintext highlighter-rouge">JDBC、Proxy 和 Sidecar</code>组成，小编今天以最简单的<code class="language-plaintext highlighter-rouge">JDBC</code>来简单整合一下！<br />
+ 现在最新版已经是<code class="language-plaintext highlighter-rouge">5.1.1</code>，经过一天的研究用于解决了所有问题，完成了单库分表！！</p>
+
+<p>想了解4.0.0版本的可以看一下小编刚刚写的：<a href="https://blog.csdn.net/qq_52423918/article/details/124989371">SpringBoot+Mybatis-Plus整合Sharding-JDBC4.0.0实现单库分表</a><br />
+ 如果想看mycat的可以看一下小编之前写的文章哈：<a href="https://blog.csdn.net/qq_52423918/article/details/124820231">Docker安装Mycat和Mysql进行水平分库分表实战</a></p>
+
+<h2 id="二踩过的坑">二、踩过的坑</h2>
+
+<h3 id="1-数据源问题">1. 数据源问题</h3>
+
+<p>不要使用<code class="language-plaintext highlighter-rouge">druid-spring-boot-starter</code>这个依赖，启动会有问题</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;dependency&gt;--&gt;&lt;groupId&gt;com.alibaba&lt;/groupId&gt;&lt;artifactId&gt;druid-spring-boot-starter&lt;/artifactId&gt;&lt;version&gt;1.1.21&lt;/version&gt;
+/dependency&gt;
+</code></pre></div></div>
+
+<p>报错信息：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Caused by: org.springframework.beans.factory.BeanCreationException: Error creating bean with name 'userMapper' defined in file 
+[D:\jiawayun\demo\target\classes\com\example\demo\mapper\UserMapper.class]:
+ Invocation of init method failed; nested exception is 
+ java.lang.IllegalArgumentException: Property 'sqlSessionFactory' 
+ or 'sqlSessionTemplate' are required
+</code></pre></div></div>
+
+<p>使用单独的<code class="language-plaintext highlighter-rouge">druid</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;dependency&gt;
+    &lt;groupId&gt;com.alibaba&lt;/groupId&gt;
+    &lt;artifactId&gt;druid&lt;/artifactId&gt;
+    &lt;version&gt;1.2.8&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre></div></div>
+
+<p>建议使用，sharding-jdbc也是使用的默认的数据源，小编使用的自带的，忘记<code class="language-plaintext highlighter-rouge">druid</code>后面会不会有问题了！！</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>type: com.zaxxer.hikari.HikariDataSource
+</code></pre></div></div>
+
+<h3 id="2-insert-语句不支持分表路由到多个数据节点">2. Insert 语句不支持分表路由到多个数据节点</h3>
+
+<p>报错信息：<br />
+ <code class="language-plaintext highlighter-rouge">Insert statement does not support sharding table routing to multiple data nodes.</code></p>
+
+<p>解决方案：<br />
+ 看小编文章：<a href="https://blog.csdn.net/qq_52423918/article/details/125004312">解决不支持分表路由问题</a></p>
+
+<h2 id="三导入maven依赖">三、导入maven依赖</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+&lt;/dependency&gt;
+
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+    &lt;exclusions&gt;
+        &lt;exclusion&gt;
+            &lt;groupId&gt;org.junit.vintage&lt;/groupId&gt;
+            &lt;artifactId&gt;junit-vintage-engine&lt;/artifactId&gt;
+        &lt;/exclusion&gt;
+    &lt;/exclusions&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;junit&lt;/groupId&gt;
+    &lt;artifactId&gt;junit&lt;/artifactId&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.apache.shardingsphere&lt;/groupId&gt;
+    &lt;artifactId&gt;shardingsphere-jdbc-core-spring-boot-starter&lt;/artifactId&gt;
+    &lt;version&gt;5.1.1&lt;/version&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-test&lt;/artifactId&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;
+&lt;!-- lombok --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.projectlombok&lt;/groupId&gt;
+    &lt;artifactId&gt;lombok&lt;/artifactId&gt;
+    &lt;version&gt;1.18.10&lt;/version&gt;
+&lt;/dependency&gt;
+&lt;!--jdbc--&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-jdbc&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;!-- mysql --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;mysql&lt;/groupId&gt;
+    &lt;artifactId&gt;mysql-connector-java&lt;/artifactId&gt;
+&lt;/dependency&gt;
+
+&lt;!-- mybatis-plus --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;com.baomidou&lt;/groupId&gt;
+    &lt;artifactId&gt;mybatis-plus-boot-starter&lt;/artifactId&gt;
+    &lt;version&gt;3.5.1&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre></div></div>
+
+<h2 id="四新建表">四、新建表</h2>
+
+<h3 id="1-新建二张表">1. 新建二张表</h3>
+
+<p>命名为：<code class="language-plaintext highlighter-rouge">user_0</code>、<code class="language-plaintext highlighter-rouge">user_1</code></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>CREATE TABLE `user_0`  (
+  `cid` bigint(25) NOT NULL,
+  `name` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
+  `gender` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
+  `data` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT NULL,
+  PRIMARY KEY (`cid`) USING BTREE
+) ENGINE = InnoDB CHARACTER SET = utf8 COLLATE = utf8_general_ci ROW_FORMAT = Dynamic;
+
+SET FOREIGN_KEY_CHECKS = 1;
+</code></pre></div></div>
+
+<h3 id="2-数据库结构">2. 数据库结构</h3>
+
+<p><img src="https://img-blog.csdnimg.cn/e05fc405015e43adb462e57b970ea05d.png" alt="在这里插入图片描述" /></p>
+
+<h2 id="五框架全局展示">五、框架全局展示</h2>
+
+<h3 id="1-user实体类">1. User实体类</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Data
+public class User implements Serializable {
+    private static final long serialVersionUID = 337361630075002456L;
+    
+    private Long cid;
+    
+    private String name;
+
+    private String gender;
+
+    private String data;
+
+}
+</code></pre></div></div>
+
+<h3 id="2-controller">2. controller</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RestController
+@RequestMapping("/test")
+public class UserController {
+
+    @Autowired
+    private UserMapper userMapper;
+
+    @GetMapping("/insertTest")
+    public void insertTest(){
+        for (int i = 1 ; i &lt; 10; i++) {
+            User test = new User("王"+i,"男","数据" + i);
+            userMapper.insert(test);
+        }
+    }
+}
+</code></pre></div></div>
+
+<h3 id="3-mapper">3. mapper</h3>
+
+<p>我们直接省略了service，简单一下哈！！</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public interface UserMapper extends BaseMapper&lt;User&gt; {
+}
+</code></pre></div></div>
+
+<h3 id="4-applicationyml配置">4. application.yml配置</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>server:
+  port: 8089
+
+spring:
+  shardingsphere:
+    mode:
+      type: memory
+    # 是否开启
+    datasource:
+      # 数据源（逻辑名字）
+      names: m1
+      # 配置数据源
+      m1:
+        type: com.zaxxer.hikari.HikariDataSource
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        url: jdbc:mysql://localhost:3306/test?useSSL=false&amp;autoReconnect=true&amp;characterEncoding=UTF-8&amp;serverTimezone=UTC
+        username: root
+        password: root
+    # 分片的配置
+    rules:
+      sharding:
+        # 表的分片策略
+        tables:
+          # 逻辑表的名称
+          user:
+            # 数据节点配置，采用Groovy表达式
+            actual-data-nodes: m1.user_$-&gt;{0..1}
+            # 配置策略
+            table-strategy:
+              # 用于单分片键的标准分片场景
+              standard:
+                sharding-column: cid
+                # 分片算法名字
+                sharding-algorithm-name: user_inline
+            key-generate-strategy: # 主键生成策略
+              column: cid  # 主键列
+              key-generator-name: snowflake  # 策略算法名称(推荐使用雪花算法)
+        key-generators:
+          snowflake:
+            type: SNOWFLAKE
+        sharding-algorithms:
+          user_inline:
+            type: inline
+            props:
+              algorithm-expression: user_$-&gt;{cid % 2}
+    props:
+      # 日志显示具体的SQL
+      sql-show: true
+
+logging:
+  level:
+    com.wang.test.demo: DEBUG
+
+mybatis-plus:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.example.demo.entity
+  configuration:
+    #在映射实体或者属性时，将数据库中表名和字段名中的下划线去掉，按照驼峰命名法映射 address_book ---&gt; addressBook
+    map-underscore-to-camel-case: true
+</code></pre></div></div>
+
+<h3 id="5-启动类">5. 启动类</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@MapperScan("com.example.demo.mapper")
+@SpringBootApplication
+public class DemoApplication {
+
+    public static void main(String[] args) {
+        SpringApplication.run(DemoApplication.class, args);
+    }
+
+}
+</code></pre></div></div>
+
+<h2 id="六测试插入九条数据">六、测试插入九条数据</h2>
+
+<h3 id="1-插入数据">1. 插入数据</h3>
+
+<p>输入 ：<code class="language-plaintext highlighter-rouge">localhost:8089/test/insertTest</code></p>
+
+<p><img src="https://img-blog.csdnimg.cn/c7a8d991fcdf410fb107d19593064ce8.png" alt="在这里插入图片描述" /></p>
+
+<h3 id="2-单个查询">2. 单个查询</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@GetMapping("/selectOneTest")
+public void selectOneTest(){
+
+    User user = userMapper.selectOne(Wrappers.&lt;User&gt;lambdaQuery().eq(User::getCid,736989417020850176L));
+    System.out.println(user);
+
+}
+</code></pre></div></div>
+
+<p><strong>这时他会根据cid去自动获取去那个表中获取数据</strong><br />
+ <img src="https://img-blog.csdnimg.cn/e888f72390a04464abb92a4c28e61b40.png" alt="在这里插入图片描述" /></p>
+
+<h3 id="3-全查询">3. 全查询</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@GetMapping("/selectListTest")
+public void selectListTest(){
+
+    List&lt;User&gt; list = userMapper.selectList(null);
+    System.out.println(list);
+
+}
+</code></pre></div></div>
+
+<p><strong>由于没有条件，他会去把两个表<code class="language-plaintext highlighter-rouge">UNION ALL</code>进行汇总</strong></p>
+
+<p><img src="https://img-blog.csdnimg.cn/8cbd72c75037487286129bf935a764d5.png" alt="在这里插入图片描述" /></p>
+
+<h3 id="4-分页查询">4. 分页查询</h3>
+
+<p>需要先配置mybatis-plus分页配置类：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Configuration
+public class MybatisPlusConfig {
+
+    @Bean
+    public MybatisPlusInterceptor mybatisPlusInterceptor() {
+        MybatisPlusInterceptor interceptor = new MybatisPlusInterceptor();
+        interceptor.addInnerInterceptor(new PaginationInnerInterceptor(DbType.MYSQL));
+        return interceptor;
+    }
+}
+
+@GetMapping("/selectListPage")
+public void selectListPage(){
+    IPage&lt;User&gt; page = new Page(1,6);
+    IPage&lt;User&gt; userIPage = userMapper.selectPage(page,null);
+    List&lt;User&gt; records = userIPage.getRecords();
+    System.out.println(records);
+}
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">我们user_0有5条数据，user_1有4条数据</code></p>
+
+<p><img src="https://img-blog.csdnimg.cn/d9fc2eb7915b4bb2881873b91bf428af.png" alt="在这里插入图片描述" /></p>
+
+<p><img src="https://img-blog.csdnimg.cn/66c97a2e8e2f4e6b9ddacf5a13d5f8d6.png" alt="在这里插入图片描述" /></p>
+
+<h3 id="5-非分片属性查询">5. 非分片属性查询</h3>
+
+<p>我们先把<code class="language-plaintext highlighter-rouge">user_0表</code>性别修改两个为女，然后进行查询！看看没有分片的字段是否能够只去<code class="language-plaintext highlighter-rouge">user_0</code>去查询</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@GetMapping("/selectListByGender")
+public void selectListByGender(){
+
+    List&lt;User&gt; list = userMapper.selectList(Wrappers.&lt;User&gt;lambdaQuery().eq(User::getGender, "女"));
+    System.out.println(list);
+}
+</code></pre></div></div>
+
+<p><strong>有图可见：不是分片的字段查询，回去全连接表去查询一遍，效率和不分表一样了哈！！</strong></p>
+
+<p><img src="https://img-blog.csdnimg.cn/32eab8e8ea05475399d0eadaee324ad4.png" alt="在这里插入图片描述" /></p>
+
+<h3 id="6-分片属性来自一个表in查询">6. 分片属性来自一个表in查询</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@GetMapping("/selectInList")
+public void selectList(){
+    List&lt;User&gt; users = userMapper.selectList(Wrappers.&lt;User&gt;lambdaQuery().in(User::getCid,736989417020850176L,736989418119757824L));
+    System.out.println(users);
+}
+</code></pre></div></div>
+
+<p><strong>我们可以发现，我们根据分片字段进行in查询，sharding-jdbc会识别出来来自于那个表进而提高效率，不会所有的表进行全连接。</strong></p>
+
+<p><img src="https://img-blog.csdnimg.cn/9ba9fed483324714abbe1959f662b93c.png" alt="在这里插入图片描述" /></p>
+
+<h2 id="七总结">七、总结</h2>
+
+<p>这样就完成了最新版的<code class="language-plaintext highlighter-rouge">sharding-jdbc</code>的简单测试和一些坑的解决，总的来说配置很费劲，不能有一定的错误！<br />
+ 看到这里了，还不给小编一键三连走起来，谢谢大家了！！</p>
+
+<hr />
+<p>有缘人才可以看得到的哦！！！ 
+<a href="https://wangzhenjun.xyz">点击访问！小编自己的网站，里面也是有很多好的文章哦！</a></p>
+<blockquote>
+  <p>作者:小王写博客<br />
+原文:https://www.cnblogs.com/wang1221/p/16325709.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/31/SpringBootMybatisPlus%E6%95%B4%E5%90%88ShardingJDBC5.1.1%E5%AE%9E%E7%8E%B0%E5%8D%95%E5%BA%93%E5%88%86%E8%A1%A8%E5%85%A8%E7%BD%91%E6%9C%80%E6%96%B0.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

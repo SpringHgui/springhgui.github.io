@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>linux系统下文件误删除该如何恢复？ | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="linux系统下文件误删除该如何恢复？" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="一、linux误删除数据的场景 在实际的工作中，朋友们可能会将linux服务器上的文件不小心误删除掉了。而且越是资历老的工程师越容易犯这样的错误，敲代码的速度也是够快，啪啪rm -rf一个回车，然后就是打脸时刻 。新人操作文件时往往战战兢兢、反复确认，反而不容易出错。如果你也是一个有多年工作经验的工程师，也给自己提个醒：淹死的都是会水的。我们需要区分两种场景来进行误删除文件的恢复： 第一种场景：被删除的文件正在被进程使用 第二种场景：文件没有被任何进程使用" />
+<meta property="og:description" content="一、linux误删除数据的场景 在实际的工作中，朋友们可能会将linux服务器上的文件不小心误删除掉了。而且越是资历老的工程师越容易犯这样的错误，敲代码的速度也是够快，啪啪rm -rf一个回车，然后就是打脸时刻 。新人操作文件时往往战战兢兢、反复确认，反而不容易出错。如果你也是一个有多年工作经验的工程师，也给自己提个醒：淹死的都是会水的。我们需要区分两种场景来进行误删除文件的恢复： 第一种场景：被删除的文件正在被进程使用 第二种场景：文件没有被任何进程使用" />
+<link rel="canonical" href="/cnblog/2022/05/26/linux%E7%B3%BB%E7%BB%9F%E4%B8%8B%E6%96%87%E4%BB%B6%E8%AF%AF%E5%88%A0%E9%99%A4%E8%AF%A5%E5%A6%82%E4%BD%95%E6%81%A2%E5%A4%8D.html" />
+<meta property="og:url" content="/cnblog/2022/05/26/linux%E7%B3%BB%E7%BB%9F%E4%B8%8B%E6%96%87%E4%BB%B6%E8%AF%AF%E5%88%A0%E9%99%A4%E8%AF%A5%E5%A6%82%E4%BD%95%E6%81%A2%E5%A4%8D.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-26T12:48:12+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="linux系统下文件误删除该如何恢复？" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-26T12:48:12+00:00","datePublished":"2022-05-26T12:48:12+00:00","description":"一、linux误删除数据的场景 在实际的工作中，朋友们可能会将linux服务器上的文件不小心误删除掉了。而且越是资历老的工程师越容易犯这样的错误，敲代码的速度也是够快，啪啪rm -rf一个回车，然后就是打脸时刻 。新人操作文件时往往战战兢兢、反复确认，反而不容易出错。如果你也是一个有多年工作经验的工程师，也给自己提个醒：淹死的都是会水的。我们需要区分两种场景来进行误删除文件的恢复： 第一种场景：被删除的文件正在被进程使用 第二种场景：文件没有被任何进程使用","headline":"linux系统下文件误删除该如何恢复？","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/26/linux%E7%B3%BB%E7%BB%9F%E4%B8%8B%E6%96%87%E4%BB%B6%E8%AF%AF%E5%88%A0%E9%99%A4%E8%AF%A5%E5%A6%82%E4%BD%95%E6%81%A2%E5%A4%8D.html"},"url":"/cnblog/2022/05/26/linux%E7%B3%BB%E7%BB%9F%E4%B8%8B%E6%96%87%E4%BB%B6%E8%AF%AF%E5%88%A0%E9%99%A4%E8%AF%A5%E5%A6%82%E4%BD%95%E6%81%A2%E5%A4%8D.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">linux系统下文件误删除该如何恢复？</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-26T12:48:12+00:00" itemprop="datePublished">May 26, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p><img src="https://img2022.cnblogs.com/other/1815316/202205/1815316-20220525082056854-692447649.jpg" alt="" /></p>
+
+<h2 id="一linux误删除数据的场景">一、linux误删除数据的场景</h2>
+
+<p>在实际的工作中，朋友们可能会将linux服务器上的文件不小心误删除掉了。而且越是资历老的工程师越容易犯这样的错误，敲代码的速度也是够快，啪啪<code class="language-plaintext highlighter-rouge">rm -rf</code>一个回车，然后就是打脸时刻 。新人操作文件时往往战战兢兢、反复确认，反而不容易出错。如果你也是一个有多年工作经验的工程师，也给自己提个醒：<strong>淹死的都是会水的</strong>。我们需要区分两种场景来进行误删除文件的恢复：</p>
+
+<ul>
+  <li>第一种场景：被删除的文件正在被进程使用</li>
+  <li>第二种场景：文件没有被任何进程使用</li>
+</ul>
+
+<p>第一种场景的数据恢复相对简单一些。</p>
+
+<h2 id="二场景一数据恢复实验">二、场景一数据恢复实验</h2>
+
+<p>第一种场景：被删除的文件正在被其他进程使用。我们先创建一个独立目录testdel，用于完成我们的实验。然后使用echo命令创建一个文件test-recovery.txt，放在testdel目录下，文件内容是：”test file delete recovery”。<strong>重点来了：我们使用命令tail来一直监听这个文件，表示这个文件一直被tail进程监听占用。</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ mkdir ./testdel;
+$ echo "test file delete recovery"  &gt; ./testdel/test-recovery.txt;
+$ tail -f ./testdel/test-recovery.txt;
+</code></pre></div></div>
+
+<p>此时我们新打开一个linux终端，完成文件删除操作，文件删除之后使用<code class="language-plaintext highlighter-rouge">ls</code>命名在该目录下查看不到任何的文件。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ rm -fr ./testdel/test-recovery.txt;
+$ ls -l ./testdel
+</code></pre></div></div>
+
+<p>下面我们来进行文件的恢复，执行下文中的lsof命令，在其返回结果中我们可以看到test-recovery.txt (deleted)被删除了，但是其存在一个进程tail使用它，tail进程的进程编号是1535。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ lsof | grep test-recovery.txt;
+tail      1535        kafka    3r      REG  253,2        26  34095906 /home/kafka/testdel/test-recovery.txt (deleted)
+</code></pre></div></div>
+
+<p>然后我们使用<code class="language-plaintext highlighter-rouge">cd /proc/1535/fd</code>命令进入该进程的文件目录下，1535是tail进程的进程id，这个文件目录里包含了若干该进程正在打开使用的文件。<br />
+ <img src="https://img2022.cnblogs.com/other/1815316/202205/1815316-20220525082057127-349611815.png" alt="" /><br />
+ 我们看到文件名为3的文件，就是我们刚刚“误删除”的文件，所以我们使用下面的cp命令把它恢复回去。至此，有进程引用的文件误删除恢复就完成了。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cp ./3 /home/kafka/testdel/test-recovery.txt;
+</code></pre></div></div>
+
+<h2 id="三场景二数据恢复">三、场景二数据恢复</h2>
+
+<p>对于场景二，没有程序使用该文件，则该文件被删除之后进行文件恢复就稍微麻烦一些了。首先我们要区分当前操作系统挂载的磁盘目录的文件格式，比如：执行<code class="language-plaintext highlighter-rouge">cat /etc/fstab</code>得到如下的结果<br />
+ <img src="https://img2022.cnblogs.com/other/1815316/202205/1815316-20220525082057371-626598423.png" alt="" /><br />
+ 除了xfs磁盘文件格式，linux常用的还有ext4的磁盘文件格式。每种磁盘文件格式，数据恢复的方式，使用到的工具都是不一样的。鉴于篇幅的问题，我就不在本文中介绍了，请关注我我会继续更新！</p>
+
+<h2 id="四深入-为什么数据可以恢复">四、深入-为什么数据可以恢复？</h2>
+
+<p><strong>第一种情况</strong>：当某个文件正在被某个程序使用时，linux针对该文件有两个计数器</p>
+
+<ul>
+  <li>i_count计数器：该文件可能被多个进程使用，每一个进程使用该文件，i_count数值都会加1。反之，进程释放该文件的引用，则该计数器减1</li>
+  <li>i_nlink作用是记录该文件产生的硬链接的次数(在linux种可以使用ln命令创建文件的硬链接)。</li>
+</ul>
+
+<p>当以上两个计数器都为0的时候，该文件实际上就是属于没有进程使用它的状态，就直接被删除掉了。如果有进程使用它，那么该文件的i_count数值不为0，就可以在<code class="language-plaintext highlighter-rouge">/proc/&lt;进程id&gt;/fd</code>目录种找回来</p>
+
+<p><strong>第二种情况</strong>：此时没有进程使用被删除的文件，被删除的文件的两个计数器i_count和i_link此时都为0。这个时候我们要理解一个概念</p>
+
+<ul>
+  <li>操作系统文件删除：操作系统层面的删除文件，只是删除文件的inode信息。删除inode信息之后，该文件对于操作系统及操作系统的用户不可见了。</li>
+  <li>磁盘文件物理删除：我们知道物理磁盘是由一个个数据块组成的，所以如果想恢复文件，我们需要找到存放文件的数据块block单元，真正在磁盘上存储文件的block暂时并未被删除（准确的说是暂时并未被覆盖）。</li>
+</ul>
+
+<blockquote>
+  <p>需要注意的是：存放数据块block单元的文件内容会一直存在么？答案是否定的，因为该数据块的内容被删除了，所以该数据块是可以被其他进程重新利用写入数据的。所以，<strong>当你发现你误删除了非常重要的文件时，你需要做的第一件事就是将磁盘从操作系统中unmout，或者停止所有进程向磁盘中写数据</strong>。因为写作数据操作，可能会占用覆盖你”误删除文件”所在数据块，一旦数据块被写的数据写入覆盖，你的数据文件就再也找不回来了。</p>
+</blockquote>
+
+<p>推荐阅读：<a href="https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzU0NDU5MTk1MQ==&amp;action=getalbum&amp;album_id=1576334194996232194#wechat_redirect">《java并发编程》</a></p>
+
+<h2 id="欢迎关注我的博客更多精品知识合集">欢迎关注我的博客，更多精品知识合集</h2>
+
+<p>本文转载注明出处（必须带连接，不能只转文字）：<a href="http://www.zimug.com">字母哥博客</a>  -   zimug.com</p>
+
+<p><strong>觉得对您有帮助的话，帮我点赞、分享！您的支持是我不竭的创作动力！</strong>。另外，笔者最近一段时间输出了如下的精品内容，期待您的关注。</p>
+
+<ul>
+  <li><a href="https://www.kancloud.cn/hanxt/kafka/content">《kafka修炼之道》</a></li>
+  <li><a href="https://www.kancloud.cn/hanxt/springboot2/content">《手摸手教你学Spring Boot2.0》</a></li>
+  <li><a href="https://www.kancloud.cn/hanxt/springsecurity/content">《Spring Security-JWT-OAuth2一本通》</a></li>
+  <li><a href="https://www.kancloud.cn/hanxt/vue-spring/content">《实战前后端分离RBAC权限管理系统》</a></li>
+  <li><a href="https://www.kancloud.cn/hanxt/springcloud/content">《实战SpringCloud微服务从青铜到王者》</a>
+    <blockquote>
+      <p>作者:字母哥博客
+原文:https://www.cnblogs.com/zimug/p/16307974.html</p>
+    </blockquote>
+  </li>
+</ul>
+
+  </div><a class="u-url" href="/cnblog/2022/05/26/linux%E7%B3%BB%E7%BB%9F%E4%B8%8B%E6%96%87%E4%BB%B6%E8%AF%AF%E5%88%A0%E9%99%A4%E8%AF%A5%E5%A6%82%E4%BD%95%E6%81%A2%E5%A4%8D.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

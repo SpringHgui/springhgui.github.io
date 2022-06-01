@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Microsoft Build 2022 上开发者最应关注的七大方向主要技术更新 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="Microsoft Build 2022 上开发者最应关注的七大方向主要技术更新" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="一年一度的 Microsoft Build 终于来了，带来了非常非常多的新技术和功能更新。不知道各位小伙伴有没有和我一样熬夜看了开幕式和五个核心主题的全过程呢？接下来我和大家来谈一下作为开发者最应关注的七大方向技术更新。 AI 能力的提升 1. Azure OpenAI Service 终于来了 开发人员可以通过 Azure OpenAI Service 来完成前后文推理，阅读理解，和用于编写辅助、代码生成和理解非结构化数据等相关应用场景。利用 Azure OpenAI Service 可以基于应用场景设置不同的模型包括 GPT-3 系列( Ada/Babbage/Curie/DaVince ) 和 Codex 系列( Davinci-codex / Cushman-codex )。以下我归纳一下 Azure OpenAI Service 基于 GPT-3 和 Codex 相关模型的能力，希望对大家在应用时有所帮助 。 2. Azure 机器学习服务能力的提升 Azure 机器学习是用于加速和管理机器学习项目生命周期的云服务。 机器学习专业人员、数据科学家和工程师可以在日常工作流中使用它：训练和部署模型，以及管理 MLOps。 在 Build 2022 上微软带来了全新的 Azure ML CLI (v2) , 机器学习的管理人员可以通过全新的命令行参与到管理机器学习生命周期中。你可以通过 Azure ML CLI(v2) 来使用计算资源、环境和数据集等资产来训练机器学习模型。 例如： 通过 Azure ML CLI(v2)来直接创建计算实例" />
+<meta property="og:description" content="一年一度的 Microsoft Build 终于来了，带来了非常非常多的新技术和功能更新。不知道各位小伙伴有没有和我一样熬夜看了开幕式和五个核心主题的全过程呢？接下来我和大家来谈一下作为开发者最应关注的七大方向技术更新。 AI 能力的提升 1. Azure OpenAI Service 终于来了 开发人员可以通过 Azure OpenAI Service 来完成前后文推理，阅读理解，和用于编写辅助、代码生成和理解非结构化数据等相关应用场景。利用 Azure OpenAI Service 可以基于应用场景设置不同的模型包括 GPT-3 系列( Ada/Babbage/Curie/DaVince ) 和 Codex 系列( Davinci-codex / Cushman-codex )。以下我归纳一下 Azure OpenAI Service 基于 GPT-3 和 Codex 相关模型的能力，希望对大家在应用时有所帮助 。 2. Azure 机器学习服务能力的提升 Azure 机器学习是用于加速和管理机器学习项目生命周期的云服务。 机器学习专业人员、数据科学家和工程师可以在日常工作流中使用它：训练和部署模型，以及管理 MLOps。 在 Build 2022 上微软带来了全新的 Azure ML CLI (v2) , 机器学习的管理人员可以通过全新的命令行参与到管理机器学习生命周期中。你可以通过 Azure ML CLI(v2) 来使用计算资源、环境和数据集等资产来训练机器学习模型。 例如： 通过 Azure ML CLI(v2)来直接创建计算实例" />
+<link rel="canonical" href="/cnblog/2022/05/26/Microsoft-Build-2022-%E4%B8%8A%E5%BC%80%E5%8F%91%E8%80%85%E6%9C%80%E5%BA%94%E5%85%B3%E6%B3%A8%E7%9A%84%E4%B8%83%E5%A4%A7%E6%96%B9%E5%90%91%E4%B8%BB%E8%A6%81%E6%8A%80%E6%9C%AF%E6%9B%B4%E6%96%B0.html" />
+<meta property="og:url" content="/cnblog/2022/05/26/Microsoft-Build-2022-%E4%B8%8A%E5%BC%80%E5%8F%91%E8%80%85%E6%9C%80%E5%BA%94%E5%85%B3%E6%B3%A8%E7%9A%84%E4%B8%83%E5%A4%A7%E6%96%B9%E5%90%91%E4%B8%BB%E8%A6%81%E6%8A%80%E6%9C%AF%E6%9B%B4%E6%96%B0.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-26T12:48:10+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Microsoft Build 2022 上开发者最应关注的七大方向主要技术更新" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-26T12:48:10+00:00","datePublished":"2022-05-26T12:48:10+00:00","description":"一年一度的 Microsoft Build 终于来了，带来了非常非常多的新技术和功能更新。不知道各位小伙伴有没有和我一样熬夜看了开幕式和五个核心主题的全过程呢？接下来我和大家来谈一下作为开发者最应关注的七大方向技术更新。 AI 能力的提升 1. Azure OpenAI Service 终于来了 开发人员可以通过 Azure OpenAI Service 来完成前后文推理，阅读理解，和用于编写辅助、代码生成和理解非结构化数据等相关应用场景。利用 Azure OpenAI Service 可以基于应用场景设置不同的模型包括 GPT-3 系列( Ada/Babbage/Curie/DaVince ) 和 Codex 系列( Davinci-codex / Cushman-codex )。以下我归纳一下 Azure OpenAI Service 基于 GPT-3 和 Codex 相关模型的能力，希望对大家在应用时有所帮助 。 2. Azure 机器学习服务能力的提升 Azure 机器学习是用于加速和管理机器学习项目生命周期的云服务。 机器学习专业人员、数据科学家和工程师可以在日常工作流中使用它：训练和部署模型，以及管理 MLOps。 在 Build 2022 上微软带来了全新的 Azure ML CLI (v2) , 机器学习的管理人员可以通过全新的命令行参与到管理机器学习生命周期中。你可以通过 Azure ML CLI(v2) 来使用计算资源、环境和数据集等资产来训练机器学习模型。 例如： 通过 Azure ML CLI(v2)来直接创建计算实例","headline":"Microsoft Build 2022 上开发者最应关注的七大方向主要技术更新","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/26/Microsoft-Build-2022-%E4%B8%8A%E5%BC%80%E5%8F%91%E8%80%85%E6%9C%80%E5%BA%94%E5%85%B3%E6%B3%A8%E7%9A%84%E4%B8%83%E5%A4%A7%E6%96%B9%E5%90%91%E4%B8%BB%E8%A6%81%E6%8A%80%E6%9C%AF%E6%9B%B4%E6%96%B0.html"},"url":"/cnblog/2022/05/26/Microsoft-Build-2022-%E4%B8%8A%E5%BC%80%E5%8F%91%E8%80%85%E6%9C%80%E5%BA%94%E5%85%B3%E6%B3%A8%E7%9A%84%E4%B8%83%E5%A4%A7%E6%96%B9%E5%90%91%E4%B8%BB%E8%A6%81%E6%8A%80%E6%9C%AF%E6%9B%B4%E6%96%B0.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Microsoft Build 2022 上开发者最应关注的七大方向主要技术更新</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-26T12:48:10+00:00" itemprop="datePublished">May 26, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>一年一度的 Microsoft Build 终于来了，带来了非常非常多的新技术和功能更新。不知道各位小伙伴有没有和我一样熬夜看了开幕式和五个核心主题的全过程呢？接下来我和大家来谈一下作为开发者最应关注的七大方向技术更新。</p>
+
+<h2 id="ai-能力的提升"><strong>AI 能力的提升</strong></h2>
+
+<h3 id="1-azure-openai-service-终于来了"><strong>1. Azure OpenAI Service 终于来了</strong></h3>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525030147153-1197045912.png" alt="" /></p>
+
+<p>开发人员可以通过 Azure OpenAI Service 来完成前后文推理，阅读理解，和用于编写辅助、代码生成和理解非结构化数据等相关应用场景。利用 Azure OpenAI Service 可以基于应用场景设置不同的模型包括 GPT-3 系列( Ada/Babbage/Curie/DaVince ) 和 Codex 系列( Davinci-codex / Cushman-codex )。以下我归纳一下 Azure OpenAI Service 基于 GPT-3 和 Codex 相关模型的能力，希望对大家在应用时有所帮助 。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525030416272-1359739160.png" alt="" /></p>
+
+<h3 id="2-azure-机器学习服务能力的提升"><strong>2. Azure 机器学习服务能力的提升</strong></h3>
+
+<p>Azure 机器学习是用于加速和管理机器学习项目生命周期的云服务。 机器学习专业人员、数据科学家和工程师可以在日常工作流中使用它：训练和部署模型，以及管理 MLOps。 在 Build 2022 上微软带来了全新的 Azure ML CLI (v2) , 机器学习的管理人员可以通过全新的命令行参与到管理机器学习生命周期中。你可以通过 Azure ML CLI(v2) 来使用计算资源、环境和数据集等资产来训练机器学习模型。</p>
+
+<p>例如：</p>
+
+<p>通过 Azure ML CLI(v2)来直接创建计算实例</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>az ml compute create --name "testdev-vm" --size STANDARD_DS11_V2 --type ComputeInstance
+</code></pre></div></div>
+
+<p>通过 Azure ML CLI(v2)来直接创建计算集群</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>az ml compute create --name "aml-cluster" --size STANDARD_DS11_V2 --max-instances 2 --type AmlCompute
+</code></pre></div></div>
+
+<p>还有大家关注的 AutoML 功能也新增了对自然语言处理的支持。可以与 Azure 机器学习数据标签功能无缝集成，以标记文本数据或引入现有标记数据。</p>
+
+<h3 id="3-认知服务功能的整合和改进"><strong>3. 认知服务功能的整合和改进</strong></h3>
+
+<p>当然在传统认知服务上也还有一些增强的功能，例如 Azure 表单识别中段落、标题和标题的布局功能可实现更精确的文本提取，还有Azure Bot Service 和 Power Virtual Agents 集成，以及 Azure Metrics Advisor 的新自动调整功能使用户能够自定义服务以仅显示个性化异常。</p>
+
+<h2 id="net-全场景开发终于到来了"><strong>.NET 全场景开发终于到来了</strong></h2>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525030520462-56691447.png" alt="" /></p>
+
+<p>MAUI 终于正式发布，这补全了 .NET 6 的所有功能。你可以通过 MAUI 用 C# 来完成跨平台的应用开发，除了传统的原生开发支持外，还可以结合 Blazor Hybrid 来完成相关的应用开发。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525030544628-1951878011.png" alt="" /></p>
+
+<p>除了 MAUI 的正式发布外，还有开发工具的支持，除了 Visual Studio 2022 的 MAUI 支持外，Visual Studio 2022 for Mac 也正式发布 ，支持 MAUI 的开发。比较遗憾一点，现阶段 Visual Studio 2022 for Mac 正式版在 MAUI 的支持还不完美， 建议各位 macOS 的小伙伴考虑用 Visual Studio 2022 preview for Mac (17.3 Preview 1) / Visual Studio Code (Comet)来做相关开发。</p>
+
+<p>当然在 .NET 6 完善的同时， .NET 7 也在预览 ， 像大家关注的 Minimal API ， WASI 的支持都会不断在后续的版本中支持。建议各位小伙伴可以关注 Build 上 .NET 的相关技术分会场专题了解更多。</p>
+
+<h2 id="为云原生时代添砖加瓦"><strong>为云原生时代添砖加瓦</strong></h2>
+
+<h3 id="1-azure-container-apps-终于来了"><strong>1. Azure Container Apps 终于来了</strong></h3>
+
+<p>Azure Container Apps 正式发布，Azure Container Apps 可以执行打包在任何容器中的应用程序代码，并且不受运行时或编程模型的影响。</p>
+
+<p>Azure Container Apps 的优势：</p>
+
+<ol>
+  <li>抛开管理云基础设施和复杂容器编排器的顾虑。</li>
+  <li>支持 Serverless</li>
+  <li>扩展 HTTP 请求、事件或运行始终在线的后台作业</li>
+  <li>入口和服务到服务通信的自动加密</li>
+  <li>建立在 AKS、KEDA、Dapr 和 Envoy 的基础上</li>
+</ol>
+
+<p>你可以通过 Azure Container Apps 和 Dapr 完成非常非常棒的云原生解决方案，以下是一个基于 Dapr + Azure Container Apps + Azure Service 的电商架构方案</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525030654825-1705773739.png" alt="" /></p>
+
+<h3 id="2-draft--增强-aks-的开发体验"><strong>2. Draft  增强 AKS 的开发体验</strong></h3>
+
+<p>我们知道 Draft ( <a href="https://github.com/azure/draft">https://github.com/azure/draft</a> ) 通过获取非容器化应用程序并生成 Dockerfile、Kubernetes 清单、Helm 图表、Kustomize 配置以及与容器化应用程序相关的其他组件，使开发人员可以更轻松地开始构建在 Kubernetes 上运行的应用程序。 Draft 还可以生成 GitHub Action 工作流文件，以快速构建应用程序并将其部署到任何 Kubernetes 集群上。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525030744822-327916901.gif" alt="" /></p>
+
+<p>Build 2022 上发布了 全新的 Draft 已经整合到 AKS CLI 上，你可以安装 AKS-Draft 插件 ， 开发人员可以通过 Draft 快速创建、容器化并部署相关应用到 Azure Kubernetes Services 上。</p>
+
+<h3 id="3-其他功能更新"><strong>3. 其他功能更新</strong></h3>
+
+<p>除了 Azure Container Apps，AKS 等相关内容外， 微软也为 Azure App Services 提供了 gRPC 支持，可以在 Azure 应用服务上托管 gRPC 应用程序。 也有面向企业的 Azure Spring Apps ， 新增了 Service Bus 资源管理器等。</p>
+
+<h2 id="teams-开发功能逐步完善"><strong>Teams 开发功能逐步完善</strong></h2>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525030830771-1124988669.png" alt="" /></p>
+
+<p>Microsoft Visual Studio Code 的 Teams 工具包插件可帮助创建和部署具有集成标识、云存储访问、来自 Microsoft Graph 的数据以及采用零配置方法的其他 Azure 和 Microsoft 365 服务的 Teams 应用。 对于 Teams 应用开发，Teams 工具包允许直接从 Visual Studio Code 创建、调试和部署 Teams 应用。</p>
+
+<p>开发人员能够通过新的 Teams SDK 在应用程序中构建 Live Share 功能,提升Teams 会议中的实时协作体验。 Live Share 体验工具基于 Microsoft Fluid Framework 构建，允许开发人员通过客户端用几行代码创建同步的会议体验。</p>
+
+<h2 id="低代码继续前行"><strong>低代码继续前行</strong></h2>
+
+<h3 id="1-power-virtual-agent-新的智能机器人开发体验"><strong>1. Power Virtual Agent 新的智能机器人开发体验</strong></h3>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525030908215-655637136.png" alt="" /></p>
+
+<p>它将 Azure Bot Framework Composer 的专业代码功能的复杂性与 Power Virtual Agent 低代码平台的简单性相结合。 这将使专业开发人员和业务专家更容易在一个 Microsoft 智能机器人工作室中合作。</p>
+
+<h3 id="2-powerplatform-的新成员-power-pages"><strong>2. PowerPlatform 的新成员 Power Pages</strong></h3>
+
+<p>Microsoft Power Pages 是一个低代码开发和托管平台，非常适合构建以业务为中心的网站，允许低代码制作者和专业开发人员通过流畅的视觉体验为桌面和移动设备设计、配置和发布网站。以前，Power Pages 作为 Power Apps 中的一项功能存在，称为 Power Apps 门户。 Power Pages 将成为 Power Platform 系列的第五个成员，作为 Power Platform 产品组合中的独立产品。全新的 Power Pages 带来了全新的设计工作室，有非常丰富的模版中心，通过 Pro-Developer 还可以和 Visual Studio、GitHub 和 Azure DevOps 的集成，以帮助开发人员实现高级业务需求。 当然 Power Pages 也打通了 Microsoft Dataverse ，允许用户安全地收集业务信息并与站点访问者共享。</p>
+
+<h3 id="3-power-automate-中的无人值守机器人流程自动化-rpa-和虚拟机-vm"><strong>3. Power Automate 中的无人值守机器人流程自动化 (RPA) 和虚拟机 (VM)</strong></h3>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525031044982-1642399996.png" alt="" /></p>
+
+<p>通过托管由 Azure 提供支持的 VM（例如 Windows 365），组织可以使用 Power Automate 的内置自动缩放功能来扩展 VM 容量，支持根据需要自动向上或向下执行 RPA 流。</p>
+
+<h2 id="windows-开发生态的改变"><strong>Windows 开发生态的改变</strong></h2>
+
+<h3 id="1-arm-生态来了"><strong>1. ARM 生态来了</strong>*</h3>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525031127416-440001124.png" alt="" /></p>
+
+<p>微软正在开发一款由高通骁龙计算平台提供支持的新 Windows-on-Arm 开发套件，该套件将允许 Windows 开发人员构建 Arm 原生应用程序。</p>
+
+<p>微软基于 Project Volterra ，推出一个全面的 ARM 原生开发人员工具集，其中就包括 Visual Studio 2022、Visual Studio Code 、.NET 和 .NET Framework 的 ARM 原生版本。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525031154873-390516734.png" alt="" /></p>
+
+<p>Microsoft 也正在努力支持 ARM64 的 Open JDK、Python、LLVM、Node 和 Git 等项目。</p>
+
+<p>Project Volterra 也使开发人员能够利用强大的集成神经处理单元 (NPU) 来构建执行本地 AI 加速工作负载的应用程序。Windows 基于 Project Volterra 通过 Hybrid Loop 模式 在客户端和云之间动态转移模型 AI 应用推理时的负载。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525031218950-2091537232.png" alt="" /></p>
+
+<h3 id="2-更强大的-microsoft-edge-webview2"><strong>2. 更强大的 Microsoft Edge WebView2</strong></h3>
+
+<p>Microsoft Edge WebView2 是 Microsoft 用于构建嵌入式浏览体验的最新 Web 框架。  WebView2 可与 .NET MAUI 框架一起使用，帮助开发人员嵌入基于 Web 的体验。 适用于 WinUI 2/UWP 的 WebView2 也即将全面推出。</p>
+
+<p>我们知道Internet Explorer 11 (IE11) 将于 2022 年 6 月 15 日停用。但是，对于需要继续访问基于 Internet Explorer 的关键 Web 应用程序的用户和组织，Microsoft Edge 提供了与 Internet Explorer 模式的向后兼容性。 对于 Web 开发人员来说，这意味着不再需要致力于向后兼容 IE11。 对于通过 MSHTML (Trident) 引擎嵌入 Web 内容的应用程序开发人员，该应用程序在 IE11 停用后将保持不变，并将继续受到支持。</p>
+
+<h3 id="3-全栈开发者首选平台---windows-11"><strong>3. 全栈开发者首选平台 - Windows 11</strong></h3>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525031256589-1023431753.png" alt="" /></p>
+
+<p>Windows 11 正在打造一个开发者喜欢的环境，开发者可以通过 Visual Studio / Visual Studio Code 结合 WSL / WSA / Windows Terminal / Microsoft Edge 开发人工智能， 安卓， 云原生， IoT 网页等相关应用。作为一个开放平台，Windows 欢迎跨平台和任何编程语言的开发者和应用程序，包括 .NET、Web、Android、C++ 和 Linux。开发人员可以使用他们常用的技术和开发工具为 Windows 设计应用程序。</p>
+
+<h2 id="更智能化的大数据平台"><strong>更智能化的大数据平台</strong></h2>
+
+<h3 id="1-microsoft-intelligent-data-platform--发布"><strong>1. Microsoft Intelligent Data Platform  发布</strong></h3>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525031359420-1100374646.png" alt="" /></p>
+
+<p>Microsoft Intelligent Data Platform 正式发布，它是一个全新的集成平台，它统一了数据库、分析和治理，使组织能够投入更多时间来创造价值，而不是集成和管理零散的数据资产。</p>
+
+<p>Microsoft Intelligent Data Platform 使组织能够轻松地在快速发展的环境中进行调整和调整，为其应用程序添加智能层，解锁预测性见解并在任何地方管理他们的数据。 它解决了市场分散等主要客户痛点，同时还使客户能够更有效地捕获和利用数据以增加市场份额。</p>
+
+<h3 id="2-sql-server-2022-发布预览"><strong>2. SQL Server 2022 发布预览</strong></h3>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525031450787-892165320.png" alt="" /></p>
+
+<p>SQL Server 2022 是最支持 Azure 的 SQL Server 版本，在性能、安全性和可用性方面都有改进。</p>
+
+<p>SQL Server 2022 与 Azure Synapse Link 和 Microsoft Purview 集成，能够从大规模数据中获得更深入的分析、预测和治理。 通过与 Azure SQL 托管实例的灾难恢复 (DR) 以及与云分析的无 ETL（提取、转换和加载）连接增强了云集成，这使数据库管理员能够以更大的灵活性和最小的影响来管理他们的数据资产。</p>
+
+<h3 id="3-azure-cosmos-db-开发更友好了"><strong>3. Azure Cosmos DB 开发更友好了</strong></h3>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525031537586-1601962883.png" alt="" /></p>
+
+<p>Azure Cosmos DB 的新功能使开发人员能够构建可扩展、经济高效的云原生应用程序，并将企业级功能添加到他们的应用程序中。开发人员还有新的、免费的在线和离线测试方式。 Azure Cosmos DB 现已推出了 30 天免费试用体验，现已推出，并支持 Azure Cosmos DB Linux 桌面模拟器中的 MongoDB 数据。</p>
+
+<h3 id="4-azure-synapse-analytics--功能更新"><strong>4. Azure Synapse Analytics  功能更新</strong></h3>
+
+<p><img src="https://img2022.cnblogs.com/blog/2170493/202205/2170493-20220525031604342-1883868414.png" alt="" /></p>
+
+<p>• Azure Synapse Link for SQL 通过消除操作数据存储和 Azure Synapse Analytics 之间的障碍，实现近乎实时的洞察。对于 SQL Server 2022 和 Azure SQL 数据库，Azure Synapse Link 可作为 Azure Synapse Analytics 的无缝数据管道，因此客户无需管理 ETL 逻辑。这使得近乎实时地对运营数据进行商业智能 (BI) 报告变得更加容易。</p>
+
+<p>• Microsoft Graph Data Connect 使 Microsoft 365 客户可以轻松利用其组织数据的能力，将其移动到 Azure Synapse 中，从中发现新的可操作的业务洞察力，从而提高客户满意度、提高生产力和优化业务流程。使用 Azure Synapse 的 Microsoft 365 客户可以使用 Azure Synapse Analytics 轻松解锁新的见解，充分利用他们已经拥有的重要的员工和客户协作数据。</p>
+
+<h2 id="后记"><strong>后记</strong></h2>
+
+<p>Build 2022 的技术更新非常大，涵盖了云原生，大数据，Windows，人工智能，低代码，开发技术及工具等领域，作为开发人员都可以从中学习到不少新的技能和知识。上述的部分是我认为的比较重要和大家值得关注的一些新技术和功能更新，建议各位小伙伴也可以去看官方发布的文档了解更多。</p>
+
+<h3 id="相关资源"><strong>相关资源</strong></h3>
+
+<ol>
+  <li>了解Microsoft Build 2022 的相关技术及更新，请访问 <a href="https://news.microsoft.com/build-2022-book-of-news/">https://news.microsoft.com/build-2022-book-of-news/</a></li>
+  <li>如果想了解更多 Azure OpenAI Service 应用的相关内容，请访问 <a href="https://blogs.microsoft.com/ai/azure-openai-service-helps-customers-accelerate-innovation-with-large-ai-models-microsoft-expands-availability/">https://blogs.microsoft.com/ai/azure-openai-service-helps-customers-accelerate-innovation-with-large-ai-models-microsoft-expands-availability/</a></li>
+  <li>如果想了解关于 Azure OpenAI Service 相关内容，请访问 <a href="https://azure.microsoft.com/en-us/services/cognitive-services/openai-service/?msclkid=4f323323cd6f11ec9ce43cc184aa6d38">https://azure.microsoft.com/en-us/services/cognitive-services/openai-service/?msclkid=4f323323cd6f11ec9ce43cc184aa6d38</a></li>
+  <li>如果想学习如何使用 Azure ML CLI(v2) 在 Azure 机器学习服务中训练模型，请访问 <a href="https://docs.microsoft.com/zh-cn/learn/paths/train-models-azure-machine-learning-cli-v2/">https://docs.microsoft.com/zh-cn/learn/paths/train-models-azure-machine-learning-cli-v2/</a></li>
+  <li>了解如何用 AutoML 以通过 Python 训练自然语言处理模型，请访问 <a href="https://docs.microsoft.com/zh-cn/azure/machine-learning/how-to-auto-train-nlp-models">https://docs.microsoft.com/zh-cn/azure/machine-learning/how-to-auto-train-nlp-models</a></li>
+  <li>如果想了解更多 .NET MAUI 正式版本更新的内容，请访问 <a href="https://devblogs.microsoft.com/dotnet/introducing-dotnet-maui-one-codebase-many-platforms/">https://devblogs.microsoft.com/dotnet/introducing-dotnet-maui-one-codebase-many-platforms/</a></li>
+  <li>下载 Visual Studio 2022 for Mac 正式版本 ，请访问 <a href="https://visualstudio.microsoft.com/thank-you-downloading-visual-studio-mac/?sku=communitymac&amp;rel=17">https://visualstudio.microsoft.com/thank-you-downloading-visual-studio-mac/?sku=communitymac&amp;rel=17</a></li>
+  <li>下载 Visual Studio 2022 ( Windows / macOS ) 17.3 Preview , 请访问 <a href="https://aka.ms/vs2022preview">https://aka.ms/vs2022preview</a></li>
+  <li>如果想了解更多 .NET 在 WASI 的开发相关内容，请访问 <a href="https://mybuild.microsoft.com/zh-CN/sessions/ddf48da7-d3e6-4ba5-affd-b5735ce205fa?source=sessions">https://mybuild.microsoft.com/zh-CN/sessions/ddf48da7-d3e6-4ba5-affd-b5735ce205fa?source=sessions</a></li>
+  <li>如果想了解更多 .NET Minimal API 的最新进展，请访问 <a href="https://mybuild.microsoft.com/zh-CN/sessions/e6b8b078-2e41-47fd-a497-151f1b766e2b?source=sessions">https://mybuild.microsoft.com/zh-CN/sessions/e6b8b078-2e41-47fd-a497-151f1b766e2b?source=sessions</a></li>
+  <li>如果想了解更多 Azure Container Apps 的相关内容，请访问 <a href="https://azure.microsoft.com/zh-cn/services/container-apps/?ocid=AID3042118#overview">https://azure.microsoft.com/zh-cn/services/container-apps/?ocid=AID3042118#overview</a></li>
+  <li>如果想了解更多用 Draft 2 开发 AKS 的内容，请访问 <a href="https://docs.microsoft.com/zh-cn/azure/aks/draft">https://docs.microsoft.com/zh-cn/azure/aks/draft</a></li>
+  <li>如果想了解 Microsoft Teams 开发的相关内容，请访问 <a href="https://docs.microsoft.com/zh-cn/microsoftteams/platform/get-started/get-started-overview">https://docs.microsoft.com/zh-cn/microsoftteams/platform/get-started/get-started-overview</a></li>
+  <li>如果想了解更多低代码开发的相关内容，请访问 <a href="https://powerapps.microsoft.com/en-us/what-is-low-code/">https://powerapps.microsoft.com/en-us/what-is-low-code/</a></li>
+  <li>如果想了解更多 Microsoft Intelligent Data Platform 的相关内容，请访问</li>
+  <li>如果想了解更多 SQL Server 2022 的相关内容，请访问 <a href="https://www.microsoft.com/en-us/sql-server/sql-server-2022">https://www.microsoft.com/en-us/sql-server/sql-server-2022</a></li>
+  <li>如果想了解更多 Azure Synapse Analytics 的相关内容，请访问 <a href="https://docs.microsoft.com/zh-cn/azure/synapse-analytics/">https://docs.microsoft.com/zh-cn/azure/synapse-analytics/</a></li>
+  <li>如果想了解更多 Windows  在 ARM 上的 Project Volterra 相关进展，请访问 <a href="https://blogs.windows.com/windowsdeveloper/2022/05/24/create-next-generation-experiences-at-scale-with-windows/">https://blogs.windows.com/windowsdeveloper/2022/05/24/create-next-generation-experiences-at-scale-with-windows/</a></li>
+  <li>如果想了解更多 Edge WebView2 的相关内容，请访问 <a href="https://docs.microsoft.com/zh-cn/microsoft-edge/webview2/">https://docs.microsoft.com/zh-cn/microsoft-edge/webview2/</a>
+    <blockquote>
+      <p>作者:MicrosoftReactor
+原文:https://www.cnblogs.com/MSReactor/p/16307909.html</p>
+    </blockquote>
+  </li>
+</ol>
+
+  </div><a class="u-url" href="/cnblog/2022/05/26/Microsoft-Build-2022-%E4%B8%8A%E5%BC%80%E5%8F%91%E8%80%85%E6%9C%80%E5%BA%94%E5%85%B3%E6%B3%A8%E7%9A%84%E4%B8%83%E5%A4%A7%E6%96%B9%E5%90%91%E4%B8%BB%E8%A6%81%E6%8A%80%E6%9C%AF%E6%9B%B4%E6%96%B0.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

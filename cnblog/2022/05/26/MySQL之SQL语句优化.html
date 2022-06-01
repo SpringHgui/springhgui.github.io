@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>MySQL之SQL语句优化 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="MySQL之SQL语句优化" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="语句优化 即优化器利用自身的优化器来对我们写的SQL进行优化，然后再将其放入InnoDB引擎中执行。 条件简化 移除不必要的括号 上面的括号很没必要，优化器就会直接去掉。 等值传递 同样的，虽然是两列比较，但是a的值只有一个，所以可以优化 常量传递 可以优化为 移除没用的条件 当前两个条件发生时，最后一个条件必然发生，所以可以优化 表达式计算 优化器不会对其进行优化，而且这个坏处很多就是不能使用索引了，所以我们尽量让列单独出现，而不是在表达式计算中。 常量表检测 当表中只有一两条数据，或则使用主键或唯一列的索引等值查询的话就会被MySQL优化器视为常量表，直接将SQL语句优化成常量。 外连接消除 外连接呢，首先连接的顺序是固定的，故驱动表和被驱动表是固定不变的。所以是不能像内连接一样交换驱动表的。 但是呢，有一种情况 我们设定了table2的列是非空的，这意味着什么，当table1匹配不到时设置table2列为null，但是却不满足搜索条件被过滤掉，所以左连接匹配失败null相当于是失效的。这个语句和内连接是没有区别的，直接将其优化为内连接即可。 所以当在外连接出现时，但是被驱动表拒绝空值时，此时外连接和内连接是可以互相转换的，而内连接可以通过交换驱动表来优化SQL查询成本。 子查询优化 子查询分类 标量子查询 列子查询 行子查询 表子查询" />
+<meta property="og:description" content="语句优化 即优化器利用自身的优化器来对我们写的SQL进行优化，然后再将其放入InnoDB引擎中执行。 条件简化 移除不必要的括号 上面的括号很没必要，优化器就会直接去掉。 等值传递 同样的，虽然是两列比较，但是a的值只有一个，所以可以优化 常量传递 可以优化为 移除没用的条件 当前两个条件发生时，最后一个条件必然发生，所以可以优化 表达式计算 优化器不会对其进行优化，而且这个坏处很多就是不能使用索引了，所以我们尽量让列单独出现，而不是在表达式计算中。 常量表检测 当表中只有一两条数据，或则使用主键或唯一列的索引等值查询的话就会被MySQL优化器视为常量表，直接将SQL语句优化成常量。 外连接消除 外连接呢，首先连接的顺序是固定的，故驱动表和被驱动表是固定不变的。所以是不能像内连接一样交换驱动表的。 但是呢，有一种情况 我们设定了table2的列是非空的，这意味着什么，当table1匹配不到时设置table2列为null，但是却不满足搜索条件被过滤掉，所以左连接匹配失败null相当于是失效的。这个语句和内连接是没有区别的，直接将其优化为内连接即可。 所以当在外连接出现时，但是被驱动表拒绝空值时，此时外连接和内连接是可以互相转换的，而内连接可以通过交换驱动表来优化SQL查询成本。 子查询优化 子查询分类 标量子查询 列子查询 行子查询 表子查询" />
+<link rel="canonical" href="/cnblog/2022/05/26/MySQL%E4%B9%8BSQL%E8%AF%AD%E5%8F%A5%E4%BC%98%E5%8C%96.html" />
+<meta property="og:url" content="/cnblog/2022/05/26/MySQL%E4%B9%8BSQL%E8%AF%AD%E5%8F%A5%E4%BC%98%E5%8C%96.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-26T12:48:05+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="MySQL之SQL语句优化" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-26T12:48:05+00:00","datePublished":"2022-05-26T12:48:05+00:00","description":"语句优化 即优化器利用自身的优化器来对我们写的SQL进行优化，然后再将其放入InnoDB引擎中执行。 条件简化 移除不必要的括号 上面的括号很没必要，优化器就会直接去掉。 等值传递 同样的，虽然是两列比较，但是a的值只有一个，所以可以优化 常量传递 可以优化为 移除没用的条件 当前两个条件发生时，最后一个条件必然发生，所以可以优化 表达式计算 优化器不会对其进行优化，而且这个坏处很多就是不能使用索引了，所以我们尽量让列单独出现，而不是在表达式计算中。 常量表检测 当表中只有一两条数据，或则使用主键或唯一列的索引等值查询的话就会被MySQL优化器视为常量表，直接将SQL语句优化成常量。 外连接消除 外连接呢，首先连接的顺序是固定的，故驱动表和被驱动表是固定不变的。所以是不能像内连接一样交换驱动表的。 但是呢，有一种情况 我们设定了table2的列是非空的，这意味着什么，当table1匹配不到时设置table2列为null，但是却不满足搜索条件被过滤掉，所以左连接匹配失败null相当于是失效的。这个语句和内连接是没有区别的，直接将其优化为内连接即可。 所以当在外连接出现时，但是被驱动表拒绝空值时，此时外连接和内连接是可以互相转换的，而内连接可以通过交换驱动表来优化SQL查询成本。 子查询优化 子查询分类 标量子查询 列子查询 行子查询 表子查询","headline":"MySQL之SQL语句优化","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/26/MySQL%E4%B9%8BSQL%E8%AF%AD%E5%8F%A5%E4%BC%98%E5%8C%96.html"},"url":"/cnblog/2022/05/26/MySQL%E4%B9%8BSQL%E8%AF%AD%E5%8F%A5%E4%BC%98%E5%8C%96.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">MySQL之SQL语句优化</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-26T12:48:05+00:00" itemprop="datePublished">May 26, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h1 id="语句优化">语句优化</h1>
+
+<p>即优化器利用自身的优化器来对我们写的SQL进行优化，然后再将其放入InnoDB引擎中执行。</p>
+
+<h1 id="条件简化">条件简化</h1>
+
+<h2 id="移除不必要的括号">移除不必要的括号</h2>
+
+<p>上面的括号很没必要，优化器就会直接去掉。</p>
+
+<h2 id="等值传递">等值传递</h2>
+
+<p>同样的，虽然是两列比较，但是a的值只有一个，所以可以优化</p>
+
+<h2 id="常量传递">常量传递</h2>
+
+<p>可以优化为</p>
+
+<h2 id="移除没用的条件">移除没用的条件</h2>
+
+<p>当前两个条件发生时，最后一个条件必然发生，所以可以优化</p>
+
+<h2 id="表达式计算">表达式计算</h2>
+
+<p>优化器不会对其进行优化，而且这个坏处很多就是不能使用索引了，所以我们尽量让列单独出现，而不是在表达式计算中。</p>
+
+<h2 id="常量表检测">常量表检测</h2>
+
+<p>当表中只有一两条数据，或则使用主键或唯一列的索引等值查询的话就会被MySQL优化器视为常量表，直接将SQL语句优化成常量。</p>
+
+<h1 id="外连接消除">外连接消除</h1>
+
+<p>外连接呢，首先连接的顺序是固定的，故驱动表和被驱动表是固定不变的。所以是不能像内连接一样交换驱动表的。</p>
+
+<p>但是呢，有一种情况</p>
+
+<p>我们设定了table2的列是非空的，这意味着什么，当table1匹配不到时设置table2列为null，但是却不满足搜索条件被过滤掉，所以左连接匹配失败null相当于是失效的。这个语句和内连接是没有区别的，直接将其优化为内连接即可。</p>
+
+<p>所以当在外连接出现时，但是被驱动表<strong>拒绝空值</strong>时，此时外连接和内连接是可以互相转换的，而内连接可以通过交换驱动表来优化SQL查询成本。</p>
+
+<h1 id="子查询优化">子查询优化</h1>
+
+<p>子查询分类</p>
+
+<ul>
+  <li>标量子查询</li>
+  <li>列子查询</li>
+  <li>行子查询</li>
+  <li>表子查询</li>
+</ul>
+
+<p>再分</p>
+
+<ul>
+  <li>相关子查询</li>
+  <li>不相关子查询</li>
+</ul>
+
+<h2 id="标量子查询">标量子查询</h2>
+
+<p>不相关标量子查询</p>
+
+<p>对于不相关的标量子查询来说，就是先执行子查询，然后在对外部查询进行查询。</p>
+
+<p>相关子查询</p>
+
+<p>对于相关的标量子查询</p>
+
+<ol>
+  <li>首先取出外部的每条满足自身搜索条件的行，然后传入子查询对应列的值。</li>
+  <li>计算子查询的结果</li>
+  <li>在判断外部key1对于这个子查询给的结果是否满足条件，满足加入结果行。</li>
+  <li>继续循环回1，直到遍历完所有外层表的行。</li>
+</ol>
+
+<p>其实和连接的流程差不多。</p>
+
+<p>优化器对于标量的子查询并不需要什么优化，因为对于标量的子查询来说，数据量还算很小的了。</p>
+
+<h2 id="in子查询优化">IN子查询优化</h2>
+
+<p>对于上述不相关的IN查询来说，如果IN子查询的参数少的话，还可以试着加载到内存，然后让外层查询对很多的条件进行比较。</p>
+
+<p>但是如果子查询数据量一旦大了起来，内存无法全部加载完，或导致外层查询需要比较的参数太多，外层记录需要对于过多条件进行比较，导致索引无法使用，因为每一次都要使用索引，每次都要比较，还不如直接全表扫描。最后导致性能很低。</p>
+
+<h3 id="物化表优化">物化表优化</h3>
+
+<p>MySQL对这种in参数过多时，不会将子查询在作为外部的参数，而是直接创建一个临时表来存储子查询的结果。</p>
+
+<ol>
+  <li>将临时表的列为子查询结果的列，并对其进行去重。</li>
+  <li>临时表经过去重通常不会太大，创建的是Memory的存储引擎的临时表，并对其创建哈希索引。</li>
+  <li></li>
+</ol>
+
+<p>子查询转物化表materialized_table后，我们还能将物化表和外层查询转换为连接的方式。</p>
+
+<p>然后我们就可以用之前计算成本的知识来计算那个作为驱动表更合适了。</p>
+
+<blockquote>
+  <p>只有不相关子查询才能转换为物化表</p>
+</blockquote>
+
+<h3 id="semi-join优化">semi-join优化</h3>
+
+<p>像上述结果一样，我们将查询结果转换为物化表，然后我们在把物化表转换为连接的方式。</p>
+
+<p>我们为什么不能直接将子查询转换为连接的方式呢？这就是semi-join优化。</p>
+
+<p>我们可以试试将其转换为如下语句</p>
+
+<p>三种情况</p>
+
+<ul>
+  <li>被驱动表y的行不满足连接条件的，不能加入结果集。</li>
+  <li>被驱动表y一个key3满足和驱动表x的key1相等且y表key3有且仅有一条，有一条记录加入结果集。</li>
+  <li>被驱动表y有key3满足连接条件但是一个key3有很多条记录，就会有多条记录加入结果集。</li>
+</ul>
+
+<p>能满足的条件就是y表的key3是主键或唯一列，不然就会出现多条的情况，这条语句就不等于原语句了。</p>
+
+<p>但是此时semi join半连接概念的出现，在半连接的情况下，<strong>对于驱动表x来说，我们只关心被驱动表y是否有记录能够满足连接条件的，而不关心被驱动表y有几条能匹配，最后结果集只保存驱动表x的记录。</strong></p>
+
+<p>实现半连接semi join的方法。PS：semi join半连接只是一个概念。</p>
+
+<ul>
+  <li>Table pullout （子查询中表上拉）
+    <ul>
+      <li>当子查询的查询列 ( 即select 的列 ) 是主键或唯一列，就是我们上面说的直接join 出来即可，因为不会出现多条的情况</li>
+    </ul>
+  </li>
+  <li>DuplicateWeedout execution strategy （重复值消除策略）
+    <ul>
+      <li>我们不是提到上述的我们自己改为join的方法会出现重复的情况吗，因为被驱动表的重复导致驱动表的重复。</li>
+      <li>我们就直接创建一个临时表，把s1连接的结果记录id (是数据行的id可以这么理解把) 放入临时表中，当该数据行再次被加入时临时表就会抛出主键重复的异常，就不会加入重复行了。</li>
+    </ul>
+  </li>
+  <li>LooseScan execution strategy （松散索引扫描）
+    <ul>
+      <li>当子查询列key1有子查询表的索引，这样我们就可以通过索引访问，对于每个值，只访问一行，重复值不再访问，这样来防止出现多条记录。</li>
+    </ul>
+  </li>
+  <li>Semi-join Materialization execution strategy (物化表半连接)
+    <ul>
+      <li>将<strong>不相关子查询</strong>通过物化表的方式物化为临时表，没有重复行的情形，我们可以直接转换为连接。</li>
+    </ul>
+  </li>
+  <li>FirstMatch execution strategy （首次匹配）
+    <ul>
+      <li>取外连接的一条记录，然后和子查询进行一条一条的比较。最原始的方法</li>
+    </ul>
+  </li>
+</ul>
+
+<p>semi join使用条件：</p>
+
+<ul>
+  <li>该子查询必须是和IN语句组成的布尔表达式，并且在外层的Where和on子句中出现。</li>
+  <li>外层的搜索条件必须是用and 和in子查询连接的。</li>
+  <li>子查询是单一的查询，不能union</li>
+  <li>子查询不能包含group by、having、聚集函数</li>
+  <li>…</li>
+</ul>
+
+<h3 id="exists优化">EXISTS优化</h3>
+
+<p>如果不能使用semi join和物化表，我们还可以将in的语句改造成EXISTS语句。</p>
+
+<p>将上述改造为如下语句。</p>
+
+<p>如果被驱动表key3有索引，就可以使用索引了啊 o(￣▽￣)ｄ。</p>
+
+<p>这个算是下下策了。</p>
+
+<blockquote>
+  <p>作者:大队长11
+原文:https://www.cnblogs.com/duizhangz/p/16306834.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/26/MySQL%E4%B9%8BSQL%E8%AF%AD%E5%8F%A5%E4%BC%98%E5%8C%96.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

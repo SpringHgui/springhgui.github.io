@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>关于c#多线程中的几个信号量 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="关于c#多线程中的几个信号量" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="信号量在c#多线程通信中主要用来向阻塞的线程传达信号从而使得阻塞线程继续执行 多线程信号（线程交互）：通常是指线程必须等待一个线程或者多个线程通知交互（释放信号）才可以继续执行 在c#中信号量主要有这几个 AutoResetEvent,ManualResetEvent,CountdownEvent,EventWaitHandle,Semaphore AutoResetEvent AutoResetEvent 在释放信号量后，会默认设置为无信号状态。AutoResetEvent 构造函数会传递一个initialState boolean 类型的参数，参数为false 时 需要主动去传递信 号量，传递信号量之后将重新设置为无信号状态。参数为ture 时会自动设置为有信号状态（终止状态），大体意思就是，会默认执行阻塞线程，不需要阻塞线程收到信号量才会执 行（不会阻塞调用线程）。在参数为ture 时，AutoResetEvent 类实例调用 Reset () 方法后，会将当前AutoResetEvent 类实例设置为无信号状态也就是 变成了一个 参数为 false 的 AutoResetEvent 类实例，在此之后的执行阻塞线程都需要主动去释放（传递）信号。" />
+<meta property="og:description" content="信号量在c#多线程通信中主要用来向阻塞的线程传达信号从而使得阻塞线程继续执行 多线程信号（线程交互）：通常是指线程必须等待一个线程或者多个线程通知交互（释放信号）才可以继续执行 在c#中信号量主要有这几个 AutoResetEvent,ManualResetEvent,CountdownEvent,EventWaitHandle,Semaphore AutoResetEvent AutoResetEvent 在释放信号量后，会默认设置为无信号状态。AutoResetEvent 构造函数会传递一个initialState boolean 类型的参数，参数为false 时 需要主动去传递信 号量，传递信号量之后将重新设置为无信号状态。参数为ture 时会自动设置为有信号状态（终止状态），大体意思就是，会默认执行阻塞线程，不需要阻塞线程收到信号量才会执 行（不会阻塞调用线程）。在参数为ture 时，AutoResetEvent 类实例调用 Reset () 方法后，会将当前AutoResetEvent 类实例设置为无信号状态也就是 变成了一个 参数为 false 的 AutoResetEvent 类实例，在此之后的执行阻塞线程都需要主动去释放（传递）信号。" />
+<link rel="canonical" href="/cnblog/2022/05/31/%E5%85%B3%E4%BA%8Ec%E5%A4%9A%E7%BA%BF%E7%A8%8B%E4%B8%AD%E7%9A%84%E5%87%A0%E4%B8%AA%E4%BF%A1%E5%8F%B7%E9%87%8F.html" />
+<meta property="og:url" content="/cnblog/2022/05/31/%E5%85%B3%E4%BA%8Ec%E5%A4%9A%E7%BA%BF%E7%A8%8B%E4%B8%AD%E7%9A%84%E5%87%A0%E4%B8%AA%E4%BF%A1%E5%8F%B7%E9%87%8F.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-31T08:41:49+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="关于c#多线程中的几个信号量" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-31T08:41:49+00:00","datePublished":"2022-05-31T08:41:49+00:00","description":"信号量在c#多线程通信中主要用来向阻塞的线程传达信号从而使得阻塞线程继续执行 多线程信号（线程交互）：通常是指线程必须等待一个线程或者多个线程通知交互（释放信号）才可以继续执行 在c#中信号量主要有这几个 AutoResetEvent,ManualResetEvent,CountdownEvent,EventWaitHandle,Semaphore AutoResetEvent AutoResetEvent 在释放信号量后，会默认设置为无信号状态。AutoResetEvent 构造函数会传递一个initialState boolean 类型的参数，参数为false 时 需要主动去传递信 号量，传递信号量之后将重新设置为无信号状态。参数为ture 时会自动设置为有信号状态（终止状态），大体意思就是，会默认执行阻塞线程，不需要阻塞线程收到信号量才会执 行（不会阻塞调用线程）。在参数为ture 时，AutoResetEvent 类实例调用 Reset () 方法后，会将当前AutoResetEvent 类实例设置为无信号状态也就是 变成了一个 参数为 false 的 AutoResetEvent 类实例，在此之后的执行阻塞线程都需要主动去释放（传递）信号。","headline":"关于c#多线程中的几个信号量","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/31/%E5%85%B3%E4%BA%8Ec%E5%A4%9A%E7%BA%BF%E7%A8%8B%E4%B8%AD%E7%9A%84%E5%87%A0%E4%B8%AA%E4%BF%A1%E5%8F%B7%E9%87%8F.html"},"url":"/cnblog/2022/05/31/%E5%85%B3%E4%BA%8Ec%E5%A4%9A%E7%BA%BF%E7%A8%8B%E4%B8%AD%E7%9A%84%E5%87%A0%E4%B8%AA%E4%BF%A1%E5%8F%B7%E9%87%8F.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">关于c#多线程中的几个信号量</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-31T08:41:49+00:00" itemprop="datePublished">May 31, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h1 id="信号量在c多线程通信中主要用来向阻塞的线程传达信号从而使得阻塞线程继续执行">信号量在c#多线程通信中主要用来向阻塞的线程传达信号从而使得阻塞线程继续执行</h1>
+
+<p>多线程信号（线程交互）：通常是指线程必须等待一个线程或者多个线程通知交互（释放信号）才可以继续执行<br />
+ 在c#中信号量主要有这几个 AutoResetEvent,ManualResetEvent,CountdownEvent,EventWaitHandle,Semaphore</p>
+
+<h1 id="autoresetevent">AutoResetEvent</h1>
+
+<p>AutoResetEvent 在释放信号量后，会默认设置为无信号状态。AutoResetEvent 构造函数会传递一个initialState boolean 类型的参数，参数为false 时 需要主动去传递信<br />
+ 号量，传递信号量之后将重新设置为无信号状态。参数为ture 时会自动设置为有信号状态（终止状态），大体意思就是，会默认执行阻塞线程，不需要阻塞线程收到信号量才会执<br />
+ 行（不会阻塞调用线程）。在参数为ture 时，AutoResetEvent 类实例调用 Reset () 方法后，会将当前AutoResetEvent 类实例设置为无信号状态也就是 变成了一个 参数为<br />
+ false 的 AutoResetEvent 类实例，在此之后的执行阻塞线程都需要主动去释放（传递）信号。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>private static AutoResetEvent auto = new AutoResetEvent(false);
+private static AutoResetEvent auto = new AutoResetEvent(ture);//有信号终止状态
+
+Thread thread1 = new Thread(AutoResetEventHandler);
+            Console.WriteLine("当前线程id"+Thread.CurrentThread.ManagedThreadId);
+            thread1.Start();
+            Thread.Sleep(5000);
+            auto.Set();
+           // auto.Reset();  在这种情况下new AutoResetEvent(ture) 的 类实例 会变成无信号未终止状态的 如果阻塞线程没有接收到信号量将会一直阻塞下去，直到接收到信号量
+            Thread thread2 = new Thread(AutoResetEventHandlerTwo);
+            thread2.Start();
+            Thread.Sleep(3000);//等待3秒
+
+private static void AutoResetEventHandler()
+        {
+            Console.WriteLine("当前线程id" + Thread.CurrentThread.ManagedThreadId);
+            auto.WaitOne();//阻塞线程
+            Console.WriteLine("等待一秒后执行");
+        }
+private static void AutoResetEventHandlerTwo()
+        {
+            auto.WaitOne();//阻塞线程
+            Console.WriteLine("我是第二个等待执行");
+        }
+</code></pre></div></div>
+
+<h1 id="manualresetevent">ManualResetEvent</h1>
+
+<p>ManualResetEvent 与上面的AutoResetEvent 类似在构造函数中也会传入一个Boolean类型参数，不同的是信号量的释放，AutoResetEvent在信号量释放后会自动设置为无信号状态（未终止状态），ManualResetEvent 需要我们手动调用Reset()方法将其设置为无信号量状态（未终止状态），否则其会一直保持有信号量状态（终止状态）ManualResetEvent 如果不手动重置信号量状态，阻塞线程将不会起作用，会立即执行。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>private static ManualResetEvent manualReset = new ManualResetEvent(false);
+private static ManualResetEvent manualReset = new ManualResetEvent(true);
+
+Thread thread1 = new Thread(() =&gt; {
+                manualReset.WaitOne();
+                Console.WriteLine("最开始的执行");
+            });
+            thread1.Start();
+            Thread.Sleep(3000);//休眠--等待三秒
+            manualReset.Set();//释放信号量
+            Thread thread2 = new Thread(ManualResetEventHandler1);
+            thread2.Start();
+            manualReset.Reset();//重置信号量
+            Thread thread3=new Thread(ManualResetEventHandler2);
+            manualReset.Set();//释放信号量
+            thread3.Start();
+            manualReset.Reset();
+
+private static void ManualResetEventHandler1()
+        {
+            manualReset.WaitOne();
+            Console.WriteLine("第一次等待执行");
+        }
+        private static void ManualResetEventHandler2()
+        {
+            manualReset.WaitOne();
+            Console.WriteLine("第二次等待执行");
+        }
+</code></pre></div></div>
+
+<p>上面说到过，ManualResetEvent 构造函数与AutoResetEvent构造函数是一样，通过bool类型的参数判读 类的实例是否默认释放信号量，不同的是ManualResetEvent 需要手动调用Reset（）方法。上面代码中，我们传递了一个false参数，调用了Set()方法释放信号量，然后再调用Reset()方法重置信号量，如此反复一次，ManualResetEventHandler2 会一直阻塞 直到我们释放信号量，才会继续执行。</p>
+
+<h1 id="countdownevent">CountdownEvent</h1>
+
+<p>CountdownEvent 实例化是需要传入一个int 类型作为InitialCount初始值，CountdownEvent信号量的释放很特别，只有当Countdown类的实例的CurrentCount等于0时才会释放我们的信号量，Signal()方法每次调用都会使得CurrentCount进行-1操作。Reset（）方法会重置为实例化对象时传递的参数值，也可以Reset(100)对我们的InitialCount重新赋值。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>private static CountdownEvent countdownEvent = new CountdownEvent(1000);
+
+ CountReduce();
+           // countdownThread.Start();
+            Thread thread = new Thread(() =&gt; {
+                countdownEvent.Wait();
+                Console.WriteLine("直到CountdownEvent总数="+countdownEvent.CurrentCount+"我才执行");
+                //CountdownEvent.CurrentCount//当前总数
+                //CountdownEvent.AddCount()//添加1
+                //CountdownEvent.AddCount(10);//添加指定数量
+                //CountdownEvent.InitialCount//总数
+                //CountdownEvent.Reset()//设置为InitialCount初始值
+                //CountdownEvent.Reset(100)//设置为指定初始值
+            });
+            thread.Start();
+
+private static async Task CountReduce()
+        {
+           await Task.Run(async () =&gt; {
+               for(var i = 0; i &lt; 1000; i++)
+                {
+                    await Task.Delay(100);//休眠100毫秒--等到100毫秒
+                   //if (countdownEvent.CurrentCount &lt; 10)
+                   //{
+                   //    countdownEvent.Reset(100);
+                   //    CountReduce();
+                   //}
+                   countdownEvent.Signal();
+                    Console.WriteLine("当前总数"+countdownEvent.CurrentCount);
+                }
+            });
+        }
+</code></pre></div></div>
+
+<p>上面代码中我们有用到异步方法但没有等待结果，但是但是线程的委托方法中调用了 countdownEvent.Wait()来阻塞线程;，只有当我们的CurrentCount等于0时才会释放信号量线程才不会阻塞得以继续执行（有感兴趣的可以试试这部分的代码）</p>
+
+<h1 id="eventwaithandle">EventWaitHandle</h1>
+
+<p>本地事件等待句柄是指创建EventWaitHandle 对象时指定EventResetMode枚举，可分为自动重置的事件等待句柄和手动重置的事件等待句柄。<br />
+ 关于事件等待句柄，不涉及到.NET 事件以及委托和事件处理程序，我们可以看一下官方的声明。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2568376/202205/2568376-20220529232003518-1041651781.png" alt="" /></p>
+
+<h2 id="evenetresetmodeautoreset">EvenetResetMode.AutoReset</h2>
+
+<p>看到AutoReset是不是想起了，我们上面的AutoResetEvent,其用法是一样的。在创建EventWaitHanlde对象时来指定是否自动重置信号状态。此同步事件表示一个等待线程（阻塞线程）在收到信号时自动重置信号状态。此事件向等待线程发送信号时，需要调用Set（）方法</p>
+
+<h2 id="evenetresetmodemanualreset">EvenetResetMode.ManualReset</h2>
+
+<p>在创建EventWaitHandle对象时指定手动重置信号状态。事件收到信号时手动重置信号状态，调用Set()方法释放信号。在调用ReSet()方法前，在此事件等待句柄上的一个或多个等待线程（阻塞线程）收到信号，立即继续执行，并且此时的等待事件句柄一直时保持信号状态（终止状态）。这里有个注意点，EventReseMode.ManualReset等待句柄上有一个或多个等待线程，我们要注意Rese（）的时机，等待线程恢复执行前是需要一定的执行时间的，我们无法判断那个等待线程恢复到执行前，在调用Reset()方法可能会中断等待线程的执行。如果我们希望在所有的等待线程都执行完后开启新的线程，就必须将他阻止到等待线程都完成后去发送新的信号量执行新的任务。<br />
+ 这里我们可以看看官方的说法<br />
+ <img src="https://img2022.cnblogs.com/blog/2568376/202205/2568376-20220529232158773-402309701.png" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>private static EventWaitHandle EventWaitHandle=new EventWaitHandle(false,EventResetMode.ManualReset);
+
+Thread thread1 = new Thread(EventWaitHandle1);
+            Thread thread2 = new Thread(EventWaitHandle2);
+            Thread thread3 = new Thread(EventWaitHandle3);
+            thread1.Start();
+            thread2.Start();
+            thread3.Start();
+            EventWaitHandle.Set();
+            Thread thread4 = new Thread(EventWaitHandl4);
+            Thread.Sleep(1000);
+            thread4.Start();
+            EventWaitHandle.Reset();
+
+ private static void EventWaitHandle1()
+        {
+            EventWaitHandle.WaitOne();
+            Thread.Sleep(1000);
+            Console.WriteLine("我是第1个EventWaitHandle");
+        }
+        private static void EventWaitHandle2()
+        {
+            EventWaitHandle.WaitOne();
+            Thread.Sleep(2000);
+            Console.WriteLine("我是第2个EventWaitHandle");
+        }
+        private static void EventWaitHandle3()
+        {
+            EventWaitHandle.WaitOne();
+            Thread.Sleep(3000);
+            Console.WriteLine("我是第3个EventWaitHandle");
+        }
+        private static void EventWaitHandl4()
+        {
+            Thread.Sleep(3000);
+            EventWaitHandle.WaitOne();
+            Console.WriteLine("我是第4个EventWaitHandle");
+        }
+</code></pre></div></div>
+
+<p>这里着重说一下EventWaitHandle4，从上面可以看到，在thread4线程开始后就开始调用了Reset方法，并且在EventWaitHandle里面休眠了三秒，这时候EventWaitHandle无法接收到信号量会一直等待下去直到接收到新的信号量。</p>
+
+<h1 id="semaphore">Semaphore</h1>
+
+<p>Semaphore 可以限制同时进入的线程数量。Semaphore 的构造函数有两个int 类型的参数，第一是指允许同时进入线程的个数，第二个是指最多与同时进入线程的个数，并且第二个参数时不能小于第一个参数（毕竟同时进入的不能大于最大能容纳下的）。WaitOne()方法这里的与上面几个信号量有点小小的不同，每调用一次Semaphore释放的信号灯数量减一，当信号灯数量为0时会阻塞线程，Release()方法会对我们的信号灯数量进行加一操作（释放信号灯），也可以调用Release(int i)来指定释放的信号灯数量。这里有个注意点，我们可以在程序中多次调用Release方法（），但要保证在程序中释放的信号量不能大于最大信号量。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>private static Semaphore semaphore = new Semaphore(2, 5);//本地信号灯
+
+for (var i = 0; i &lt; 12; i++)
+            {
+                Thread thread = new Thread(new ParameterizedThreadStart(Semaphorehandle));
+                thread.Start(i);
+            }
+
+ private static void Semaphorehandle(Object i)
+        {
+            semaphore.WaitOne();
+            Console.WriteLine((int)i + "进入了线程");
+            Thread.Sleep(2000);
+            Console.WriteLine((int)i + "准备离开线程");
+            if ((int)i &gt;1)
+            {
+                Console.WriteLine(semaphore.Release());
+                return;
+            }
+            semaphore.Release(2);
+        }
+</code></pre></div></div>
+
+<p>这里插一句——多线程执行是没有特定的顺序的、是不可预测的。<br />
+ Semaphore信号灯有两种：本地信号灯和命名系统信号灯。本地信号灯仅存在于进程中（上面的例子中使用的是本地信号灯）。命名系统信号灯是存在与整个操作系统的，一般用于同步进程的活动。<br />
+ c#多线程的信号量就先到这了。<br />
+ <a href="https://www.cnblogs.com/1996-Chinese-Chen/p/15585254.html">也可以看大佬的教程</a><br />
+ <a href="https://github.com/Git-Wen776/ThreadDemo">本文涉及到的Demo代码</a></p>
+<blockquote>
+  <p>作者:阿文不知所措<br />
+原文:https://www.cnblogs.com/lonely-wen/p/16325316.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/31/%E5%85%B3%E4%BA%8Ec%E5%A4%9A%E7%BA%BF%E7%A8%8B%E4%B8%AD%E7%9A%84%E5%87%A0%E4%B8%AA%E4%BF%A1%E5%8F%B7%E9%87%8F.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

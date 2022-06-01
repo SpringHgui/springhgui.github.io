@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>面试突击51：为什么单例一定要加 volatile？ | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="面试突击51：为什么单例一定要加 volatile？" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="单例模式的实现方法有很多种，如饿汉模式、懒汉模式、静态内部类和枚举等，当面试官问到“为什么单例模式一定要加 volatile？”时，那么他指的是为什么懒汉模式中的私有变量要加 volatile？" />
+<meta property="og:description" content="单例模式的实现方法有很多种，如饿汉模式、懒汉模式、静态内部类和枚举等，当面试官问到“为什么单例模式一定要加 volatile？”时，那么他指的是为什么懒汉模式中的私有变量要加 volatile？" />
+<link rel="canonical" href="/cnblog/2022/05/26/%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB51-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8D%95%E4%BE%8B%E4%B8%80%E5%AE%9A%E8%A6%81%E5%8A%A0-volatile.html" />
+<meta property="og:url" content="/cnblog/2022/05/26/%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB51-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8D%95%E4%BE%8B%E4%B8%80%E5%AE%9A%E8%A6%81%E5%8A%A0-volatile.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-26T12:48:03+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="面试突击51：为什么单例一定要加 volatile？" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-26T12:48:03+00:00","datePublished":"2022-05-26T12:48:03+00:00","description":"单例模式的实现方法有很多种，如饿汉模式、懒汉模式、静态内部类和枚举等，当面试官问到“为什么单例模式一定要加 volatile？”时，那么他指的是为什么懒汉模式中的私有变量要加 volatile？","headline":"面试突击51：为什么单例一定要加 volatile？","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/26/%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB51-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8D%95%E4%BE%8B%E4%B8%80%E5%AE%9A%E8%A6%81%E5%8A%A0-volatile.html"},"url":"/cnblog/2022/05/26/%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB51-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8D%95%E4%BE%8B%E4%B8%80%E5%AE%9A%E8%A6%81%E5%8A%A0-volatile.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">面试突击51：为什么单例一定要加 volatile？</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-26T12:48:03+00:00" itemprop="datePublished">May 26, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>单例模式的实现方法有很多种，如饿汉模式、懒汉模式、静态内部类和枚举等，当面试官问到“为什么单例模式一定要加 volatile？”时，那么他指的是为什么懒汉模式中的私有变量要加  volatile？</p>
+
+<blockquote>
+  <p>懒汉模式指的是对象的创建是懒加载的方式，并不是在程序启动时就创建对象，而是第一次被真正使用时才创建对象。</p>
+</blockquote>
+
+<p>要解释为什么要加 volatile？我们先来看懒汉模式的具体实现代码：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class Singleton {
+    // 1.防止外部直接 new 对象破坏单例模式
+    private Singleton() {}
+    // 2.通过私有变量保存单例对象【添加了 volatile 修饰】
+    private static volatile Singleton instance = null;
+    // 3.提供公共获取单例对象的方法
+    public static Singleton getInstance() {
+        if (instance == null) { // 第 1 次效验
+            synchronized (Singleton.class) {
+                if (instance == null) { // 第 2 次效验
+                    instance = new Singleton(); 
+                }
+            }
+        }
+        return instance;
+    }
+}
+</code></pre></div></div>
+
+<p>从上述代码可以看出，为了保证线程安全和高性能，代码中使用了两次 if 和 synchronized 来保证程序的执行。那既然已经有 synchronized 来保证线程安全了，为什么还要给变量加 volatile 呢？<br />
+ 在解释这个问题之前，我们先要搞懂一个前置知识：volatile 有什么用呢？</p>
+
+<h2 id="1volatile-作用">1.volatile 作用</h2>
+
+<p>volatile 有两个主要的作用，第一，解决内存可见性问题，第二，防止指令重排序。</p>
+
+<h3 id="11-内存可见性问题">1.1 内存可见性问题</h3>
+
+<p><strong>所谓内存可见性问题，指的是多个线程同时操作一个变量，其中某个线程修改了变量的值之后，其他线程感知不到变量的修改，这就是内存可见性问题。</strong><br />
+ <strong>而使用 volatile 就可以解决内存可见性问题</strong>，比如以下代码，当没有添加 volatile 时，它的实现如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>private static boolean flag = false;
+public static void main(String[] args) {
+    Thread t1 = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            // 如果 flag 变量为 true 就终止执行
+            while (!flag) {
+
+            }
+            System.out.println("终止执行");
+        }
+    });
+    t1.start();
+    // 1s 之后将 flag 变量的值修改为 true
+    Thread t2 = new Thread(new Runnable() {
+        @Override
+        public void run() {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println("设置 flag 变量的值为 true！");
+            flag = true;
+        }
+    });
+    t2.start();
+}
+</code></pre></div></div>
+
+<p>以上程序的执行结果如下：<br />
+ <img src="https://cdn.nlark.com/yuque/0/2022/png/92791/1650458547207-82d75caf-c3a0-4934-a83e-af74bb269a1d.png#clientId=uebca8d07-ffcb-4&amp;crop=0&amp;crop=0&amp;crop=1&amp;crop=1&amp;from=paste&amp;height=234&amp;id=u0d791ef0&amp;margin=%5Bobject%20Object%5D&amp;name=image.png&amp;originHeight=467&amp;originWidth=1738&amp;originalType=binary&amp;ratio=1&amp;rotation=0&amp;showTitle=false&amp;size=51096&amp;status=done&amp;style=none&amp;taskId=uffc6d906-eb4a-4e2e-8681-2fc0a2f1d3a&amp;title=&amp;width=869" alt="image.png" /><br />
+ 然而，以上程序执行了 N 久之后，依然没有结束执行，这说明线程 2 在修改了 flag 变量之后，线程 1 根本没有感知到变量的修改。<br />
+ 那么接下来，我们尝试给 flag 加上 volatile，实现代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class volatileTest {
+    private static volatile boolean flag = false;
+    public static void main(String[] args) {
+        Thread t1 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                // 如果 flag 变量为 true 就终止执行
+                while (!flag) {
+
+                }
+                System.out.println("终止执行");
+            }
+        });
+        t1.start();
+        // 1s 之后将 flag 变量的值修改为 true
+        Thread t2 = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                System.out.println("设置 flag 变量的值为 true！");
+                flag = true;
+            }
+        });
+        t2.start();
+    }
+}
+</code></pre></div></div>
+
+<p>以上程序的执行结果如下：<br />
+ <img src="https://cdn.nlark.com/yuque/0/2022/png/92791/1650458765573-e1fb8e93-21cb-4b17-9e55-a8021bb1aeb4.png#clientId=uebca8d07-ffcb-4&amp;crop=0&amp;crop=0&amp;crop=1&amp;crop=1&amp;from=paste&amp;height=236&amp;id=u5d404467&amp;margin=%5Bobject%20Object%5D&amp;name=image.png&amp;originHeight=471&amp;originWidth=1785&amp;originalType=binary&amp;ratio=1&amp;rotation=0&amp;showTitle=false&amp;size=61785&amp;status=done&amp;style=none&amp;taskId=u1aba1dc9-2355-4ba9-b26f-162b8650c07&amp;title=&amp;width=892.5" alt="image.png" /><br />
+ 从上述执行结果我们可以看出，使用 volatile 之后就可以解决程序中的内存可见性问题了。</p>
+
+<h3 id="12-防止指令重排序">1.2 防止指令重排序</h3>
+
+<p>指令重排序是指在程序执行过程中，编译器或 JVM 常常会对指令进行重新排序，已提高程序的执行性能。<br />
+ 指令重排序的设计初衷确实很好，在单线程中也能发挥很棒的作用，然而在多线程中，使用指令重排序就可能会导致线程安全问题了。</p>
+
+<blockquote>
+  <p>所谓线程安全问题是指程序的执行结果，和我们的预期不相符。比如我们预期的正确结果是 0，但程序的执行结果却是 1，那么这就是线程安全问题。</p>
+</blockquote>
+
+<p>而使用 volatile 可以禁止指令重排序，从而保证程序在多线程运行时能够正确执行。</p>
+
+<h2 id="2为什么要用-volatile">2.为什么要用 volatile？</h2>
+
+<p>回到主题，我们<strong>在单例模式中使用 volatile，主要是使用 volatile 可以禁止指令重排序，从而保证程序的正常运行</strong>。这里可能会有读者提出疑问，不是已经使用了 synchronized 来保证线程安全吗？那为什么还要再加 volatile 呢？看下面的代码：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class Singleton {
+    private Singleton() {}
+    // 使用 volatile 禁止指令重排序
+    private static volatile Singleton instance = null;
+    public static Singleton getInstance() {
+        if (instance == null) { // ①
+            synchronized (Singleton.class) {
+                if (instance == null) {
+                    instance = new Singleton(); // ②
+                }
+            }
+        }
+        return instance;
+    }
+}
+</code></pre></div></div>
+
+<p>注意观察上述代码，我标记了第 ① 处和第 ② 处的两行代码。给私有变量加 volatile 主要是为了防止第 ② 处执行时，也就是“instance = new Singleton()”执行时的指令重排序的，这行代码<strong>看似只是一个创建对象的过程，然而它的实际执行却分为以下 3 步：</strong></p>
+
+<ol>
+  <li><strong>创建内存空间。</strong></li>
+  <li><strong>在内存空间中初始化对象 Singleton。</strong></li>
+  <li><strong>将内存地址赋值给 instance 对象（执行了此步骤，instance 就不等于 null 了）。</strong></li>
+</ol>
+
+<p>试想一下，<strong>如果不加 volatile，那么线程 1 在执行到上述代码的第 ② 处时就可能会执行指令重排序，将原本是 1、2、3 的执行顺序，重排为 1、3、2。但是特殊情况下，线程 1 在执行完第 3 步之后，如果来了线程 2 执行到上述代码的第 ① 处，判断 instance 对象已经不为 null，但此时线程 1 还未将对象实例化完，那么线程 2 将会得到一个被实例化“一半”的对象，从而导致程序执行出错，这就是为什么要给私有变量添加 volatile 的原因了。</strong></p>
+
+<h2 id="总结">总结</h2>
+
+<p>使用 volatile 可以解决内存可见性问题和防止指令重排序，我们在单例模式中使用 volatile 主要是使用 volatile 的后一个特性（防止指令重排序），从而避免多线程执行的情况下，因为指令重排序而导致某些线程得到一个未被完全实例化的对象，从而导致程序执行出错的情况。</p>
+
+<blockquote>
+  <p>是非审之于己，毁誉听之于人，得失安之于数。</p>
+
+  <p>公众号：Java面试真题解析</p>
+
+  <p>面试合集：<a href="https://gitee.com/mydb/interview">https://gitee.com/mydb/interview</a>
+作者:Java中文社群
+原文:https://www.cnblogs.com/vipstone/p/16312300.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/26/%E9%9D%A2%E8%AF%95%E7%AA%81%E5%87%BB51-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%8D%95%E4%BE%8B%E4%B8%80%E5%AE%9A%E8%A6%81%E5%8A%A0-volatile.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

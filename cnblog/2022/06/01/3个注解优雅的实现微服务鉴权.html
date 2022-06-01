@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>3个注解，优雅的实现微服务鉴权 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="3个注解，优雅的实现微服务鉴权" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="这是《Spring Cloud 进阶》第39篇文章，前面的文章中介绍了网关集成Spring Security实现网关层面的统一的认证鉴权。 有不清楚的可以看之前的文章：实战干货！Spring Cloud Gateway 整合 OAuth2.0 实现分布式统一认证授权！ 最近订阅了《Spring Cloud Alibaba 实战》视频专栏的读者经常问陈某两个问题，如下： 鉴权放在各个微服务中如何做？ feign的调用如何做到的鉴权？" />
+<meta property="og:description" content="这是《Spring Cloud 进阶》第39篇文章，前面的文章中介绍了网关集成Spring Security实现网关层面的统一的认证鉴权。 有不清楚的可以看之前的文章：实战干货！Spring Cloud Gateway 整合 OAuth2.0 实现分布式统一认证授权！ 最近订阅了《Spring Cloud Alibaba 实战》视频专栏的读者经常问陈某两个问题，如下： 鉴权放在各个微服务中如何做？ feign的调用如何做到的鉴权？" />
+<link rel="canonical" href="/cnblog/2022/06/01/3%E4%B8%AA%E6%B3%A8%E8%A7%A3%E4%BC%98%E9%9B%85%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%BE%AE%E6%9C%8D%E5%8A%A1%E9%89%B4%E6%9D%83.html" />
+<meta property="og:url" content="/cnblog/2022/06/01/3%E4%B8%AA%E6%B3%A8%E8%A7%A3%E4%BC%98%E9%9B%85%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%BE%AE%E6%9C%8D%E5%8A%A1%E9%89%B4%E6%9D%83.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-06-01T11:45:50+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="3个注解，优雅的实现微服务鉴权" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-06-01T11:45:50+00:00","datePublished":"2022-06-01T11:45:50+00:00","description":"这是《Spring Cloud 进阶》第39篇文章，前面的文章中介绍了网关集成Spring Security实现网关层面的统一的认证鉴权。 有不清楚的可以看之前的文章：实战干货！Spring Cloud Gateway 整合 OAuth2.0 实现分布式统一认证授权！ 最近订阅了《Spring Cloud Alibaba 实战》视频专栏的读者经常问陈某两个问题，如下： 鉴权放在各个微服务中如何做？ feign的调用如何做到的鉴权？","headline":"3个注解，优雅的实现微服务鉴权","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/06/01/3%E4%B8%AA%E6%B3%A8%E8%A7%A3%E4%BC%98%E9%9B%85%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%BE%AE%E6%9C%8D%E5%8A%A1%E9%89%B4%E6%9D%83.html"},"url":"/cnblog/2022/06/01/3%E4%B8%AA%E6%B3%A8%E8%A7%A3%E4%BC%98%E9%9B%85%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%BE%AE%E6%9C%8D%E5%8A%A1%E9%89%B4%E6%9D%83.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">3个注解，优雅的实现微服务鉴权</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-06-01T11:45:50+00:00" itemprop="datePublished">Jun 1, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>这是<a href="https://www.java-family.cn/#/spring-cloud/README">《Spring Cloud 进阶》</a><strong>第39篇</strong>文章，前面的文章中介绍了网关集成Spring Security实现网关层面的统一的认证鉴权。</p>
+
+<p>有不清楚的可以看之前的文章：<a href="https://www.java-family.cn/#/OAuth2.0/07-Spring-Cloud-Gateway%E9%9B%86%E6%88%90OAuth2.0">实战干货！Spring Cloud Gateway 整合 OAuth2.0 实现分布式统一认证授权！</a></p>
+
+<p>最近订阅了<a href="https://www.java-family.cn/#/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98">《Spring Cloud Alibaba 实战》</a>视频专栏的读者经常问陈某两个问题，如下：</p>
+
+<ol>
+  <li>鉴权放在各个微服务中如何做？</li>
+  <li>feign的调用如何做到的鉴权？</li>
+</ol>
+
+<p>今天针对以上两个问题深入聊聊如何通过三个注解解决。</p>
+
+<h2 id="实现思路">实现思路</h2>
+
+<p>前面的几篇文章陈某都是将鉴权和认证统一的放在了网关层面，架构如下：</p>
+
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/261fa221c941479cb04b9598bbfdd5a7~tplv-k3u1fbpfcp-zoom-1.image" alt="" /></p>
+
+<p>微服务中的鉴权还有另外一种思路：<strong>将鉴权交给下游的各个微服务，网关层面只做路由转发</strong>。</p>
+
+<p>这种思路其实实现起来也是很简单，下面针对网关层面鉴权的代码改造一下即可完成：<a href="https://www.java-family.cn/#/OAuth2.0/07-Spring-Cloud-Gateway%E9%9B%86%E6%88%90OAuth2.0">实战干货！Spring Cloud Gateway 整合 OAuth2.0 实现分布式统一认证授权！</a></p>
+
+<h3 id="1-干掉鉴权管理器">1. 干掉鉴权管理器</h3>
+
+<p>在网关统一鉴权实际是依赖的鉴权管理器<strong>ReactiveAuthorizationManager</strong>，所有的请求都需要经过鉴权管理器的去对登录用户的权限进行鉴权。</p>
+
+<p>这个鉴权管理器在网关鉴权的文章中也有介绍，在陈某的<a href="https://www.java-family.cn/#/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98">《Spring Cloud Alibaba 实战》</a>中配置拦截也很简单，如下：</p>
+
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b7d15b9aead648719af9f3da698d1007~tplv-k3u1fbpfcp-zoom-1.image" alt="" /></p>
+
+<p>除了配置的白名单，其他的请求一律都要被网关的鉴权管理器拦截鉴权，只有鉴权通过才能放行路由转发给下游服务。</p>
+
+<p>看到这里思路是不是很清楚了，想要将鉴权交给下游服务，只需要在网关层面直接放行，不走鉴权管理器，代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>http....//白名单直接放行
+ 	.pathMatchers(ArrayUtil.toArray(whiteUrls.getUrls(), String.class)).permitAll()//其他的任何请求直接放行
+ 	.anyExchange().permitAll() .....
+</code></pre></div></div>
+
+<h3 id="2-定义三个注解">2. 定义三个注解</h3>
+
+<p>经过第①步，鉴权已经下放给下游服务了，那么下游服务如何进行拦截鉴权呢？</p>
+
+<p>其实Spring Security 提供了3个注解用于控制权限，如下：</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">@Secured</code></li>
+  <li><code class="language-plaintext highlighter-rouge">@PreAuthorize</code></li>
+  <li><code class="language-plaintext highlighter-rouge">@PostAuthorize</code></li>
+</ol>
+
+<p>关于这三个注解就不再详细介绍了，有兴趣的可以去查阅官方文档。</p>
+
+<p>陈某这里并不打算使用的内置的三个注解实现，而是自定义了三个注解，如下：</p>
+
+<p><strong>1.@RequiresLogin</strong></p>
+
+<p>见名知意，只有用户登录才能放行，代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+ * @url: www.java-family.cn
+ * @description 登录认证的注解，标注在controller方法上，一定要是登录才能的访问的接口
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface RequiresLogin {
+}
+</code></pre></div></div>
+
+<p><strong>2.@RequiresPermissions</strong></p>
+
+<p>见名知意，只有拥有指定权限才能放行，代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+ * @url: www.java-family.cn
+ * @description 标注在controller方法上，确保拥有指定权限才能访问该接口
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface RequiresPermissions {
+    /**
+     * 需要校验的权限码
+     */
+    String[] value() default {};
+
+    /**
+     * 验证模式：AND | OR，默认AND
+     */
+    Logical logical() default Logical.AND;
+}
+</code></pre></div></div>
+
+<p><strong>3.@RequiresRoles</strong></p>
+
+<p>见名知意，只有拥有指定角色才能放行，代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+ * @url: www.java-family.cn
+ * @description 标注在controller方法上，确保拥有指定的角色才能访问该接口
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface RequiresRoles {
+    /**
+     * 需要校验的角色标识，默认超管和管理员
+     */
+    String[] value() default {OAuthConstant.ROLE_ROOT_CODE,OAuthConstant.ROLE_ADMIN_CODE};
+
+    /**
+     * 验证逻辑：AND | OR，默认AND
+     */
+    Logical logical() default Logical.AND;
+}
+</code></pre></div></div>
+
+<p>以上三个注解的含义想必都很好理解，这里就不再解释了….</p>
+
+<h3 id="3-注解切面定义">3. 注解切面定义</h3>
+
+<p>注解有了，那么如何去拦截呢？这里陈某定义了一个切面进行拦截，关键代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+ * @url: www.java-family.cn
+ * @description @RequiresLogin，@RequiresPermissions，@RequiresRoles 注解的切面
+ */
+@Aspect
+@Component
+public class PreAuthorizeAspect {
+    /**
+     * 构建
+     */
+    public PreAuthorizeAspect() {
+    }
+
+    /**
+     * 定义AOP签名 (切入所有使用鉴权注解的方法)
+     */
+    public static final String POINTCUT_SIGN = " @annotation(com.mugu.blog.common.annotation.RequiresLogin) || "
+            + "@annotation(com.mugu.blog.common.annotation.RequiresPermissions) || "
+            + "@annotation(com.mugu.blog.common.annotation.RequiresRoles)";
+
+    /**
+     * 声明AOP签名
+     */
+    @Pointcut(POINTCUT_SIGN)
+    public void pointcut() {
+    }
+
+    /**
+     * 环绕切入
+     *
+     * @param joinPoint 切面对象
+     * @return 底层方法执行后的返回值
+     * @throws Throwable 底层方法抛出的异常
+     */
+    @Around("pointcut()")
+    public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
+        // 注解鉴权
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        checkMethodAnnotation(signature.getMethod());
+        try {
+            // 执行原有逻辑
+            Object obj = joinPoint.proceed();
+            return obj;
+        } catch (Throwable e) {
+            throw e;
+        }
+    }
+
+    /**
+     * 对一个Method对象进行注解检查
+     */
+    public void checkMethodAnnotation(Method method) {
+        // 校验 @RequiresLogin 注解
+        RequiresLogin requiresLogin = method.getAnnotation(RequiresLogin.class);
+        if (requiresLogin != null) {
+            doCheckLogin();
+        }
+
+        // 校验 @RequiresRoles 注解
+        RequiresRoles requiresRoles = method.getAnnotation(RequiresRoles.class);
+        if (requiresRoles != null) {
+            doCheckRole(requiresRoles);
+        }
+
+        // 校验 @RequiresPermissions 注解
+        RequiresPermissions requiresPermissions = method.getAnnotation(RequiresPermissions.class);
+        if (requiresPermissions != null) {
+            doCheckPermissions(requiresPermissions);
+        }
+    }
+
+    /**
+     * 校验有无登录
+     */
+    private void doCheckLogin() {
+        LoginVal loginVal = SecurityContextHolder.get();
+        if (Objects.isNull(loginVal))
+            throw new ServiceException(ResultCode.INVALID_TOKEN.getCode(), ResultCode.INVALID_TOKEN.getMsg());
+    }
+
+    /**
+     * 校验有无对应的角色
+     */
+    private void doCheckRole(RequiresRoles requiresRoles){
+        String[] roles = requiresRoles.value();
+        LoginVal loginVal = OauthUtils.getCurrentUser();
+
+        //该登录用户对应的角色
+        String[] authorities = loginVal.getAuthorities();
+        boolean match=false;
+
+        //and 逻辑
+        if (requiresRoles.logical()==Logical.AND){
+            match = Arrays.stream(authorities).filter(StrUtil::isNotBlank).allMatch(item -&gt; CollectionUtil.contains(Arrays.asList(roles), item));
+        }else{  //OR 逻辑
+            match = Arrays.stream(authorities).filter(StrUtil::isNotBlank).anyMatch(item -&gt; CollectionUtil.contains(Arrays.asList(roles), item));
+        }
+
+        if (!match)
+            throw new ServiceException(ResultCode.NO_PERMISSION.getCode(), ResultCode.NO_PERMISSION.getMsg());
+    }
+
+    /**
+     * TODO 自己实现，由于并未集成前端的菜单权限，根据业务需求自己实现
+     */
+    private void doCheckPermissions(RequiresPermissions requiresPermissions){
+
+    }
+}
+</code></pre></div></div>
+
+<p>其实这中间的逻辑非常简单，就是解析的Token中的权限、角色然后和注解中的指定的进行比对。</p>
+
+<blockquote>
+  <p><code class="language-plaintext highlighter-rouge">@RequiresPermissions</code>这个注解的逻辑陈某并未实现，自己根据业务模仿着完成，算是一道思考题了….</p>
+</blockquote>
+
+<h3 id="4-注解使用">4. 注解使用</h3>
+
+<p>比如<a href="https://www.java-family.cn/#/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98">《Spring Cloud Alibaba 实战》</a>项目中有一个添加文章的接口，只有超管和管理员的角色才能添加，那么可以使用<code class="language-plaintext highlighter-rouge">@RequiresRoles</code>注解进行标注，如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RequiresRoles
+@AvoidRepeatableCommit
+@ApiOperation("添加文章")
+@PostMapping("/add")
+public ResultMsg&lt;Void&gt; add(@RequestBody @Valid ArticleAddReq req){.......
+}
+</code></pre></div></div>
+
+<p>效果这里就不演示了，实际的效果：非超管和管理员角色用户登录访问，将会直接被拦截，返回<strong>无权限</strong>。</p>
+
+<p><strong>注意</strong>：这里仅仅解决了下游服务鉴权的问题，那么feign调用是否也适用？</p>
+
+<p>当然适用，这里使用的是切面方式，feign内部其实使用的是http方式调用，对于接口来说一样适用。</p>
+
+<p>比如<a href="https://www.java-family.cn/#/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98">《Spring Cloud Alibaba 实战》</a>项目中获取文章列表的接口，其中会通过feign的方式调用评论服务中的接口获取文章评论总数，这里一旦加上了<code class="language-plaintext highlighter-rouge">@RequiresRoles</code>，那么调用将会失败，代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RequiresRoles
+@ApiOperation(value = "批量获取文章总数")
+@PostMapping(value = "/list/total")
+public ResultMsg&lt;List&lt;TotalVo&gt;&gt; listTotal(@RequestBody @Valid List&lt;CommentListReq&gt; param){
+....
+}
+</code></pre></div></div>
+
+<h2 id="总结">总结</h2>
+
+<p>本文主要介绍了微服务中如何将鉴权下放到微服务中，也是为了解决读者的疑惑，实际生产中除非业务需要，陈某还是建议将鉴权统一放到网关中。</p>
+<blockquote>
+  <p>作者:bucaichenmou<br />
+原文:https://www.cnblogs.com/cbvlog/p/16330469.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/06/01/3%E4%B8%AA%E6%B3%A8%E8%A7%A3%E4%BC%98%E9%9B%85%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%BE%AE%E6%9C%8D%E5%8A%A1%E9%89%B4%E6%9D%83.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

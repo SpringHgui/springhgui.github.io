@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>深度学习和图形学渲染的结合和应用 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="深度学习和图形学渲染的结合和应用" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="大家好~这一个月以来，我从0开始学习和实现“深度学习”的技术。 现在与大家分享下我的学习经历，以及我了解到的深度学习在渲染中的应用方向，希望对大家有所帮助！谢谢！" />
+<meta property="og:description" content="大家好~这一个月以来，我从0开始学习和实现“深度学习”的技术。 现在与大家分享下我的学习经历，以及我了解到的深度学习在渲染中的应用方向，希望对大家有所帮助！谢谢！" />
+<link rel="canonical" href="/cnblog/2022/05/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%92%8C%E5%9B%BE%E5%BD%A2%E5%AD%A6%E6%B8%B2%E6%9F%93%E7%9A%84%E7%BB%93%E5%90%88%E5%92%8C%E5%BA%94%E7%94%A8.html" />
+<meta property="og:url" content="/cnblog/2022/05/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%92%8C%E5%9B%BE%E5%BD%A2%E5%AD%A6%E6%B8%B2%E6%9F%93%E7%9A%84%E7%BB%93%E5%90%88%E5%92%8C%E5%BA%94%E7%94%A8.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-28T16:01:11+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="深度学习和图形学渲染的结合和应用" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-28T16:01:11+00:00","datePublished":"2022-05-28T16:01:11+00:00","description":"大家好~这一个月以来，我从0开始学习和实现“深度学习”的技术。 现在与大家分享下我的学习经历，以及我了解到的深度学习在渲染中的应用方向，希望对大家有所帮助！谢谢！","headline":"深度学习和图形学渲染的结合和应用","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%92%8C%E5%9B%BE%E5%BD%A2%E5%AD%A6%E6%B8%B2%E6%9F%93%E7%9A%84%E7%BB%93%E5%90%88%E5%92%8C%E5%BA%94%E7%94%A8.html"},"url":"/cnblog/2022/05/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%92%8C%E5%9B%BE%E5%BD%A2%E5%AD%A6%E6%B8%B2%E6%9F%93%E7%9A%84%E7%BB%93%E5%90%88%E5%92%8C%E5%BA%94%E7%94%A8.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">深度学习和图形学渲染的结合和应用</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-28T16:01:11+00:00" itemprop="datePublished">May 28, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>大家好~这一个月以来，我从0开始学习和实现“深度学习”的技术。<br />
+ 现在与大家分享下我的学习经历，以及我了解到的深度学习在渲染中的应用方向，希望对大家有所帮助！谢谢！</p>
+
+<p>目录</p>
+
+<ul>
+  <li>为什么开始学习深度学习？</li>
+  <li>了解到“谷歌地图基于神经渲染实现了3D地图”</li>
+  <li>NeRF的改进方向</li>
+  <li>在Web上使用硬件来加速训练和推理？</li>
+  <li>更多的资料</li>
+</ul>
+
+<h1 id="为什么开始学习深度学习">为什么开始学习深度学习？</h1>
+
+<p>其实我以前在实现与路径追踪相关的降噪算法时，就了解到可以基于深度学习来实现降噪，并且发现这方面的论文近年来越来越多。所以我初步判定深度学习是降噪领域中的发展方向。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/419321/202205/419321-20220528121826777-114914754.png" alt="image" /></p>
+
+<p>但因为深度学习跟图形学是完全不同的学科，跨学科学习的成本太高，需要从0开始，所以我那时候没有采用深度学习的方法，而是采用更偏向于图形学的方法来实现降噪（比如SVGF/BMFR算法）。</p>
+
+<p>那为什么我现在下决心从0开始学习深度学习了呢？这要感谢今年参加我开的<a href="https://www.bilibili.com/video/BV1134y1s7Su">“离线渲染（二期）”培训课</a>的同学的反馈意见~他们表示希望多学习下实时渲染的技术，或者是能够将课程的离线渲染技术（如路径追踪）应用到实时渲染中。<br />
+ 经过我的研究，我发现了有两个可行的方案：<br />
+ 1、基于<a href="https://zhuanlan.zhihu.com/p/404520592">DDGI</a>以及衍生的技术方案（如<a href="https://new.qq.com/omn/20201217/20201217A0IA0U00.html">SDFDDGI</a>）<br />
+ 2、路径追踪+降噪+SDF</p>
+
+<p>第一个方案属于工业上的成熟方案，但是也有很多限制（如只支持漫反射表面），工程上也不易维护（因为是混合了光栅化和光追渲染，比较复杂）；<br />
+ 第二个方案而是只用光追渲染，工程上容易维护；并且也支持高光反射、透明物体等材质。</p>
+
+<p>所以我决定采用第二个方案。这个方案的技术难点就是降噪（路径追踪我已经实现了），所以我决定优先实现它。<br />
+ 前面已经提到了我知道深度学习在降噪中很有前景，所以我下定决心从0学习深度学习！</p>
+
+<p>使用深度学习来降噪的相关论文资料：<br />
+ <a href="https://www.zhihu.com/column/deepvision">AI图像降噪</a><br />
+ <a href="https://zhuanlan.zhihu.com/p/39987943">ISO随便开！神经网络学习降噪算法解析</a><br />
+ <a href="https://zhuanlan.zhihu.com/p/153165931">【每周CV论文】深度学习图像降噪应该从阅读哪些文章开始</a><br />
+ <a href="https://zhuanlan.zhihu.com/p/32502816">可复现的图像降噪算法总结</a></p>
+
+<h1 id="了解到谷歌地图基于神经渲染实现了3d地图">了解到“谷歌地图基于神经渲染实现了3D地图”</h1>
+
+<p>本来我学习深度学习是一心为了用在降噪中，但是我在QQ群里与同学分享我在深度学习方面的实现进展后，有个同学提到了NeRF，说这个最近很火。</p>
+
+<p>我初步研究了下，发现它使用了神经网络，用于从2D图像中重建3D渲染的。我认为我还是需要3D-&gt;2D，而不是2D-&gt;3D。也就是说，我是要渲染3D模型为2D图像的。所以我认为我目前暂时不需要用到NeRF。</p>
+
+<p>但是，后来我在微信朋友圈中，看到有人分享了“谷歌地图”的发布会，它基于NeRF实现了3D地图。<br />
+ 然后我又在QQ群里看到有同学再一次分享了“谷歌地图”的这个发布会，于是我就再次调研了下相关的技术。</p>
+
+<p>相关的视频：<br />
+ <a href="https://www.bilibili.com/video/BV1aS4y1z7ji">用AI建模？谷歌3D地图的背后技术</a></p>
+
+<p>通过调查后，我还是很看好这个技术！NeRF属于“神经渲染”领域，有希望取代目前传统的基于几何模型的渲染！因为它只需要几张图片，就可以渲染出3D画面了，而不再需要几何模型！<br />
+ 使用NeRF得到的3D渲染还可以进行风格变换，以及各种光照变换！</p>
+
+<p>NeRF相关资料：<br />
+ <a href="https://zhuanlan.zhihu.com/p/390848839">NeRF：用深度学习完成3D渲染任务的蹿红</a><br />
+ <a href="https://posts.careerengine.us/p/6146b8a241bcd20fc4545786">神经渲染最新进展与算法（二）：NeRF及其演化</a></p>
+
+<h1 id="nerf的改进方向">NeRF的改进方向</h1>
+
+<p>NeRF目前主要用在静态场景中，我还不清楚如何将其用在动态场景中。<br />
+ 不过对于NeRF的其它的缺点，已经有相关的论文对其改进：</p>
+
+<p><strong>提高训练速度</strong><br />
+ NeRF训练时间太长，相关的改进资料如下：<br />
+ <a href="https://posts.careerengine.us/p/6146b8a241bcd20fc4545786">神经渲染最新进展与算法（二）：NeRF及其演化</a> -&gt; NeRF的加速<br />
+ FastNeRF: High-Fidelity NeuralRendering at 200FPS<br />
+ Baking Neural Radiance Fields for real-Time View Synthesis<br />
+ AutoInt: Automatic Integration for Fast Neural Volume Rendering<br />
+ <a href="https://cloud.tencent.com/developer/article/1961326?from=article.detail.1972906">不可思议！英伟达新技术训练NeRF模型最快只需5秒</a><br />
+ <img src="https://img2022.cnblogs.com/blog/419321/202205/419321-20220528123903425-1325328805.gif" alt="image" /></p>
+
+<p>还有人提出了不用神经网络的方法，资料如下：<br />
+ <a href="https://baijiahao.baidu.com/s?id=1720002965899087781&amp;wfr=spider&amp;for=pc&amp;searchword=nerf%E7%A5%9E%E7%BB%8F%E7%BD%91%E7%BB%9C">本科生新算法打败NeRF，不用神经网络照片也能动起来，提速100倍</a><br />
+ <img src="https://img2022.cnblogs.com/blog/419321/202205/419321-20220528123812608-369938676.gif" alt="image" /></p>
+
+<p><strong>只要一张图片</strong><br />
+ NeRF需要多个角度下的图片。<br />
+ 有论文提出了只要一张图片的方法：<br />
+ <a href="https://cloud.tencent.com/developer/article/1950416?from=article.detail.1961326">一张照片就能生成3D模型，GAN和自动编码器碰撞出奇迹</a><br />
+ <img src="https://img2022.cnblogs.com/blog/419321/202205/419321-20220528123948576-1711934021.png" alt="image" /></p>
+
+<p><strong>将体素渲染转换为真实渲染</strong><br />
+ 把“我的世界”的体素风格转换为真实渲染：<br />
+ <a href="https://developer.nvidia.com/zh-cn/blog/gancraft-turning-gamers-into-3d-artists/">GANcraft ：将玩家变成 3D 艺术家</a><br />
+ <img src="https://img2022.cnblogs.com/blog/419321/202205/419321-20220528123957146-1986256161.gif" alt="image" /></p>
+
+<p><strong>支持透明物体</strong><br />
+ 有论文提出了支持透明物体的方法：<br />
+ <a href="https://sites.google.com/view/dex-nerf">Dex-NeRF: Using a Neural Radiance Field to Grasp Transparent Objects</a><br />
+ <img src="https://img2022.cnblogs.com/blog/419321/202205/419321-20220528124000742-965449264.png" alt="image" /></p>
+
+<p><strong>支持超大场景</strong><br />
+ 这个就是谷歌地图实现的技术了，他们还发表了论文：<br />
+ <a href="https://arxiv.org/abs/2202.05263">Block-NeRF: Scalable Large Scene Neural View Synthesis</a><br />
+ <img src="https://img2022.cnblogs.com/blog/419321/202205/419321-20220528124007121-1196657153.png" alt="image" /></p>
+
+<p><strong>编辑场景内容</strong><br />
+ NeRF方法仅能从已有的固定的场景生成渲染图像，无法直接按照主观意图编辑场景内容<br />
+ 改进的论文如下：<br />
+ <a href="https://autonomousvision.github.io/graf/">GRAF: Generative Radiance Fields for3D-Aware Image</a><br />
+ GIRAFFE: RepresentingScenes as Compositional Generative Neural Feature Fields</p>
+
+<p><strong>黑暗中的高光渲染</strong><br />
+ <a href="https://bmild.github.io/rawnerf/">NeRF in the Dark: High Dynamic Range View Synthesis from Noisy Raw Images</a><br />
+ <img src="https://img2022.cnblogs.com/blog/419321/202205/419321-20220528124013730-72866173.png" alt="image" /></p>
+
+<p><strong>用于降噪</strong><br />
+ NeRF甚至可以用在降噪中，不过我没有具体研究。<br />
+ 相关论文如下：<br />
+ <a href="https://arxiv.org/abs/2204.04668">NAN: Noise-Aware NeRFs for Burst-Denoising</a></p>
+
+<h1 id="在web上使用硬件来加速训练和推理">在Web上使用硬件来加速训练和推理？</h1>
+
+<p>因为我是Web3D领域的开发者，我知道深度学习的Web后端可以为：CPU、WebGL、WebGPU（我不考虑WebAssembly）</p>
+
+<p>我也了解到nvidia显卡有专门的神经网络硬件，但我不清楚如何使用它！</p>
+
+<p>通过群里同学的提醒，我通过研究了解到现在的硬件除了CPU、GPU，还有NPU，而这个NPU是专门为深度学习设计的硬件</p>
+
+<p>NPU相关介绍：<a href="http://www.4k8k.xyz/article/CHAO_bismarck/106651814">NPU的发展概况</a></p>
+
+<p>那么在Web上能使用NPU硬件吗？答案是有的！目前Web上已经制定了<a href="https://webmachinelearning.github.io/webnn/">Web Neural Network API标准</a>（简称WebNN），通过该API即可调用NPU硬件!<br />
+ 目前Chrome浏览器正在实现中，貌似还没有发布计划，所以暂时不能使用！</p>
+
+<p>看到有人进行了测评，它的性能比WebGPU快数倍！</p>
+
+<p>参考资料为：<br />
+ <a href="https://static001.geekbang.org/con/42/pdf/4134778686/file/%E5%85%83%E5%87%AF-WebNN%20API%20-%20%E5%B0%86%E7%A1%AC%E4%BB%B6%E5%8A%A0%E9%80%9F%E7%9A%84%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%B8%A6%E5%85%A5%E5%BC%80%E6%94%BE%E5%BC%8F%20Web%20%E5%B9%B3%E5%8F%B0.pdf">WebNN API - 将硬件加速的深度学习带入开放式 Web 平台</a></p>
+
+<h1 id="更多的资料">更多的资料</h1>
+
+<p><a href="https://space.bilibili.com/288489574/video">AI算法与图像处理</a></p>
+<blockquote>
+  <p>作者:Wonder-YYC<br />
+原文:https://www.cnblogs.com/chaogex/p/16320343.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/28/%E6%B7%B1%E5%BA%A6%E5%AD%A6%E4%B9%A0%E5%92%8C%E5%9B%BE%E5%BD%A2%E5%AD%A6%E6%B8%B2%E6%9F%93%E7%9A%84%E7%BB%93%E5%90%88%E5%92%8C%E5%BA%94%E7%94%A8.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

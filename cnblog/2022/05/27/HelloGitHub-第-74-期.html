@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>《HelloGitHub》第 74 期 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="《HelloGitHub》第 74 期" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="兴趣是最好的老师，HelloGitHub 让你对编程感兴趣！" />
+<meta property="og:description" content="兴趣是最好的老师，HelloGitHub 让你对编程感兴趣！" />
+<link rel="canonical" href="/cnblog/2022/05/27/HelloGitHub-%E7%AC%AC-74-%E6%9C%9F.html" />
+<meta property="og:url" content="/cnblog/2022/05/27/HelloGitHub-%E7%AC%AC-74-%E6%9C%9F.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-27T08:35:47+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="《HelloGitHub》第 74 期" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-27T08:35:47+00:00","datePublished":"2022-05-27T08:35:47+00:00","description":"兴趣是最好的老师，HelloGitHub 让你对编程感兴趣！","headline":"《HelloGitHub》第 74 期","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/27/HelloGitHub-%E7%AC%AC-74-%E6%9C%9F.html"},"url":"/cnblog/2022/05/27/HelloGitHub-%E7%AC%AC-74-%E6%9C%9F.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">《HelloGitHub》第 74 期</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-27T08:35:47+00:00" itemprop="datePublished">May 27, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <blockquote>
+  <p>兴趣是最好的老师，<strong>HelloGitHub</strong> 让你对编程感兴趣！</p>
+</blockquote>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154800875-353600563.png" alt="" /></p>
+
+<h2 id="简介">简介</h2>
+
+<p><strong>HelloGitHub</strong> 分享 GitHub 上有趣、入门级的开源项目。</p>
+
+<blockquote>
+  <p><a href="https://github.com/521xueweihan/HelloGitHub">https://github.com/521xueweihan/HelloGitHub</a></p>
+</blockquote>
+
+<p>这里有实战项目、入门教程、黑科技、开源书籍、大厂开源项目等，涵盖多种编程语言 Python、Java、Go、C/C++、Swift…让你在短时间内感受到开源的魅力，对编程产生兴趣！</p>
+
+<hr />
+
+<blockquote>
+  <p><strong>以下为本期内容</strong>｜每个月 <strong>28</strong> 号更新</p>
+</blockquote>
+
+<h3 id="c-项目">C 项目</h3>
+
+<p>1、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/eradman/entr">entr</a>：在文件有改动时自动触发任意命令的工具。采用 kqueue 或 inotify 事件通知接口监听文件改动事件，避免轮询造成的资源浪费，可用于实现自动编译、重启、测试、同步等功能</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 自动 make 
+find src/ | entr sh -c 'make | head -n 20'
+# 自动重启服务
+ls *.js | entr -r node app.js
+</code></pre></div></div>
+
+<p>2、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/NVIDIA/open-gpu-kernel-modules">open-gpu-kernel-modules</a>：英伟达开源的 Linux GPU 内核驱动。关于开源的原因网友们众说纷纭黑客勒索、被 Linus 骂的、拥抱开源，但无论如何这是件好事，至于这件事后续对 Linux 系统的影响就让我们拭目以待吧</p>
+
+<p>3、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/ahrm/sioyek">sioyek</a>：免费开源的 PDF 阅读器。支持交互式快速搜索文档，而且就算文档中的引用没有链接也可以直接跳转，特别适合 PC 端阅读和研究论文、技术文档等</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154954636-1883621166.gif" alt="" /></p>
+
+<p>4、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/cppla/ServerStatus">ServerStatus</a>：多服务器云监控。轻松监控多台服务器状态的工具，用于解决多个不同平台下的服务器状态监控问题</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154954677-1070702844.png" alt="" /></p>
+
+<p>5、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/FreeRDP/FreeRDP">FreeRDP</a>：完全免费的远程桌面管理工具。此项目为远程桌面协议（RDP）的一个开源实现，通过它可以轻松实现 macOS 或 Linux 远程操作 Windows 桌面系统反之亦可，使用起来十分方便和流畅。<a href="https://github.com/FreeRDP/FreeRDP/wiki/PreBuilds">下载地址</a></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154954716-556202187.png" alt="" /></p>
+
+<h3 id="c-项目-1">C# 项目</h3>
+
+<p>6、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/DrFlower/TowerDefense-GameFramework-Demo">TowerDefense-GameFramework-Demo</a>：开源的塔防游戏示例。此项目主要用来上手和学习基于 Unity 引擎的游戏框架 GameFramework，感兴趣的同学可以把玩一下。游戏共有五个关卡，玩家通过击杀敌人和建造能量塔获取资源，消耗能量建造防御塔阻止敌人攻击基地</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526155516470-1100007862.gif" alt="" /></p>
+
+<h3 id="c-项目-2">C++ 项目</h3>
+
+<p>7、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/applenob/Cpp_Primer_Practice">Cpp_Primer_Practice</a>：《C++ Primer》中文版第 5 版的学习笔记。该项目不仅包含学习笔记还有课后习题的答案</p>
+
+<p>8、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/SerenityOS/serenity">serenity</a>：开源桌面操作系统。一款披着复古外衣现代的类 Unix 开源操作系统。从内核到 Web 浏览器均采用 C++ 编写，没有依赖现成的第三方库，外观模仿 90 年代操作系统界面的风格，我认为这是一封极客致敬经典的情书</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855671-165528817.png" alt="" /></p>
+
+<p>9、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/polybar/polybar">polybar</a>：超酷的 Linux 桌面状态栏工具。使用时无需精通 shell 就能上手，轻松完成高度自定义的状态栏。还有更多现成的主题，拿来即用<a href="https://github.com/adi1090x/polybar-themes">点击查看</a></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154854980-1210444292.gif" alt="" /></p>
+
+<h3 id="css-项目">CSS 项目</h3>
+
+<p>10、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/Tencent/weui">weui</a>：微信开源的原生基础样式库。为微信内网页和小程序量身设计的样式库，包括按钮、徽章、进度条、图标、对话框等各式元素</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154954697-14185224.gif" alt="" /></p>
+
+<h3 id="go-项目">Go 项目</h3>
+
+<p>11、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/httprunner/httprunner">httprunner</a>：开源的 API 测试工具。支持丰富的网络协议，涵盖接口测试、性能测试等测试类型的测试工具</p>
+
+<ul>
+  <li>多种网络协议：支持 HTTP(S)/HTTP2/WebSocket/RPC 等</li>
+  <li>多格式可选：测试用例支持 YAML/JSON/go test/pytest 格式</li>
+  <li>双执行引擎：同时支持 Golang/Python 两个执行引擎</li>
+  <li>一键部署：一条命令在 macOS/Linux/Windows 完成安装部署</li>
+  <li>网络性能采集：在场景化接口测试的基础上，可额外采集网络链路性能指标</li>
+</ul>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855210-1526878181.jpg" alt="" /></p>
+
+<p>12、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/antonmedv/fx">fx</a>：命令行 JSON 浏览工具。看似简单却十分实用的 JSON 命令行查询工具，支持流式和交互式两种查询方式</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154954670-2016935967.gif" alt="" /></p>
+
+<p>13、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/zinclabs/zinc">zinc</a>：轻量级全文搜索引擎。Go 语言下的轻量级搜索引擎，支持中文搜索自带 Web 管理界面</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855027-1201694643.jpg" alt="" /></p>
+
+<p>14、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/panjf2000/ants">ants</a>：高性能 goroutine 池。实现了大规模下的 goroutine 调度和复用，从而节省资源提高执行效果。还有如任务提交、动态调整 pool 大小、查询运行状态等实用接口</p>
+
+<h3 id="java-项目">Java 项目</h3>
+
+<p>15、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/ingokegel/jclasslib">jclasslib</a>：Java 字节码浏览器。支持可视化操作、查看、编辑编译好的 Java 类文件的开发工具</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855514-951498978.png" alt="" /></p>
+
+<p>16、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/yangzongzhuan/RuoYi">RuoYi</a>：开箱即用的权限管理系统。基于 SpringBoot 开发的后台管理系统，包含用户管理、部门管理、角色管理、登录日志、定时任务、服务监控等功能，可以用来快速构建 CMS、CRM、OA 等系统</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154954760-1550905198.png" alt="" /></p>
+
+<p>17、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/debezium/debezium">debezium</a>：捕获数据更改(CDC)的流式处理平台。可以监控数据库中的数据变动，把每一个行级别的数据改动，通过流的方式实时同步给其他服务。适用于更新缓存、更新搜索、双写等场景</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855049-847225981.png" alt="" /></p>
+
+<p>18、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/apache/shardingsphere">shardingsphere</a>：一套开源的分布式数据库增强计算引擎。可将多种数据库转换为分布式数据库的生态系统，就是把多种不同类型的数据整合成对外是一个整体的数据库，即化零为整。充分合理地利用数据库的计算和存储能力，解决数据分片、数据加密、异构数据查询等痛点</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855182-96035765.png" alt="" /></p>
+
+<p>19、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/dromara/hertzbeat">hertzbeat</a>：易用友好的云监控系统。适用于应用服务、数据库、网站、API、操作系统等监控的场景，可以帮助中小型团队快速搭建监控系统</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154954783-2051544707.png" alt="" /></p>
+
+<h3 id="javascript-项目">JavaScript 项目</h3>
+
+<p>20、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/ruilisi/fortune-sheet">fortune-sheet</a>：类似 Excel 的电子表格组件。使用简单无需繁琐的配置，内置多种 Excel 常用功能，并且支持在线协同编辑</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import React from 'react';
+import ReactDOM from 'react-dom';
+import { Workbook } from "@fortune-sheet/react";
+import "@fortune-sheet/react/dist/index.css"
+
+ReactDOM.render(
+  &lt;Workbook data={[{ name: "Sheet1" }]} &gt;&lt;/Workbook&gt;,
+  document.getElementById('root')
+);
+</code></pre></div></div>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855164-1837757038.png" alt="" /></p>
+
+<p>21、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/xtermjs/xterm.js">xterm.js</a>：功能齐全的终端前端组件。用 TypeScript 编写的前端组件，提供了完整的终端功能、支持鼠标事件、丰富的 Unicode 支持。在众多流行开源项目中都能看到它的身影，比如 VS Code、Hyper 和 Theia 等</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855662-12557705.png" alt="" /></p>
+
+<p>22、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/MakinoharaShoko/WebGAL">WebGAL</a>：无需开发基础分分钟就能学会所有语法，立马开始创作自己的 Galgame。<a href="https://demo.msfasr.com/">在线尝试</a></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855840-1714851435.png" alt="" /></p>
+
+<p>23、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/bytedance/bytemd">bytemd</a>：掘金社区开源的 Markdown 编辑器组件。基于 Svelte 构建的 Markdown 编辑器组件，功能齐全还可以通过插件扩展功能，默认安全且兼容 SSR，适用于 React、Vue 和 Angular 框架</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// React
+import { Editor, Viewer } from '@bytemd/react'
+import gfm from '@bytemd/plugin-gfm'
+
+const plugins = [
+  gfm(),
+  // Add more plugins here
+]
+
+const App = () =&gt; {
+  const [value, setValue] = useState('')
+
+  return (
+    &lt;Editor
+      value={value}
+      plugins={plugins}
+      onChange={(v) =&gt; {
+        setValue(v)
+      }}
+    /&gt;
+  )
+}
+</code></pre></div></div>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855392-2058749452.png" alt="" /></p>
+
+<h3 id="kotlin-项目">Kotlin 项目</h3>
+
+<p>24、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/guolindev/PermissionX">PermissionX</a>：解决 Android 运行时权限的库。该项目本是作者写的一本书中的练手项目，后来经过不断优化和功能迭代，已经可以真正做到简化 Android 运行时权限处理的工作，所以就有了我们现在看到的 PermissionX。时至今日它依旧在持续更新，没有停下变得更好的脚步，或许这就是工匠精神的体现吧。<a href="https://blog.csdn.net/guolin_blog/category_10108528.html">中文文档</a></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154954835-440493704.gif" alt="" /></p>
+
+<h3 id="php-项目">PHP 项目</h3>
+
+<p>25、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/flarum/framework">framework</a>：简约大方的论坛项目。这是一个用 PHP+Mithril 开发的免费、美观、简单、速度快的论坛系统</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855113-1359207794.png" alt="" /></p>
+
+<h3 id="python-项目">Python 项目</h3>
+
+<p>26、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/pyenv/pyenv">pyenv</a>：简单易用的 Python 版本管理工具。开发者有时候因为历史遗留问题，需要维护依赖不同 Pyhton 版本的项目，这时就需要安装和管理多个 Python 版本，这是一件十分痛苦的事情。而 pyenv 恰好完美地解决了这一痛点，它支持 global、local、shell 三种模式，开发者可以根据情况灵活地切换不同的 Python 版本，这一切仅需一条命令</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>安装 pyenv：brew install pyenv
+安装 Python：pyenv install 3.10.4
+切换版本：pyenv shell｜local｜global
+shell：当前 shell
+local：当前目录
+global：全局
+</code></pre></div></div>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154955031-297914929.png" alt="" /></p>
+
+<p>27、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/hhyo/Archery">Archery</a>：在线 SQL 审核平台。采用 Django+Bootstrap 框架开发而成，支持 MySQL、Oracle 等数据库的 SQL 上线、备份、慢日志查询等功能。<a href="https://demo.archerydms.com/">在线尝试</a></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154954903-1123084098.png" alt="" /></p>
+
+<p>28、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/xxh/xxh">xxh</a>：在 SSH 服务器时带上自己喜欢的 shell。你的 shell 里是不是塞满了快捷脚本、工具和颜色，但在 SSH 远程连接服务器时，你就会失去这一切。xxh 可以把你最喜欢的 shell 带到任何地方</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Oh My Zsh：source xxh.zsh anyhost +I xxh-plugin-zsh-ohmyzsh +if +q 
+xonsh：xxh anyhost +s xonsh
+</code></pre></div></div>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154955239-1453620537.png" alt="" /></p>
+
+<p>29、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/Gsllchb/Handright">Handright</a>：模拟手写体中文的 Python 库。基于 PIL 开发实现的工具库，能够输出手写体中文的图片，支持自定义背景图</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># coding: utf-8
+from PIL import Image, ImageFont
+
+from handright import Template, handwrite
+
+text = "分享 GitHub 上有趣、入门级开源项目"
+template = Template(
+    background=Image.new(mode="1", size=(1024, 2048), color=1),
+    font=ImageFont.truetype("path/to/my/font.ttf", size=100),
+)
+images = handwrite(text, template)
+for im in images:
+    assert isinstance(im, Image.Image)
+    im.show()
+</code></pre></div></div>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154955135-1603091809.png" alt="" /></p>
+
+<p>30、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/shmilylty/OneForAll">OneForAll</a>：功能强大的子域收集工具。具有强大的子域收集能力、支持子域验证、速度快等特点的子域扫描工具</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154856047-511735798.png" alt="" /></p>
+
+<h3 id="ruby-项目">Ruby 项目</h3>
+
+<p>31、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/solidusio/solidus">solidus</a>：开源的简约电商平台。基于 Ruby on Rails 构建的电商平台，界面清爽代码完全开源。<a href="http://demo.solidus.io/">在线尝试</a></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154955118-739042847.png" alt="" /></p>
+
+<h3 id="rust-项目">Rust 项目</h3>
+
+<p>32、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/rust-lang/mdBook">mdBook</a>：Rust 官方开源的 Markdown 电子书构建工具。类似 Gitbook 可以将 Markdown 文件制作成在线书籍，简单易用非常适合创建教程、课程材料、开源书籍等文稿</p>
+
+<h3 id="swift-项目">Swift 项目</h3>
+
+<p>33、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/kuglee/TermiWatch">TermiWatch</a>：终端风格的 iWatch 手表面</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855673-1247011259.png" alt="" /></p>
+
+<h3 id="其它">其它</h3>
+
+<p>34、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/github/opensource.guide">opensource.guide</a>：GitHub 官方的开源指南。为想学习如何创建和贡献开源项目的个人、社区和公司提供的资源集合，<a href="https://opensource.guide/zh-hans/">中文</a></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855988-1717472791.png" alt="" /></p>
+
+<p>35、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/flutter/pinball">pinball</a>：谷歌开源的弹珠台游戏。使用 Flutter 和  Firebase 平台开发的弹珠台游戏，可运行在 Android、iOS、Windows、macOS、Linux 操作系统。<a href="https://pinball.flutter.dev/#/">在线试玩</a></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154856723-553152888.png" alt="" /></p>
+
+<p>36、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/yujiangshui/A-Programmers-Guide-to-English">A-Programmers-Guide-to-English</a>：专为程序员编写的英语学习指南。一位程序员提升英语水平的实践经验分享，还有相关训练方法和用到的工具，<a href="https://a-programmers-guide-to-english.harryyu.me/">点击查看</a></p>
+
+<p>37、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/hellodigua/code996">code996</a>：根据 git 的提交时间推断工作强度的工具。通过分析 git 提交记录，得出是否加班、工作强度的可视化图表的工具</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154855940-1066538286.png" alt="" /></p>
+
+<p>38、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/eryajf/Thanks-Mirror">Thanks-Mirror</a>：国内公共仓库镜像的集合。该项目包含开发常用的库、软件、系统镜像地址以及使用的方法</p>
+
+<p>39、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/jiusanzhou/flutter_floatwing">flutter_floatwing</a>：Flutter 的 Android 浮动窗口插件。该插件能够让开发者使用 Flutter 完成浮动窗口的功能开发，同时无需任何原生 Android 开发的背景</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154856017-974783305.gif" alt="" /></p>
+
+<p>40、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/myth984/wechat-report">wechat-report</a>：自制微信聊天年度报告。教你如何生成和女朋友微信聊天记录的年度报告项目</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154955235-2138131729.png" alt="" /></p>
+
+<h3 id="开源书籍">开源书籍</h3>
+
+<p>41、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/riba2534/TCP-IP-NetworkNote">TCP-IP-NetworkNote</a>：《TCP/IP 网络编程》学习笔记。除了笔记还包含书中的代码实现和课后习题回答</p>
+
+<p>42、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/deeplearning-ai/machine-learning-yearning-cn">machine-learning-yearning-cn</a>：《Machine Learning Yearning》中文版。《机器学习训练秘籍》样稿吴恩达著，<a href="https://deeplearning-ai.github.io/machine-learning-yearning-cn/">在线阅读</a></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154955799-363235490.png" alt="" /></p>
+
+<p>43、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/seankross/the-unix-workbench">the-unix-workbench</a>：《The Unix Workbench》该书面向刚接触编程和类 Unix（如 macOS）和 Linux 操作系统的开发者，帮你快速上手命令行以及搞懂相关知识。<a href="https://seankross.com/the-unix-workbench/">在线阅读</a></p>
+
+<h3 id="机器学习">机器学习</h3>
+
+<p>44、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/thunlp/WantWords">WantWords</a>：拯救词穷的字典。由清华大学 NLP 实验室开源，可以根据你的意思返回相关词汇，有效解决词穷、话到嘴边说不出来的窘境。<a href="https://wantwords.net/">在线尝试</a></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154856154-1444706496.png" alt="" /></p>
+
+<p>45、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/mindsdb/mindsdb">mindsdb</a>：用 SQL 开启机器学习的数据库。把机器学习引入 SQL 数据库将模型作为虚拟表（AI-table），从而省去了数据准备、预处理等步骤，可以直接用 SQL 查询时间序列、回归、分类预测的结果，实现简化机器学习开发流程的效果</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154856046-1910361858.png" alt="" /></p>
+
+<p>46、<a href="https://hellogithub.com/periodical/statistics/click/?target=https://github.com/Nyandwi/machine_learning_complete">machine_learning_complete</a>：全面的机器学习教程库。一份包含 30 多个 Jupyter Notebook 的集合库，内容涵盖机器学习所需的 Python 基础，数据操作、清洗、分析、可视化常用的库和工具，以及经典机器学习、NLP、计算机视觉等算法，一份面面俱到的机器学习入门教程</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/759200/202205/759200-20220526154955635-742524683.png" alt="" /></p>
+
+<h2 id="最后">最后</h2>
+
+<p>如果你发现了 GitHub 上有趣的项目，就<a href="https://github.com/521xueweihan/HelloGitHub/issues/new">点击分享</a>给大家伙吧。</p>
+
+<p>以上就是本期的所有内容了，往期内容<a href="https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzA5MzYyNzQ0MQ==&amp;action=getalbum&amp;album_id=1331197538447310849&amp;scene=173&amp;from_msgid=2247511076&amp;from_itemidx=1&amp;count=3&amp;nolastread=1#wechat_redirect">点击阅读</a></p>
+
+<p>感谢您的阅读，如果觉得本期内容还不错的话 <strong>求赞、求分享</strong> ❤️</p>
+<blockquote>
+  <p>作者:削微寒
+原文:https://www.cnblogs.com/xueweihan/p/16316193.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/27/HelloGitHub-%E7%AC%AC-74-%E6%9C%9F.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

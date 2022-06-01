@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>PostgreSQL 的窗口函数 OVER, WINDOW, PARTITION BY, RANGE | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="PostgreSQL 的窗口函数 OVER, WINDOW, PARTITION BY, RANGE" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="最近在数据处理中用到了窗函数, 把使用方法记录一下, 暂时只有分组排序和滑动时间窗口的例子, 以后再逐步添加 场景 在SQL查询时, 会遇到有两类需要分组统计的场景, 在之前的SQL语法中是不方便实现的 场景1: 顾客维修设备的记录表, 每次维修产生一条记录, 每个记录包含时间, 顾客ID和维修金额, 要取出每个顾客的维修次数和最后一次维修时的金额 场景2: 还是上面的维修记录表, 要取出每个顾客的每次维修之间的时间间隔 场景3: 一个用户账户的交易流水表, 要求每个小时的交易笔数和平均收支金额, 这个平均数的统计范围是两个小时(整点时间的前后一个小时)" />
+<meta property="og:description" content="最近在数据处理中用到了窗函数, 把使用方法记录一下, 暂时只有分组排序和滑动时间窗口的例子, 以后再逐步添加 场景 在SQL查询时, 会遇到有两类需要分组统计的场景, 在之前的SQL语法中是不方便实现的 场景1: 顾客维修设备的记录表, 每次维修产生一条记录, 每个记录包含时间, 顾客ID和维修金额, 要取出每个顾客的维修次数和最后一次维修时的金额 场景2: 还是上面的维修记录表, 要取出每个顾客的每次维修之间的时间间隔 场景3: 一个用户账户的交易流水表, 要求每个小时的交易笔数和平均收支金额, 这个平均数的统计范围是两个小时(整点时间的前后一个小时)" />
+<link rel="canonical" href="/cnblog/2022/05/28/PostgreSQL%E7%9A%84%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0OVERWINDOWPARTITIONBYRANGE.html" />
+<meta property="og:url" content="/cnblog/2022/05/28/PostgreSQL%E7%9A%84%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0OVERWINDOWPARTITIONBYRANGE.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-28T16:01:13+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="PostgreSQL 的窗口函数 OVER, WINDOW, PARTITION BY, RANGE" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-28T16:01:13+00:00","datePublished":"2022-05-28T16:01:13+00:00","description":"最近在数据处理中用到了窗函数, 把使用方法记录一下, 暂时只有分组排序和滑动时间窗口的例子, 以后再逐步添加 场景 在SQL查询时, 会遇到有两类需要分组统计的场景, 在之前的SQL语法中是不方便实现的 场景1: 顾客维修设备的记录表, 每次维修产生一条记录, 每个记录包含时间, 顾客ID和维修金额, 要取出每个顾客的维修次数和最后一次维修时的金额 场景2: 还是上面的维修记录表, 要取出每个顾客的每次维修之间的时间间隔 场景3: 一个用户账户的交易流水表, 要求每个小时的交易笔数和平均收支金额, 这个平均数的统计范围是两个小时(整点时间的前后一个小时)","headline":"PostgreSQL 的窗口函数 OVER, WINDOW, PARTITION BY, RANGE","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/28/PostgreSQL%E7%9A%84%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0OVERWINDOWPARTITIONBYRANGE.html"},"url":"/cnblog/2022/05/28/PostgreSQL%E7%9A%84%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0OVERWINDOWPARTITIONBYRANGE.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">PostgreSQL 的窗口函数 OVER, WINDOW, PARTITION BY, RANGE</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-28T16:01:13+00:00" itemprop="datePublished">May 28, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>最近在数据处理中用到了窗函数, 把使用方法记录一下, 暂时只有分组排序和滑动时间窗口的例子, 以后再逐步添加</p>
+
+<h1 id="场景">场景</h1>
+
+<p>在SQL查询时, 会遇到有两类需要分组统计的场景, 在之前的SQL语法中是不方便实现的</p>
+
+<ol>
+  <li>场景1: 顾客维修设备的记录表, 每次维修产生一条记录, 每个记录包含时间, 顾客ID和维修金额, 要取出每个顾客的维修次数和最后一次维修时的金额</li>
+  <li>场景2: 还是上面的维修记录表, 要取出每个顾客的每次维修之间的时间间隔</li>
+  <li>场景3: 一个用户账户的交易流水表, 要求每个小时的交易笔数和平均收支金额, 这个平均数的统计范围是两个小时(整点时间的前后一个小时)</li>
+</ol>
+
+<p>使用窗函数直接SQL中使用窗函数就能解决这些问题, 否则需要使用临时表, 函数或存储过程进行处理.</p>
+
+<h1 id="窗函数">窗函数</h1>
+
+<p>PostgreSQL 从2010年的版本8开始就支持窗函数了.</p>
+
+<h2 id="文档">文档</h2>
+
+<p>详细说明建议查看官方文档 <a href="https://www.postgresql.org/docs/current/tutorial-window.html">https://www.postgresql.org/docs/current/tutorial-window.html</a></p>
+
+<h2 id="函数说明">函数说明</h2>
+
+<p>窗函数(window function)的计算方式与传统的单行和聚合不同</p>
+
+<ol>
+  <li>窗函数是在当前表中, 基于当前行的相关行的计算, 注意是基于多行的计算</li>
+  <li>属于一种聚合计算, 可以使用聚合类型的函数(aggregate function)</li>
+  <li>使用窗函数并不会导致结果的聚合, 也就是结果依然是当前的行结构</li>
+</ol>
+
+<p>所以综合的说, 窗口函数就是在行的基础上, 允许对多行数据进行计算. 下面是一个简单的窗函数例子, 将每个员工的薪资与其所在的部门的平均薪资进行比较</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT depname, empno, salary, avg(salary) OVER (PARTITION BY depname) FROM empsalary;
+</code></pre></div></div>
+
+<h2 id="关键词">关键词</h2>
+
+<p>使用窗函数时会用到的一些关键词</p>
+
+<ul>
+  <li>OVER 前面的查询基于后面的窗口</li>
+  <li>PARTITION BY 类似于 GROUP BY 的语义, 专用于窗口的分组</li>
+  <li>ORDER BY 窗内的排序依据, 依据的字段决定了 RANGE 的类型</li>
+  <li>RANGE … PRECEDING 在当前值之前的范围, 基准是当前记录这个 ORDER BY 字段的值</li>
+  <li>RANGE … FOLLOWING 在当前值之后的范围, 基准是当前记录这个 ORDER BY 字段的值</li>
+  <li>RANGE BETWEEN … PRECEDING AND … FOLLOWING 前后范围的组合</li>
+  <li>WINDOW 将窗口命名为变量, 可以在 SELECT 中重复使用</li>
+</ul>
+
+<h1 id="示例">示例</h1>
+
+<h2 id="按窗口打序号">按窗口打序号</h2>
+
+<p>功能: 将数据按指定的字段分组, 再按另一个字段排列, 给每个分组里的数据打上序号.</p>
+
+<p>这是一个常用技巧, 例如要计算各组内记录之间的时间间隔, 但是用时间不方便join, 打完序号后就可以用序号join了</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+    ROW_NUMBER() OVER w1 AS rn,
+    sample_01.*
+FROM
+    sample_01
+WINDOW 
+w1 AS (PARTITION BY field_name ORDER BY created_at ASC);
+</code></pre></div></div>
+
+<h2 id="简单时间窗口统计">简单时间窗口统计</h2>
+
+<p>功能: 将数据表按指定字段(日期类型)进行排序, 然后基于每个记录的这个字段创建一个固定宽度的时间窗口, 对窗口内的多个记录进行统计</p>
+
+<p>统计单个字段, 可以直接写在select中</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+    MAX(amount) OVER (ORDER BY traded_at RANGE '30 minutes' PRECEDING) AS amount_max,
+    *
+FROM sample_01
+WHERE card_num = '6210812500006111111'
+</code></pre></div></div>
+
+<h2 id="基于时间窗口变量进行多字段统计">基于时间窗口变量进行多字段统计</h2>
+
+<p>功能: 和前一个功能一样, 但是要进行多个不同的统计, 要重复用到这个窗口函数</p>
+
+<p>如果要统计多个字段, 可以抽出单独的WINDOW</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+    MAX(rn) OVER w1 AS rn_max,
+    MAX(amount) OVER w1 AS amount_max,
+    AVG(amount) OVER w1 AS amount_avg,
+    *
+FROM sample_01_diff
+WINDOW
+    -- w1 AS (ORDER BY traded_at RANGE '30 minutes' PRECEDING)
+    w1 AS (PARTITION BY card_num ORDER BY traded_at RANGE BETWEEN '30 minutes' PRECEDING AND '30 minutes' FOLLOWING)
+ORDER BY
+    rn ASC
+</code></pre></div></div>
+
+<p>在这个例子中</p>
+
+<ol>
+  <li>先依据 card_num 这个字段进行分区,</li>
+  <li>然后按 traded_at 这个字段进行排序,</li>
+  <li>对每个记录的 traded_at 值, 开启一个 RANGE, 包含前面的30分钟和后面的30分钟, RANGE 中能用的类型和 ORDER BY 的字段类型是相关的</li>
+  <li>SELECT中的 MAX, MIN 等聚合函数, 是基于上面的 RANGE 进行的</li>
+</ol>
+
+<blockquote>
+  <p>In RANGE mode, these options require that the ORDER BY clause specify exactly one column. The offset specifies the maximum difference between the value of that column in the current row and its value in preceding or following rows of the frame. The data type of the offset expression varies depending on the data type of the ordering column. For numeric ordering columns it is typically of the same type as the ordering column, but for datetime ordering columns it is an interval. For example, if the ordering column is of type date or timestamp, one could write <code class="language-plaintext highlighter-rouge">RANGE BETWEEN '1 day' PRECEDING AND '10 days'</code> FOLLOWING. The offset is still required to be non-null and non-negative, though the meaning of “non-negative” depends on its data type.</p>
+</blockquote>
+
+<h2 id="多个窗口多个字段同时统计">多个窗口多个字段同时统计</h2>
+
+<p>功能: 在前面的功能基础上, 同时存在多个时间窗口</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT
+    -- 1 hour
+    SUM(amount_in) OVER w1h AS h1_amount_in_sum,
+    SUM(
+        CASE
+            WHEN amount_in = 0 THEN 0
+            ELSE 1
+        END
+    ) OVER w1h AS h1_amount_in_count,
+    SUM(amount_out) OVER w1h AS h1_amount_out_sum,
+    SUM(
+        CASE
+            WHEN amount_out = 0 THEN 0
+            ELSE 1
+        END
+    ) OVER w1h AS h1_amount_out_count,
+    SUM(amount) OVER w1h AS h1_amount_sum,
+    COUNT(amount) OVER w1h AS h1_amount_count,
+    ROUND(AVG(amount) OVER w1h, 2) AS h1_amount_avg,
+    FIRST_VALUE(amount) OVER w1h AS h1_amount_first,
+    LAST_VALUE(amount) OVER w1h AS h1_amount_last,
+    MAX(amount) OVER w1h AS h1_amount_max,
+    MIN(amount) OVER w1h AS h1_amount_min,
+    -- 3 hour
+    SUM(amount_in) OVER w3h AS h3_amount_in_sum,
+    SUM(
+        CASE
+            WHEN amount_in = 0 THEN 0
+            ELSE 1
+        END
+    ) OVER w3h AS h3_amount_in_count,
+    SUM(amount_out) OVER w3h AS h3_amount_out_sum,
+    SUM(
+        CASE
+            WHEN amount_out = 0 THEN 0
+            ELSE 1
+        END
+    ) OVER w3h AS h3_amount_out_count,
+    SUM(amount) OVER w3h AS h3_amount_sum,
+    COUNT(amount) OVER w3h AS h3_amount_count,
+    ROUND(AVG(amount) OVER w3h, 2) AS h3_amount_avg,
+    FIRST_VALUE(amount) OVER w3h AS h3_amount_first,
+    LAST_VALUE(amount) OVER w3h AS h3_amount_last,
+    MAX(amount) OVER w3h AS h3_amount_max,
+    MIN(amount) OVER w3h AS h3_amount_min,
+    *
+FROM sample_01
+WINDOW
+    w1h AS (PARTITION BY card_num ORDER BY traded_at RANGE BETWEEN '30 minutes' PRECEDING AND '30 minutes' FOLLOWING),
+    w3h AS (PARTITION BY card_num ORDER BY traded_at RANGE BETWEEN '90 minutes' PRECEDING AND '90 minutes' FOLLOWING)
+;
+</code></pre></div></div>
+
+<h1 id="参考">参考</h1>
+
+<ul>
+  <li><a href="https://www.postgresql.org/docs/current/tutorial-window.html">https://www.postgresql.org/docs/current/tutorial-window.html</a></li>
+  <li><a href="https://stackoverflow.com/questions/14989927/sql-sliding-window-finding-max-value-over-interval">https://stackoverflow.com/questions/14989927/sql-sliding-window-finding-max-value-over-interval</a></li>
+  <li><a href="https://www.postgresqltutorial.com/postgresql-window-function/">https://www.postgresqltutorial.com/postgresql-window-function/</a></li>
+  <li><a href="https://www.citusdata.com/blog/2018/06/01/fun-with-sql-window-functions-in-postgresql/">https://www.citusdata.com/blog/2018/06/01/fun-with-sql-window-functions-in-postgresql/</a></li>
+  <li><a href="https://tapoueh.org/blog/2013/08/understanding-window-functions/">https://tapoueh.org/blog/2013/08/understanding-window-functions/</a>
+    <blockquote>
+      <p>作者:Milton<br />
+原文:https://www.cnblogs.com/milton/p/16315790.html</p>
+    </blockquote>
+  </li>
+</ul>
+
+  </div><a class="u-url" href="/cnblog/2022/05/28/PostgreSQL%E7%9A%84%E7%AA%97%E5%8F%A3%E5%87%BD%E6%95%B0OVERWINDOWPARTITIONBYRANGE.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

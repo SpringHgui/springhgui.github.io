@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>C# 蓄水池抽样 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="C# 蓄水池抽样" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="蓄水池采样算法解决的是在给定但长度未知的大数据集中，随机等概率抽取一个数据。如果知道数据的长度，可以用随机数rand()%n得到一个确切的随机位置，或者分块取值来构造随机，那么该位置的对象就是所求的对象，选中的概率是1/n。那长度未知特别是如果这个大数据集不能一次性放入内存中，蓄水池抽样算法就非常有用,在我的项目中采用的蓄水池随机抽样还加入了权重的计算。 其中方法中核心代码，也就是蓄水池抽样就是如下代码。" />
+<meta property="og:description" content="蓄水池采样算法解决的是在给定但长度未知的大数据集中，随机等概率抽取一个数据。如果知道数据的长度，可以用随机数rand()%n得到一个确切的随机位置，或者分块取值来构造随机，那么该位置的对象就是所求的对象，选中的概率是1/n。那长度未知特别是如果这个大数据集不能一次性放入内存中，蓄水池抽样算法就非常有用,在我的项目中采用的蓄水池随机抽样还加入了权重的计算。 其中方法中核心代码，也就是蓄水池抽样就是如下代码。" />
+<link rel="canonical" href="/cnblog/2022/05/26/C-%E8%93%84%E6%B0%B4%E6%B1%A0%E6%8A%BD%E6%A0%B7.html" />
+<meta property="og:url" content="/cnblog/2022/05/26/C-%E8%93%84%E6%B0%B4%E6%B1%A0%E6%8A%BD%E6%A0%B7.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-26T12:47:56+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="C# 蓄水池抽样" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-26T12:47:56+00:00","datePublished":"2022-05-26T12:47:56+00:00","description":"蓄水池采样算法解决的是在给定但长度未知的大数据集中，随机等概率抽取一个数据。如果知道数据的长度，可以用随机数rand()%n得到一个确切的随机位置，或者分块取值来构造随机，那么该位置的对象就是所求的对象，选中的概率是1/n。那长度未知特别是如果这个大数据集不能一次性放入内存中，蓄水池抽样算法就非常有用,在我的项目中采用的蓄水池随机抽样还加入了权重的计算。 其中方法中核心代码，也就是蓄水池抽样就是如下代码。","headline":"C# 蓄水池抽样","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/26/C-%E8%93%84%E6%B0%B4%E6%B1%A0%E6%8A%BD%E6%A0%B7.html"},"url":"/cnblog/2022/05/26/C-%E8%93%84%E6%B0%B4%E6%B1%A0%E6%8A%BD%E6%A0%B7.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">C# 蓄水池抽样</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-26T12:47:56+00:00" itemprop="datePublished">May 26, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>蓄水池采样算法解决的是在给定但长度未知的大数据集中，随机等概率抽取一个数据。如果知道数据的长度，可以用随机数rand()%n得到一个确切的随机位置，或者分块取值来构造随机，那么该位置的对象就是所求的对象，选中的概率是1/n。那长度未知特别是如果这个大数据集不能一次性放入内存中，蓄水池抽样算法就非常有用,在我的项目中采用的蓄水池随机抽样还加入了权重的计算。</p>
+
+<p>其中方法中核心代码，也就是蓄水池抽样就是如下代码。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>if (i &lt; spotQuantity)
+{
+    titleIndexList.Add(i);
+    eigenValueList.Add(tempEigenValue);
+}
+else
+{
+    double minEigenValue = eigenValueList.Min();
+    int minIndex = eigenValueList.IndexOf(minEigenValue);
+
+    if (tempEigenValue &gt; minEigenValue)
+    {
+        eigenValueList[minIndex] = tempEigenValue;
+        titleIndexList[minIndex] = i;
+    }
+}
+</code></pre></div></div>
+
+<p>首先从计算出的要抽取多少数量，根据数据循环，先让抽取数量的数据放入池子中titleIndexList，并且将对应数据的权重放入到抽取数据的权重列表。<br />
+ 在后面的循环中，判断抽取的权重如果大于已经抽取的最小权重则替换最小权重的数据为当前循环的数据。<br />
+ 如果你不是按照权重，则可以产生一个随机数，如果随机数落在已经抽取队列的数组下标内，则替换掉原来的下标数据也能实现随机性。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>        public static void WeightedSampling(List&lt;article&gt; articleList, int grade)
+        {
+            //根据传入的grade 计算一个抽样数量。
+            double sampleFactor = (double)Math.Pow((double)1 / (1 + grade), Math.E);
+            var spotQuantity = (int)Math.Ceiling(articleList.Count() * sampleFactor);
+            //如果规则抽的数量已经超过随机抽取数则不再抽取
+            var spotedCount = articleList.Where(t =&gt; t.isspot == 1).Count();
+            if (spotedCount &gt;= spotQuantity)
+                return;
+            //如果数量不足则补齐
+            spotQuantity -= spotedCount;
+            var spotTitleList = articleList.Where(t =&gt; t.isspot != 1).ToList();
+            //实例化池子和数据权重List
+            List&lt;int&gt; titleIndexList = new List&lt;int&gt;();
+            List&lt;double&gt; eigenValueList = new List&lt;double&gt;();
+
+            if (spotArticle.Count() &lt;= spotQuantity)
+            {
+                for (int i = 0; i &lt; spotArticle.Count(); i++)
+                {
+                    spotArticle[i].isspot = 1;
+                }
+            }
+            else
+            {
+                var random = new Random();
+                for (int i = 0; i &lt; spotTitleList.Count; i++)
+                {
+                    double tempWeight = spotTitleList[i].eigenvalue;
+                    double tempEigenValue = Math.Pow(random.NextDouble(), 1 / tempWeight);
+
+                    if (i &lt; spotQuantity)
+                    {
+                        titleIndexList.Add(i);
+                        eigenValueList.Add(tempEigenValue);
+                    }
+                    else
+                    {
+                        double minEigenValue = eigenValueList.Min();
+                        int minIndex = eigenValueList.IndexOf(minEigenValue);
+
+                        if (tempEigenValue &gt; minEigenValue)
+                        {
+                            eigenValueList[minIndex] = tempEigenValue;
+                            titleIndexList[minIndex] = i;
+                        }
+                    }
+                }
+                //将抽取出来的对象isspot 抽取标志设置为1
+                foreach (var index in titleIndexList)
+                {
+                    spotTitleList[index].isspot = 1;
+                }
+            }
+        }
+</code></pre></div></div>
+
+<p>该方法对于我们平时项目中抽取不知道数据长度的随机数是非常好用的算法，同时该算法不复杂其时间复杂度为O(n)。</p>
+<blockquote>
+  <p>作者:XSpringSun
+原文:https://www.cnblogs.com/SunSpring/p/16308794.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/26/C-%E8%93%84%E6%B0%B4%E6%B1%A0%E6%8A%BD%E6%A0%B7.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

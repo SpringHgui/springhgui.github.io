@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Docker安装Mycat和Mysql进行水平分库分表实战【图文教学】 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="Docker安装Mycat和Mysql进行水平分库分表实战【图文教学】" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="一、前言 小编最近公司有个新的需求，数据量比较大，要涉及到分库分表。大概了解了一些主流的中间件，使用和网上资料比较多的是Mycat和sharding-jdbc，小编比较倾向于Mycat。原因很简单就是参考的资料比较多，教学比较多，小编经过一天的尝试，终于完成了！这篇主要是实战，一些知识点请自行百度，小编也是没有了解太多，最主要的目的是看一下效果！网上全使用Docker还是不多，而且很迷糊，小编进行补充，让大家少走弯路！！ 本次简单的进行分库分表测试，测试分片规则是mod-long，简单的根据id取余分组，实际业务肯定不符合，大家根据业务进行具体规则！！小编的场景是水平的拆分哈，如果不符合你的可以看看使用Docker安装，然后再修改分片策略即可！ 小编大部分的命令都是来自于两位大佬的，后面给出链接，大家可以去看一下哈！不过他们省略了一些，我给补充上，能够顺畅的走下去流程！！ 二、安装docker网络 因为我们的Mycat和Mysql都是使用docker安装的，容器和容器之间是相互隔离的，这时候需要用到docker网络帮助我们进行两个容器之间的通信！" />
+<meta property="og:description" content="一、前言 小编最近公司有个新的需求，数据量比较大，要涉及到分库分表。大概了解了一些主流的中间件，使用和网上资料比较多的是Mycat和sharding-jdbc，小编比较倾向于Mycat。原因很简单就是参考的资料比较多，教学比较多，小编经过一天的尝试，终于完成了！这篇主要是实战，一些知识点请自行百度，小编也是没有了解太多，最主要的目的是看一下效果！网上全使用Docker还是不多，而且很迷糊，小编进行补充，让大家少走弯路！！ 本次简单的进行分库分表测试，测试分片规则是mod-long，简单的根据id取余分组，实际业务肯定不符合，大家根据业务进行具体规则！！小编的场景是水平的拆分哈，如果不符合你的可以看看使用Docker安装，然后再修改分片策略即可！ 小编大部分的命令都是来自于两位大佬的，后面给出链接，大家可以去看一下哈！不过他们省略了一些，我给补充上，能够顺畅的走下去流程！！ 二、安装docker网络 因为我们的Mycat和Mysql都是使用docker安装的，容器和容器之间是相互隔离的，这时候需要用到docker网络帮助我们进行两个容器之间的通信！" />
+<link rel="canonical" href="/cnblog/2022/06/01/Docker%E5%AE%89%E8%A3%85Mycat%E5%92%8CMysql%E8%BF%9B%E8%A1%8C%E6%B0%B4%E5%B9%B3%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E5%AE%9E%E6%88%98%E5%9B%BE%E6%96%87%E6%95%99%E5%AD%A6.html" />
+<meta property="og:url" content="/cnblog/2022/06/01/Docker%E5%AE%89%E8%A3%85Mycat%E5%92%8CMysql%E8%BF%9B%E8%A1%8C%E6%B0%B4%E5%B9%B3%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E5%AE%9E%E6%88%98%E5%9B%BE%E6%96%87%E6%95%99%E5%AD%A6.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-06-01T11:45:48+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Docker安装Mycat和Mysql进行水平分库分表实战【图文教学】" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-06-01T11:45:48+00:00","datePublished":"2022-06-01T11:45:48+00:00","description":"一、前言 小编最近公司有个新的需求，数据量比较大，要涉及到分库分表。大概了解了一些主流的中间件，使用和网上资料比较多的是Mycat和sharding-jdbc，小编比较倾向于Mycat。原因很简单就是参考的资料比较多，教学比较多，小编经过一天的尝试，终于完成了！这篇主要是实战，一些知识点请自行百度，小编也是没有了解太多，最主要的目的是看一下效果！网上全使用Docker还是不多，而且很迷糊，小编进行补充，让大家少走弯路！！ 本次简单的进行分库分表测试，测试分片规则是mod-long，简单的根据id取余分组，实际业务肯定不符合，大家根据业务进行具体规则！！小编的场景是水平的拆分哈，如果不符合你的可以看看使用Docker安装，然后再修改分片策略即可！ 小编大部分的命令都是来自于两位大佬的，后面给出链接，大家可以去看一下哈！不过他们省略了一些，我给补充上，能够顺畅的走下去流程！！ 二、安装docker网络 因为我们的Mycat和Mysql都是使用docker安装的，容器和容器之间是相互隔离的，这时候需要用到docker网络帮助我们进行两个容器之间的通信！","headline":"Docker安装Mycat和Mysql进行水平分库分表实战【图文教学】","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/06/01/Docker%E5%AE%89%E8%A3%85Mycat%E5%92%8CMysql%E8%BF%9B%E8%A1%8C%E6%B0%B4%E5%B9%B3%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E5%AE%9E%E6%88%98%E5%9B%BE%E6%96%87%E6%95%99%E5%AD%A6.html"},"url":"/cnblog/2022/06/01/Docker%E5%AE%89%E8%A3%85Mycat%E5%92%8CMysql%E8%BF%9B%E8%A1%8C%E6%B0%B4%E5%B9%B3%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E5%AE%9E%E6%88%98%E5%9B%BE%E6%96%87%E6%95%99%E5%AD%A6.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Docker安装Mycat和Mysql进行水平分库分表实战【图文教学】</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-06-01T11:45:48+00:00" itemprop="datePublished">Jun 1, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h2 id="一前言">一、前言</h2>
+
+<p>小编最近公司有个新的需求，数据量比较大，要涉及到分库分表。大概了解了一些主流的中间件，使用和网上资料比较多的是<code class="language-plaintext highlighter-rouge">Mycat</code>和<code class="language-plaintext highlighter-rouge">sharding-jdbc</code>，小编比较倾向于<code class="language-plaintext highlighter-rouge">Mycat</code>。原因很简单就是参考的资料比较多，教学比较多，小编经过一天的尝试，终于完成了！这篇主要是实战，一些知识点请自行百度，小编也是没有了解太多，最主要的目的是看一下效果！网上全使用Docker还是不多，而且很迷糊，小编进行补充，让大家少走弯路！！</p>
+
+<p>本次简单的进行分库分表测试，测试分片规则是<code class="language-plaintext highlighter-rouge">mod-long</code>，简单的根据id取余分组，实际业务肯定不符合，大家根据业务进行具体规则！！小编的场景是<code class="language-plaintext highlighter-rouge">水平的拆分</code>哈，如果不符合你的可以看看使用Docker安装，然后再修改分片策略即可！<br />
+ 小编大部分的命令都是来自于两位大佬的，后面给出链接，大家可以去看一下哈！不过他们省略了一些，我给补充上，能够顺畅的走下去流程！！</p>
+
+<h2 id="二安装docker网络">二、安装docker网络</h2>
+
+<p>因为我们的Mycat和Mysql都是使用docker安装的，容器和容器之间是相互隔离的，这时候需要用到docker网络帮助我们进行两个容器之间的通信！</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> docker network create -d bridge --ip-range=192.168.1.0/24 --gateway=192.168.1.1
+ --subnet=192.168.1.0/24 bridge2
+</code></pre></div></div>
+
+<p>这是用的大佬的创建命令，可以去原文看看：<a href="https://blog.csdn.net/qq_41542638/article/details/103847692">原文地址</a></p>
+
+<p>我们把Mycat和Mysql都是创建出来在进行统一的测试。</p>
+
+<h2 id="三安装mycat">三、安装Mycat</h2>
+
+<p><strong>1. 创建新目录并解压Mycat</strong></p>
+
+<p>创建一个存放压缩包的命令</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mkdir /usr/local/docker
+</code></pre></div></div>
+
+<p>准备好压缩包<br />
+ 链接：<a href="https://pan.baidu.com/s/1MGmArgUz-pB9Cgyl2QFCIw">百度云地址</a><br />
+ 提取码：2n1u</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tar -zxvf mycat.tar.gz
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/0141570b049f4f2f979bd4a85fb8cc72.png" alt="在这里插入图片描述" /></p>
+
+<p><strong>2. 复制到docker挂载创建目录</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cp -r /usr/local/docker/mycat/conf/ /usr/local/mycat/conf/
+cp -r /usr/local/docker/mycat/logs/ /usr/local/mycat/logs/
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/28421728e7fb4f86b23a08ae9bb4c498.png" alt="在这里插入图片描述" /></p>
+
+<p><strong>3. 赋予最高权限</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>chmod 777 /usr/local/mycat/logs
+
+chmod 777 /usr/local/mycat/conf
+</code></pre></div></div>
+
+<p><strong>4. 创建dockerfile文件</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>touch Dockerfile
+vi Dockerfile
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/bef77a73228847e9a98b565b64924301.png" alt="在这里插入图片描述" /></p>
+
+<p><strong>5. Dockerfile内容</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>FROM openjdk:8
+ADD mycat.tar.gz /usr/local/
+VOLUME /usr/local/mycat/conf
+ENV MYCAT_HOME=/usr/local/mycat
+EXPOSE 8066 9066
+CMD ["/usr/local/mycat/bin/mycat", "console","&amp;"]
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/506ef903aaaf45d2a0a0e192f7f8b2c5.png" alt="在这里插入图片描述" /><br />
+ <img src="https://img-blog.csdnimg.cn/cda20ae2d11e4c7fb230461019aee47c.png" alt="在这里插入图片描述" /><br />
+ <strong>6. 构建Mycat镜像</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker build -t mycat .
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/7a677dc9819a438eaaaa75d8e17ea68f.png" alt="在这里插入图片描述" /><br />
+ <strong>7. 运行Mycat镜像</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run --name mycat -p 8066:8066 -p 9066:9066 -v /usr/local/mycat/conf/:/usr/local/mycat/conf -v /usr/local/mycat/logs:/usr/local/mycat/logs -d --network=bridge2 --ip=192.168.1.8  mycat
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/075ec1ae81aa4a2ab714625e438ef650.png" alt="在这里插入图片描述" /></p>
+
+<h2 id="四创建mysql容器">四、创建Mysql容器</h2>
+
+<p><strong>1.  创建容器内在本地的挂载文件夹</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mkdir -p /usr/local/mysql/data /usr/local/mysql/logs /usr/local/mysql/conf
+# 给予权限省略了哈
+</code></pre></div></div>
+
+<p><strong>2. 初始化mysql的配置文件*.cnf</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>touch /usr/local/mysql/conf/my.cnf
+</code></pre></div></div>
+
+<p><strong>3. 启动镜像</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run -p 3306:3306 --name mysql -v /usr/local/mysql/conf:/etc/mysql/conf.d -v /usr/local/mysql/logs:/var/log/mysql -v /usr/local/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=root -d --network=bridge2 --ip=192.168.1.9 mysql:5.7
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/f51ceff1a13d4d11983b03e4e3d353dd.png" alt="在这里插入图片描述" /></p>
+
+<p><strong>4. 本地测试连接</strong></p>
+
+<p><img src="https://img-blog.csdnimg.cn/49117459ee024c469c99143c30161d8c.png" alt="在这里插入图片描述" /><br />
+ <strong>5. 新建三个数据库及其表</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 新建三个库
+CREATE DATABASE IF NOT EXISTS db1 DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE IF NOT EXISTS db2 DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE IF NOT EXISTS db3 DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
+
+# 每个库下面新建一个表
+drop table test_table;
+CREATE TABLE `test_table` (
+  `id` int(6) NOT NULL,
+  `name` varchar(500) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/cd5dbe12742540f1a404de4c8cde6e5b.png" alt="在这里插入图片描述" /></p>
+
+<h2 id="五mycat和mysql互ping">五、Mycat和Mysql互ping</h2>
+
+<p><strong>1. 进入Mycat容器内部</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker exec -it 256 /bin/bash
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/48464dbe228142238a96589410f0dec4.png" alt="在这里插入图片描述" /></p>
+
+<p><strong>2. 更新apt-get</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apt-get update
+</code></pre></div></div>
+
+<p><strong>3. 下载Ping命令</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apt-get install iputils-ping
+</code></pre></div></div>
+
+<p>输入y即可<br />
+ <img src="https://img-blog.csdnimg.cn/c346ddb9d8f049d38316a179e80f239a.png" alt="在这里插入图片描述" /></p>
+
+<p><strong>4. 互ping成功</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ping 192.168.1.8
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/bb8feb33a54f410dbbfdef90857d1489.png" alt="在这里插入图片描述" /><br />
+ <strong>5. 退出容器，以后台形式运行</strong></p>
+
+<p><code class="language-plaintext highlighter-rouge">Ctrl + P + Q</code></p>
+
+<h2 id="六修改mycat配置文件">六、修改Mycat配置文件</h2>
+
+<p><strong>1. 重要配置</strong></p>
+<blockquote>
+  <p>作者:小王写博客<br />
+原文:https://www.cnblogs.com/wang1221/p/16329408.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/06/01/Docker%E5%AE%89%E8%A3%85Mycat%E5%92%8CMysql%E8%BF%9B%E8%A1%8C%E6%B0%B4%E5%B9%B3%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E5%AE%9E%E6%88%98%E5%9B%BE%E6%96%87%E6%95%99%E5%AD%A6.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

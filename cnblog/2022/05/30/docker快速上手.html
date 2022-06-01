@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>docker 快速上手 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="docker 快速上手" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="Docker 属于 Linux 容器的一种封装，提供简单易用的容器使用接口 安装 docker 设置仓库" />
+<meta property="og:description" content="Docker 属于 Linux 容器的一种封装，提供简单易用的容器使用接口 安装 docker 设置仓库" />
+<link rel="canonical" href="/cnblog/2022/05/30/docker%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8B.html" />
+<meta property="og:url" content="/cnblog/2022/05/30/docker%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8B.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-30T09:03:11+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="docker 快速上手" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-30T09:03:11+00:00","datePublished":"2022-05-30T09:03:11+00:00","description":"Docker 属于 Linux 容器的一种封装，提供简单易用的容器使用接口 安装 docker 设置仓库","headline":"docker 快速上手","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/30/docker%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8B.html"},"url":"/cnblog/2022/05/30/docker%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8B.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">docker 快速上手</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-30T09:03:11+00:00" itemprop="datePublished">May 30, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p><strong>Docker 属于 Linux 容器的一种封装，提供简单易用的容器使用接口</strong></p>
+
+<p><img src="https://aida-blog.oss-cn-hangzhou.aliyuncs.com/images/pictures/640" alt="图片" /></p>
+
+<h3 id="安装-docker">安装 docker</h3>
+
+<h4 id="设置仓库">设置仓库</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>$ sudo yum install -y yum-utils
+
+$ sudo yum-config-manager \
+    --add-repo \
+    https://download.docker.com/linux/centos/docker-ce.repo
+# 增加阿里源
+$ sudo yum-config-manager \
+    --add-repo \
+    http://mirrors.aliyun.com/docker-ce/linux/centos/docker-ce.repo
+</code></pre></div></div>
+
+<h4 id="安装">安装</h4>
+
+<ol>
+  <li>
+    <p>Install the <em>latest version</em> of Docker Engine, containerd, and Docker Compose or go to the next step to install a specific version:</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> $ sudo yum install docker-ce docker-ce-cli containerd.io docker-compose-plugin
+</code></pre></div>    </div>
+
+    <p>If prompted to accept the GPG key, verify that the fingerprint matches <code class="language-plaintext highlighter-rouge">060A 61C5 1B55 8A7F 742B 77AA C52F EB6B 621E 9F35</code>, and if so, accept it.</p>
+  </li>
+</ol>
+
+<blockquote>
+  <p>安装指定版本</p>
+</blockquote>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    $ yum list docker-ce --showduplicates | sort -r
+    
+    docker-ce.x86_64  3:18.09.1-3.el7                     docker-ce-stable
+    docker-ce.x86_64  3:18.09.0-3.el7                     docker-ce-stable
+    docker-ce.x86_64  18.06.1.ce-3.el7                    docker-ce-stable
+    docker-ce.x86_64  18.06.0.ce-3.el7                    docker-ce-stable
+
+    $ sudo yum install docker-ce-&lt;VERSION_STRING&gt; docker-ce-cli-&lt;VERSION_STRING&gt; containerd.io docker-compose-plugin 2. Start Docker.
+
+    $ sudo systemctl start docker 3. Verify that Docker Engine is installed correctly by running the `hello-world` image.
+
+    $ sudo docker run hello-world
+
+This command downloads a test 4. 避免每次输入`sudo`, 可以把用户加入docker用户组
+
+    1、输入
+    $ sudo groupadd docker
+    显示groupadd: group 'docker' already exists
+    
+    2、将docker账户给与权限
+    sudo gpasswd -a &lt;用户名&gt; docker
+    例如： sudo gpasswd -a xiangyuan docker
+    
+    3、重启docker
+    sudo service docker restart
+    
+    4、刷新docker成员
+    newgrp - docker
+</code></pre></div></div>
+
+<h4 id="验证">验证</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker version
+docker info
+</code></pre></div></div>
+
+<blockquote>
+  <p>官方文档 <a href="https://docs.docker.com/engine/install/centos/#set-up-the-repository">https://docs.docker.com/engine/install/centos/#set-up-the-repository</a></p>
+
+  <p><a href="https://www.runoob.com/docker/centos-docker-install.html">https://www.runoob.com/docker/centos-docker-install.html</a></p>
+</blockquote>
+
+<h2 id="docker-使用">docker 使用</h2>
+
+<p>三个核心部件</p>
+
+<ul>
+  <li>dockerfile</li>
+  <li>image</li>
+  <li>container</li>
+</ul>
+
+<h3 id="image">image</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 列出本机的所有 image 文件。
+$ docker image ls
+
+# 删除 image 文件
+$ docker image rm [imageName]
+</code></pre></div></div>
+
+<h3 id="container">container</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 列出本机正在运行的容器
+$ docker container ls
+
+# 列出本机所有容器，包括终止运行的容器
+$ docker container ls --all
+
+#新建容器，每运行一次，就会新建一个容器。同样的命令运行两次，就会生成两个一模一样的容器文件
+$ docker container run hello-world 
+
+# 命令，它用来启动已经生成、已经停止运行的容器文件。
+$ docker container start
+
+# 强行终止
+$ docker container kill
+
+$ docker container rm [containerID]
+
+# 查看 docker 容器的输出，即容器里面 Shell 的标准输出
+$ docker container logs [containerID]
+</code></pre></div></div>
+
+<h3 id="dockerfile">Dockerfile</h3>
+
+<p>Dockerfile 文件。它是一个文本文件，用来配置 image。Docker 根据 该文件生成二进制的 image 文件</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker image build  -t koa-demo:0.0.1 .  # 命令创建 image 文件
+
+# -t参数用来指定 image 文件的名字，后面还可以用冒号指定标签。如果不指定，默认的标签就是latest。最后的那个点表示 Dockerfile 文件所在的路径，上例是当前路径，所以是一个点。 &gt; 作者:鱼与鱼   &gt; 原文:https://www.cnblogs.com/gongyanzh/p/16325117.html  
+</code></pre></div></div>
+
+  </div><a class="u-url" href="/cnblog/2022/05/30/docker%E5%BF%AB%E9%80%9F%E4%B8%8A%E6%89%8B.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

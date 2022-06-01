@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>.net core 和 WPF 开发升讯威在线客服系统：调用百度翻译接口实现实时自动翻译 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content=".net core 和 WPF 开发升讯威在线客服系统：调用百度翻译接口实现实时自动翻译" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="业余时间用 .net core 写了一个在线客服系统。并在博客园写了一个系列的文章，写介绍这个开发过程。 我把这款业余时间写的小系统丢在网上，陆续有人找我要私有化版本，我都给了，毕竟软件业的初衷就是免费和分享，后来我索性就官方发了一个私有化版直接给别人下载。希望能够打造： 开放、开源、共享。努力打造 .net 社区的一款优秀开源产品。 2021年下半年，陆续有朋友联系我，表示从事外贸行业，希望客服系统能够实现客服与访客之间双向的实时自动翻译。 一开始我想的比较复杂，拖着没做这个功能，后来询问的朋友越来越多，我仔细调研了一下这个需求，发现通过公有云上的接口实现起来，非常的简单！整个对接实现过程不夸张的说，10 分钟就完成了。 本文将详细的介绍百度翻译接口的注册、开通、对接全过程，以及 源代码 ，希望对你有用。 先看实现效果 客服端程序以原文和译文对照的方式显示。 访客端以访客语言显示。 以设置默认翻译所有访客的消息，也可以由客服根据不同访客自行决定是否翻译。 简介 升讯威在线客服与营销系统是基于 .net core / WPF 开发的一款在线客服软件，宗旨是： 开放、开源、共享。努力打造 .net 社区的一款优秀开源产品。 完整私有化包下载地址" />
+<meta property="og:description" content="业余时间用 .net core 写了一个在线客服系统。并在博客园写了一个系列的文章，写介绍这个开发过程。 我把这款业余时间写的小系统丢在网上，陆续有人找我要私有化版本，我都给了，毕竟软件业的初衷就是免费和分享，后来我索性就官方发了一个私有化版直接给别人下载。希望能够打造： 开放、开源、共享。努力打造 .net 社区的一款优秀开源产品。 2021年下半年，陆续有朋友联系我，表示从事外贸行业，希望客服系统能够实现客服与访客之间双向的实时自动翻译。 一开始我想的比较复杂，拖着没做这个功能，后来询问的朋友越来越多，我仔细调研了一下这个需求，发现通过公有云上的接口实现起来，非常的简单！整个对接实现过程不夸张的说，10 分钟就完成了。 本文将详细的介绍百度翻译接口的注册、开通、对接全过程，以及 源代码 ，希望对你有用。 先看实现效果 客服端程序以原文和译文对照的方式显示。 访客端以访客语言显示。 以设置默认翻译所有访客的消息，也可以由客服根据不同访客自行决定是否翻译。 简介 升讯威在线客服与营销系统是基于 .net core / WPF 开发的一款在线客服软件，宗旨是： 开放、开源、共享。努力打造 .net 社区的一款优秀开源产品。 完整私有化包下载地址" />
+<link rel="canonical" href="/cnblog/2022/05/31/.netcore%E5%92%8CWPF%E5%BC%80%E5%8F%91%E5%8D%87%E8%AE%AF%E5%A8%81%E5%9C%A8%E7%BA%BF%E5%AE%A2%E6%9C%8D%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E7%99%BE%E5%BA%A6%E7%BF%BB%E8%AF%91%E6%8E%A5%E5%8F%A3%E5%AE%9E%E7%8E%B0%E5%AE%9E%E6%97%B6%E8%87%AA%E5%8A%A8%E7%BF%BB%E8%AF%91.html" />
+<meta property="og:url" content="/cnblog/2022/05/31/.netcore%E5%92%8CWPF%E5%BC%80%E5%8F%91%E5%8D%87%E8%AE%AF%E5%A8%81%E5%9C%A8%E7%BA%BF%E5%AE%A2%E6%9C%8D%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E7%99%BE%E5%BA%A6%E7%BF%BB%E8%AF%91%E6%8E%A5%E5%8F%A3%E5%AE%9E%E7%8E%B0%E5%AE%9E%E6%97%B6%E8%87%AA%E5%8A%A8%E7%BF%BB%E8%AF%91.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-31T08:42:25+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content=".net core 和 WPF 开发升讯威在线客服系统：调用百度翻译接口实现实时自动翻译" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-31T08:42:25+00:00","datePublished":"2022-05-31T08:42:25+00:00","description":"业余时间用 .net core 写了一个在线客服系统。并在博客园写了一个系列的文章，写介绍这个开发过程。 我把这款业余时间写的小系统丢在网上，陆续有人找我要私有化版本，我都给了，毕竟软件业的初衷就是免费和分享，后来我索性就官方发了一个私有化版直接给别人下载。希望能够打造： 开放、开源、共享。努力打造 .net 社区的一款优秀开源产品。 2021年下半年，陆续有朋友联系我，表示从事外贸行业，希望客服系统能够实现客服与访客之间双向的实时自动翻译。 一开始我想的比较复杂，拖着没做这个功能，后来询问的朋友越来越多，我仔细调研了一下这个需求，发现通过公有云上的接口实现起来，非常的简单！整个对接实现过程不夸张的说，10 分钟就完成了。 本文将详细的介绍百度翻译接口的注册、开通、对接全过程，以及 源代码 ，希望对你有用。 先看实现效果 客服端程序以原文和译文对照的方式显示。 访客端以访客语言显示。 以设置默认翻译所有访客的消息，也可以由客服根据不同访客自行决定是否翻译。 简介 升讯威在线客服与营销系统是基于 .net core / WPF 开发的一款在线客服软件，宗旨是： 开放、开源、共享。努力打造 .net 社区的一款优秀开源产品。 完整私有化包下载地址","headline":".net core 和 WPF 开发升讯威在线客服系统：调用百度翻译接口实现实时自动翻译","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/31/.netcore%E5%92%8CWPF%E5%BC%80%E5%8F%91%E5%8D%87%E8%AE%AF%E5%A8%81%E5%9C%A8%E7%BA%BF%E5%AE%A2%E6%9C%8D%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E7%99%BE%E5%BA%A6%E7%BF%BB%E8%AF%91%E6%8E%A5%E5%8F%A3%E5%AE%9E%E7%8E%B0%E5%AE%9E%E6%97%B6%E8%87%AA%E5%8A%A8%E7%BF%BB%E8%AF%91.html"},"url":"/cnblog/2022/05/31/.netcore%E5%92%8CWPF%E5%BC%80%E5%8F%91%E5%8D%87%E8%AE%AF%E5%A8%81%E5%9C%A8%E7%BA%BF%E5%AE%A2%E6%9C%8D%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E7%99%BE%E5%BA%A6%E7%BF%BB%E8%AF%91%E6%8E%A5%E5%8F%A3%E5%AE%9E%E7%8E%B0%E5%AE%9E%E6%97%B6%E8%87%AA%E5%8A%A8%E7%BF%BB%E8%AF%91.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">.net core 和 WPF 开发升讯威在线客服系统：调用百度翻译接口实现实时自动翻译</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-31T08:42:25+00:00" itemprop="datePublished">May 31, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>业余时间用 .net core 写了一个在线客服系统。并在博客园写了一个系列的文章，写介绍这个开发过程。</p>
+
+<p>我把这款业余时间写的小系统丢在网上，陆续有人找我要私有化版本，我都给了，毕竟软件业的初衷就是免费和分享，后来我索性就官方发了一个私有化版直接给别人下载。希望能够打造： 开放、开源、共享。努力打造 .net 社区的一款优秀开源产品。</p>
+
+<p><strong>2021年下半年，陆续有朋友联系我，表示从事外贸行业，希望客服系统能够实现客服与访客之间双向的实时自动翻译。</strong></p>
+
+<p>一开始我想的比较复杂，拖着没做这个功能，后来询问的朋友越来越多，我仔细调研了一下这个需求，发现通过公有云上的接口实现起来，非常的简单！整个对接实现过程不夸张的说，10 分钟就完成了。</p>
+
+<p>本文将详细的介绍百度翻译接口的注册、开通、对接全过程，以及 源代码 ，希望对你有用。</p>
+
+<h2 id="先看实现效果">先看实现效果</h2>
+
+<p>客服端程序以原文和译文对照的方式显示。</p>
+
+<p><img src="https://docs-api.shengxunwei.com/StaticFiles/Upload/5c448fc1-d287-4952-9d55-6be25eb86ab3.JPG" alt="" /></p>
+
+<p>访客端以访客语言显示。</p>
+
+<p><img src="https://docs-api.shengxunwei.com/StaticFiles/Upload/25294080-7fc3-4728-94ea-7276c5d29637.JPG" alt="" /></p>
+
+<p>以设置默认翻译所有访客的消息，也可以由客服根据不同访客自行决定是否翻译。</p>
+
+<p><img src="https://docs-api.shengxunwei.com/StaticFiles/Upload/75a5072f-c9e8-49fd-b346-4b6fb225ad24.JPG" alt="" /></p>
+
+<hr />
+
+<h2 id="简介">简介</h2>
+
+<p>升讯威在线客服与营销系统是基于 .net core / WPF 开发的一款在线客服软件，宗旨是： <strong>开放、开源、共享。努力打造 .net 社区的一款优秀开源产品。</strong></p>
+
+<h3 id="完整私有化包下载地址">完整私有化包下载地址</h3>
+
+<blockquote>
+  <p>💾 <a href="https://kf.shengxunwei.com">https://kf.shengxunwei.com</a></p>
+</blockquote>
+
+<h4 id="钟意的话请给个赞支持一下吧谢谢">钟意的话请给个赞支持一下吧，谢谢~</h4>
+
+<h3 id="安装部署说明书">安装部署说明书</h3>
+
+<blockquote>
+  <p>📕 <a href="https://docs.shengxunwei.com/Post/f7bc8496-14ee-4a53-07b4-08d8e3da6269">https://docs.shengxunwei.com/Post/f7bc8496-14ee-4a53-07b4-08d8e3da6269</a></p>
+</blockquote>
+
+<hr />
+
+<h1 id="百度翻译的对接使用">百度翻译的对接使用</h1>
+
+<p>访问百度翻译开放平台，注册账户并认证。</p>
+
+<blockquote>
+  <p><a href="https://fanyi-api.baidu.com">https://fanyi-api.baidu.com</a></p>
+</blockquote>
+
+<h2 id="开通通用翻译-api">开通通用翻译 API</h2>
+
+<p>注意：</p>
+
+<ul>
+  <li>非常见语种（如：乌克兰、菲律宾、印尼），仅企业认证尊享版可调用，未认证的非尊享版接口将返回 58001 错误。</li>
+  <li>请选择开通“尊享版”。“标准版” QPS 只有 1，每秒只允许调用 1 次翻译接口，无法满足客服系统正常使用需要。</li>
+</ul>
+
+<p><img src="https://docs-api.shengxunwei.com/StaticFiles/Upload/2db415d2-d8c1-41f9-9667-a723f0fcb80c.PNG" alt="" /></p>
+
+<h2 id="创建应用">创建应用</h2>
+
+<p>“服务器回调地址” 留空不填。<br />
+ “服务器地址”可留空不填，也可填写部署客服系统的服务器 IP 地址。</p>
+
+<p><img src="https://docs-api.shengxunwei.com/StaticFiles/Upload/9488559f-8062-4fe3-8d65-acd02f340886.PNG" alt="" /></p>
+
+<h2 id="获取-app-id-和-密钥">获取 APP ID 和 密钥</h2>
+
+<p>进入“开发者信息”画面，查看“申请信息”中的 <code class="language-plaintext highlighter-rouge">APP ID</code> 和 <code class="language-plaintext highlighter-rouge">密钥</code>，将其保存备用，在随后的客服系统主程序配置中使用。</p>
+
+<p><img src="https://docs-api.shengxunwei.com/StaticFiles/Upload/67785e2e-632a-41e3-a077-31b676570137.JPG" alt="" /></p>
+
+<h2 id="使用-c-调用翻译接口">使用 C# 调用翻译接口</h2>
+
+<p>接入方式<br />
+ 翻译API通过 HTTP 接口对外提供多语种互译服务。只需要通过调用通用翻译API，传入待翻译的内容，并指定要翻译的源语言（支持源语言语种自动检测）和目标语言种类，就可以得到相应的翻译结果。</p>
+
+<p>通用翻译API HTTPS 地址：<br />
+ <a href="https://fanyi-api.baidu.com/api/trans/vip/translate">https://fanyi-api.baidu.com/api/trans/vip/translate</a></p>
+
+<p>签名生成方法<br />
+ 签名是为了保证调用安全，使用 MD5 算法生成的一段字符串，生成的签名长度为 32 位，签名中的英文字符均为小写格式。</p>
+
+<p>生成方法：<br />
+ Step1. 将请求参数中的 APPID(appid)， 翻译 query(q，注意为UTF-8编码)，随机数(salt)，以及平台分配的密钥(可在管理控制台查看) 按照 appid+q+salt+密钥的顺序拼接得到字符串 1。<br />
+ Step2. 对字符串 1 做 md5 ，得到 32 位小写的 sign。<br />
+ 注：</p>
+
+<ol>
+  <li>待翻译文本（q）需为 UTF-8 编码；</li>
+  <li>在生成签名拼接 appid+q+salt+密钥 字符串时，q 不需要做 URL encode，在生成签名之后，发送 HTTP 请求之前才需要对要发送的待翻译文本字段 q 做 URL encode；</li>
+</ol>
+
+<p>3.如遇到报 54001 签名错误，请检查您的签名生成方法是否正确，在对 sign 进行拼接和加密时，q 不需要做 URL encode，很多开发者遇到签名报错均是由于拼接 sign 前就做了 URL encode；</p>
+
+<p>4.在生成签名后，发送 HTTP 请求时，如果将 query 拼接在 url 上，需要对 query 做 URL encode。</p>
+
+<p>输入参数<br />
+ 请求方式： 可使用 GET 或 POST 方式，如使用 POST 方式，Content-Type 请指定为：application/x-www-form-urlencoded<br />
+ 字符编码：统一采用 UTF-8 编码格式<br />
+ query 长度：为保证翻译质量，请将单次请求长度控制在 6000 bytes以内（汉字约为输入参数 2000 个）</p>
+
+<h2 id="代码">代码</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>using System;
+using System.Text;
+using System.Net;
+using System.IO;
+using System.Security.Cryptography;
+using System.Web;
+
+namespace TransAPICSharpDemo
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
+            // 原文
+            string q = "apple";
+            // 源语言
+            string from = "en";
+            // 目标语言
+            string to = "zh";
+            // 改成您的APP ID
+            string appId = "2015063000000001";
+            Random rd = new Random();
+            string salt = rd.Next(100000).ToString();
+            // 改成您的密钥
+            string secretKey = "12345678";
+            string sign = EncryptString(appId + q + salt + secretKey);
+            string url = "http://api.fanyi.baidu.com/api/trans/vip/translate?";
+            url += "q=" + HttpUtility.UrlEncode(q);
+            url += "&amp;from=" + from;
+            url += "&amp;to=" + to;
+            url += "&amp;appid=" + appId;
+            url += "&amp;salt=" + salt;
+            url += "&amp;sign=" + sign;
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+            request.Method = "GET";
+            request.ContentType = "text/html;charset=UTF-8";
+            request.UserAgent = null;
+            request.Timeout = 6000;
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            Stream myResponseStream = response.GetResponseStream();
+            StreamReader myStreamReader = new StreamReader(myResponseStream, Encoding.GetEncoding("utf-8"));
+            string retString = myStreamReader.ReadToEnd();
+            myStreamReader.Close();
+            myResponseStream.Close();
+            Console.WriteLine(retString);
+            Console.ReadLine();
+        }
+        // 计算MD5值
+        public static string EncryptString(string str)
+        {
+            MD5 md5 = MD5.Create();
+            // 将字符串转换成字节数组
+            byte[] byteOld = Encoding.UTF8.GetBytes(str);
+            // 调用加密方法
+            byte[] byteNew = md5.ComputeHash(byteOld);
+            // 将加密结果转换为字符串
+            StringBuilder sb = new StringBuilder();
+            foreach (byte b in byteNew)
+            {
+                // 将字节转换成16进制表示的字符串，
+                sb.Append(b.ToString("x2"));
+            }
+            // 返回加密的字符串
+            return sb.ToString();
+        }
+    }
+}
+</code></pre></div></div>
+
+<p>在编写你的代码时，把以上示例代码中的 APP ID 和 密钥 更换成你注册开通百度翻译时得到的即可！</p>
+
+<p>希望能够打造： <strong>开放、开源、共享。努力打造 .net 社区的一款优秀开源产品。</strong></p>
+
+<h3 id="钟意的话请给个赞支持一下吧谢谢-1">钟意的话请给个赞支持一下吧，谢谢~</h3>
+<blockquote>
+  <p>作者:曹旭升（sheng.c）<br />
+原文:https://www.cnblogs.com/sheng_chao/p/16327531.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/31/.netcore%E5%92%8CWPF%E5%BC%80%E5%8F%91%E5%8D%87%E8%AE%AF%E5%A8%81%E5%9C%A8%E7%BA%BF%E5%AE%A2%E6%9C%8D%E7%B3%BB%E7%BB%9F%E8%B0%83%E7%94%A8%E7%99%BE%E5%BA%A6%E7%BF%BB%E8%AF%91%E6%8E%A5%E5%8F%A3%E5%AE%9E%E7%8E%B0%E5%AE%9E%E6%97%B6%E8%87%AA%E5%8A%A8%E7%BF%BB%E8%AF%91.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

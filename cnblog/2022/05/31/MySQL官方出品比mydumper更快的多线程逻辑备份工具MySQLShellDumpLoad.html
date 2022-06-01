@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>MySQL 官方出品，比 mydumper 更快的多线程逻辑备份工具-MySQL Shell Dump &amp; Load | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="MySQL 官方出品，比 mydumper 更快的多线程逻辑备份工具-MySQL Shell Dump &amp; Load" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="mysqldump 和 mydumper 是我们常用的两个逻辑备份工具。 无论是 mysqldump 还是 mydumper 都是将备份数据通过 INSERT 的方式写入到备份文件中。 恢复时，myloader（ mydumper 中的恢复工具 ） 是多线程导入，且一个 INSERT 语句中包含多条记录，多个 INSERT 操作批量提交。基本上，凡是我们能想到的，有助于提升导入速度的，myloader 都会使用或有选项提供。 单就恢复速度而言，可以说，myloader 就是逻辑恢复工具的天花板。 既然如此，还有办法能继续提升逻辑恢复工具的恢复速度么？毕竟，备份的恢复速度直接影响着灾难发生时数据库服务的 RTO。 答案，有！ 这个就是官方在 MySQL Shell 8.0.21 中推出的 Dump &amp; Load 工具。 与 myloader 不一样的是，MySQL Shell Load 是通过 LOAD DATA LOCAL INFILE 命令来导入数据的。 而 LOAD DATA 操作，按照官方文档的说法，比 INSERT 操作快 20 倍。 下面，我们看看 MySQL Shell Dump &amp; Load 的具体用法和实现原理。 本文主要包括以下几部分： 什么是 MySQL Shell。 MySQL Shell的安装。 MySQL Shell Dump &amp; Load的使用。 util.dumpInstance的关键特性。 util.loadDump的关键特性。 util.dumpInstance的备份流程。 util.dumpInstance的参数解析。 util.loadDump的参数解析。 使用 MySQL Shell Dump &amp; Load时的注意事项。" />
+<meta property="og:description" content="mysqldump 和 mydumper 是我们常用的两个逻辑备份工具。 无论是 mysqldump 还是 mydumper 都是将备份数据通过 INSERT 的方式写入到备份文件中。 恢复时，myloader（ mydumper 中的恢复工具 ） 是多线程导入，且一个 INSERT 语句中包含多条记录，多个 INSERT 操作批量提交。基本上，凡是我们能想到的，有助于提升导入速度的，myloader 都会使用或有选项提供。 单就恢复速度而言，可以说，myloader 就是逻辑恢复工具的天花板。 既然如此，还有办法能继续提升逻辑恢复工具的恢复速度么？毕竟，备份的恢复速度直接影响着灾难发生时数据库服务的 RTO。 答案，有！ 这个就是官方在 MySQL Shell 8.0.21 中推出的 Dump &amp; Load 工具。 与 myloader 不一样的是，MySQL Shell Load 是通过 LOAD DATA LOCAL INFILE 命令来导入数据的。 而 LOAD DATA 操作，按照官方文档的说法，比 INSERT 操作快 20 倍。 下面，我们看看 MySQL Shell Dump &amp; Load 的具体用法和实现原理。 本文主要包括以下几部分： 什么是 MySQL Shell。 MySQL Shell的安装。 MySQL Shell Dump &amp; Load的使用。 util.dumpInstance的关键特性。 util.loadDump的关键特性。 util.dumpInstance的备份流程。 util.dumpInstance的参数解析。 util.loadDump的参数解析。 使用 MySQL Shell Dump &amp; Load时的注意事项。" />
+<link rel="canonical" href="/cnblog/2022/05/31/MySQL%E5%AE%98%E6%96%B9%E5%87%BA%E5%93%81%E6%AF%94mydumper%E6%9B%B4%E5%BF%AB%E7%9A%84%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%80%BB%E8%BE%91%E5%A4%87%E4%BB%BD%E5%B7%A5%E5%85%B7MySQLShellDumpLoad.html" />
+<meta property="og:url" content="/cnblog/2022/05/31/MySQL%E5%AE%98%E6%96%B9%E5%87%BA%E5%93%81%E6%AF%94mydumper%E6%9B%B4%E5%BF%AB%E7%9A%84%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%80%BB%E8%BE%91%E5%A4%87%E4%BB%BD%E5%B7%A5%E5%85%B7MySQLShellDumpLoad.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-31T08:41:44+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="MySQL 官方出品，比 mydumper 更快的多线程逻辑备份工具-MySQL Shell Dump &amp; Load" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-31T08:41:44+00:00","datePublished":"2022-05-31T08:41:44+00:00","description":"mysqldump 和 mydumper 是我们常用的两个逻辑备份工具。 无论是 mysqldump 还是 mydumper 都是将备份数据通过 INSERT 的方式写入到备份文件中。 恢复时，myloader（ mydumper 中的恢复工具 ） 是多线程导入，且一个 INSERT 语句中包含多条记录，多个 INSERT 操作批量提交。基本上，凡是我们能想到的，有助于提升导入速度的，myloader 都会使用或有选项提供。 单就恢复速度而言，可以说，myloader 就是逻辑恢复工具的天花板。 既然如此，还有办法能继续提升逻辑恢复工具的恢复速度么？毕竟，备份的恢复速度直接影响着灾难发生时数据库服务的 RTO。 答案，有！ 这个就是官方在 MySQL Shell 8.0.21 中推出的 Dump &amp; Load 工具。 与 myloader 不一样的是，MySQL Shell Load 是通过 LOAD DATA LOCAL INFILE 命令来导入数据的。 而 LOAD DATA 操作，按照官方文档的说法，比 INSERT 操作快 20 倍。 下面，我们看看 MySQL Shell Dump &amp; Load 的具体用法和实现原理。 本文主要包括以下几部分： 什么是 MySQL Shell。 MySQL Shell的安装。 MySQL Shell Dump &amp; Load的使用。 util.dumpInstance的关键特性。 util.loadDump的关键特性。 util.dumpInstance的备份流程。 util.dumpInstance的参数解析。 util.loadDump的参数解析。 使用 MySQL Shell Dump &amp; Load时的注意事项。","headline":"MySQL 官方出品，比 mydumper 更快的多线程逻辑备份工具-MySQL Shell Dump &amp; Load","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/31/MySQL%E5%AE%98%E6%96%B9%E5%87%BA%E5%93%81%E6%AF%94mydumper%E6%9B%B4%E5%BF%AB%E7%9A%84%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%80%BB%E8%BE%91%E5%A4%87%E4%BB%BD%E5%B7%A5%E5%85%B7MySQLShellDumpLoad.html"},"url":"/cnblog/2022/05/31/MySQL%E5%AE%98%E6%96%B9%E5%87%BA%E5%93%81%E6%AF%94mydumper%E6%9B%B4%E5%BF%AB%E7%9A%84%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%80%BB%E8%BE%91%E5%A4%87%E4%BB%BD%E5%B7%A5%E5%85%B7MySQLShellDumpLoad.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">MySQL 官方出品，比 mydumper 更快的多线程逻辑备份工具-MySQL Shell Dump &amp; Load</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-31T08:41:44+00:00" itemprop="datePublished">May 31, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>mysqldump 和 mydumper 是我们常用的两个逻辑备份工具。</p>
+
+<p>无论是 mysqldump 还是 mydumper 都是将备份数据通过 INSERT 的方式写入到备份文件中。</p>
+
+<p>恢复时，myloader（ mydumper 中的恢复工具 ） 是多线程导入，且一个 INSERT 语句中包含多条记录，多个 INSERT 操作批量提交。基本上，凡是我们能想到的，有助于提升导入速度的，myloader 都会使用或有选项提供。</p>
+
+<p>单就恢复速度而言，可以说，myloader 就是逻辑恢复工具的天花板。</p>
+
+<p>既然如此，还有办法能继续提升逻辑恢复工具的恢复速度么？毕竟，备份的恢复速度直接影响着灾难发生时数据库服务的 RTO。</p>
+
+<p>答案，有！</p>
+
+<p>这个就是官方在 MySQL Shell 8.0.21 中推出的 Dump &amp; Load 工具。</p>
+
+<p>与 myloader 不一样的是，MySQL Shell Load 是通过 LOAD DATA LOCAL INFILE 命令来导入数据的。</p>
+
+<p>而 LOAD DATA 操作，按照官方文档的说法，比 INSERT 操作快 20 倍。</p>
+
+<p>下面，我们看看 MySQL Shell Dump &amp; Load 的具体用法和实现原理。</p>
+
+<p>本文主要包括以下几部分：</p>
+
+<ol>
+  <li>什么是 MySQL Shell。</li>
+  <li>MySQL Shell的安装。</li>
+  <li>MySQL Shell Dump &amp; Load的使用。</li>
+  <li>util.dumpInstance的关键特性。</li>
+  <li>util.loadDump的关键特性。</li>
+  <li>util.dumpInstance的备份流程。</li>
+  <li>util.dumpInstance的参数解析。</li>
+  <li>util.loadDump的参数解析。</li>
+  <li>使用 MySQL Shell Dump &amp; Load时的注意事项。</li>
+</ol>
+
+<h1 id="什么是-mysql-shell"><strong>什么是 MySQL Shell</strong></h1>
+
+<p>MySQL Shell 是 MySQL 的一个高级客户端和代码编辑器，是第二代 MySQL 客户端。第一代 MySQL 客户端即我们常用的 mysql。</p>
+
+<p>相比于 mysql，MySQL Shell 不仅支持 SQL，还具有以下关键特性：</p>
+
+<ol>
+  <li>支持 Python 和 JavaScript 两种语言模式。基于此，我们可以很容易地进行一些脚本开发工作。</li>
+  <li>支持 AdminAPI。AdminAPI 可用来管理 InnoDB Cluster、InnoDB ClusterSet 和 InnoDB ReplicaSet。</li>
+  <li>支持 X DevAPI。X DevAPI 可对文档（ Document ）和表（ Table ）进行 CRUD（Create，Read，Update，Delete）操作。</li>
+</ol>
+
+<p>除此之外，MySQL Shell 还内置了很多实用工具，包括：</p>
+
+<ul>
+  <li>checkForServerUpgrade：检测目标实例能否升级到指定版本。</li>
+  <li>dumpInstance：备份实例。</li>
+  <li>dumpSchemas：备份指定库。</li>
+  <li>dumpTables：备份指定表。</li>
+  <li>loadDump：恢复通过上面三个工具生成的备份。</li>
+  <li>exportTable：将指定的表导出到文本文件中。只支持单表，效果同 <code class="language-plaintext highlighter-rouge">SELECT INTO OUTFILE</code> 一样。</li>
+  <li>
+    <p>importTable：将指定文本的数据导入到表中。</p>
+
+    <p>在线上，如果我们有个大文件需要导入，建议使用这个工具。它会将单个文件进行拆分，然后多线程并行执行 LOAD DATA LOCAL INFILE 操作。不仅提升了导入速度，还规避了大事务的问题。</p>
+  </li>
+  <li>importJson：将 JSON 格式的数据导入到 MySQL 中，譬如将 MongoDB 中通过 mongoexport 导出的数据导入到 MySQL 中。</li>
+</ul>
+
+<p>在使用时注意：</p>
+
+<ol>
+  <li>通过 dumpInstance，dumpSchemas，dumpTables 生成的备份只能通过 loadDump 来恢复。</li>
+  <li>通过 exportTable 生成的备份只能通过 importTable 来恢复。</li>
+</ol>
+
+<p>下面，我们重点说说 Dump &amp; Load 相关的工具，包括 dumpInstance，dumpSchemas，dumpTables 和 loadDump。</p>
+
+<h1 id="mysql-shell-的安装"><strong>MySQL Shell 的安装</strong></h1>
+
+<p>MySQL Shell 下载地址：https://dev.mysql.com/downloads/shell/。</p>
+
+<p>同 MySQL 一样，提供了多个版本的下载。这里使用 Linux 二进制版本（ Linux - Generic ）。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># cd /usr/local/
+# wget https://dev.mysql.com/get/Downloads/MySQL-Shell/mysql-shell-8.0.29-linux-glibc2.12-x86-64bit.tar.gz
+# tar xvf mysql-shell-8.0.29-linux-glibc2.12-x86-64bit.tar.gz 
+# ln -s mysql-shell-8.0.29-linux-glibc2.12-x86-64bit mysql-shell
+# export PATH=$PATH:/usr/local/mysql-shell/bin
+</code></pre></div></div>
+
+<h1> </h1>
+
+<h1 id="mysql-shell-dump--load-的使用"><strong>MySQL Shell Dump &amp; Load 的使用</strong></h1>
+
+<h2 id="utildumpinstanceoutputurl-options">util.dumpInstance(outputUrl[, options])</h2>
+
+<p>备份实例。</p>
+
+<p>其中，outputUrl 是备份目录，其必须为空。options 是可指定的选项。</p>
+
+<p>首先，看一个简单的示例。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># mysqlsh -h 10.0.20.4 -P3306 -uroot -p
+mysql-js&gt; util.dumpInstance('/data/backup/full',{compression: "none"})
+Acquiring global read lock
+Global read lock acquired
+Initializing - done
+1 out of 5 schemas will be dumped and within them 1 table, 0 views.
+4 out of 7 users will be dumped.
+Gathering information - done
+All transactions have been started
+Locking instance for backup
+Global read lock has been released
+Writing global DDL files
+Writing users DDL
+Running data dump using 4 threads.
+NOTE: Progress information uses estimated values and may not be accurate.
+Writing schema metadata - done
+Writing DDL - done
+Writing table metadata - done
+Starting data dump
+101% (650.00K rows / ~639.07K rows), 337.30K rows/s, 65.89 MB/s
+Dump duration: 00:00:01s
+Total duration: 00:00:01s
+Schemas dumped: 1
+Tables dumped: 1
+Data size: 126.57 MB
+Rows written: 650000
+Bytes written: 126.57 MB
+Average throughput: 65.30 MB/s
+</code></pre></div></div>
+
+<p>命令中的 /data/backup/full 是备份目录，compression: “none” 指的是不压缩，这里设置为不压缩主要是为了方便查看数据文件的内容。线上使用建议开启压缩。</p>
+
+<p>接下来我们看看备份目录中的内容。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># ll /data/backup/full/
+total 123652
+-rw-r----- 1 root root      273 May 25 21:13 @.done.json
+-rw-r----- 1 root root      854 May 25 21:13 @.json
+-rw-r----- 1 root root      240 May 25 21:13 @.post.sql
+-rw-r----- 1 root root      288 May 25 21:13 sbtest.json
+-rw-r----- 1 root root 63227502 May 25 21:13 sbtest@sbtest1@0.tsv
+-rw-r----- 1 root root      488 May 25 21:13 sbtest@sbtest1@0.tsv.idx
+-rw-r----- 1 root root 63339214 May 25 21:13 sbtest@sbtest1@@1.tsv
+-rw-r----- 1 root root      488 May 25 21:13 sbtest@sbtest1@@1.tsv.idx
+-rw-r----- 1 root root      633 May 25 21:13 sbtest@sbtest1.json
+-rw-r----- 1 root root      759 May 25 21:13 sbtest@sbtest1.sql
+-rw-r----- 1 root root      535 May 25 21:13 sbtest.sql
+-rw-r----- 1 root root      240 May 25 21:13 @.sql
+-rw-r----- 1 root root     6045 May 25 21:13 @.users.sql
+</code></pre></div></div>
+
+<p>其中，</p>
+
+<ul>
+  <li>@.done.json：会记录备份的结束时间，备份集的大小。备份结束时生成。</li>
+  <li>@.json：会记录备份的一些元数据信息，包括备份时的一致性位置点信息：binlogFile，binlogPosition 和 gtidExecuted，这些信息可用来建立复制。</li>
+  <li>@.sql，@.post.sql：这两个文件只有一些注释信息。不过在通过 util.loadDump 导入数据时，我们可以通过这两个文件自定义一些 SQL。其中，@.sql 是数据导入前执行，@.post.sql 是数据导入后执行。</li>
+  <li>sbtest.json：记录 sbtest 中已经备份的表、视图、定时器、函数和存储过程。</li>
+  <li>
+    <p>*.tsv：数据文件。我们看看数据文件的内容。</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  # head -2 sbtest@sbtest1@0.tsv
+  1 6461363 68487932199-96439406143-93774651418-41631865787-96406072701-20604855487-25459966574-28203206787-41238978918-19503783441 22195207048-70116052123-74140395089-76317954521-98694025897
+  2 1112248 13241531885-45658403807-79170748828-69419634012-13605813761-77983377181-01582588137-21344716829-87370944992-02457486289 28733802923-10548894641-11867531929-71265603657-36546888392
+</code></pre></div>    </div>
+
+    <p>TSV 格式，每一行储存一条记录，字段与字段之间用制表符（\t）分隔。</p>
+  </li>
+  <li>sbtest@sbtest1.json：记录了表相关的一些元数据信息，如列名，字段之间的分隔符（fieldsTerminatedBy）等。</li>
+  <li>sbtest@sbtest1.sql：sbtest.sbtest1 的建表语句。</li>
+  <li>sbtest.sql：建库语句。如果这个库中存在存储过程、函数、定时器，也是写到这个文件中。</li>
+  <li>@.users.sql：创建账号及授权语句。默认不会备份 mysql.session，mysql.session，mysql.sys 这三个内部账号。</li>
+</ul>
+
+<h2 id="utildumpschemasschemas-outputurl-options">util.dumpSchemas(schemas, outputUrl[, options])</h2>
+
+<p>备份指定库的数据。</p>
+
+<p>用法同 util.dumpInstance 类似。其中，第一个参数必须为数组，即使只需备份一个库，如，</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>util.dumpSchemas(['sbtest'],'/data/backup/schema')
+</code></pre></div></div>
+
+<p>支持的配置大部分与 util.dumpInstance 相同。</p>
+
+<p>从 MySQL Shell 8.0.28 开始，可直接使用 util.dumpInstance 中的 includeSchemas 选项进行指定库的备份。</p>
+
+<h2 id="utildumptablesschema-tables-outputurl-options">util.dumpTables(schema, tables, outputUrl[, options])</h2>
+
+<p>备份指定表的数据。</p>
+
+<p>用法同 util.dumpInstance 类似。其中，第二个参数必须为数组，如，</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>util.dumpTables('sbtest',['sbtest1'],'/data/backup/table')
+</code></pre></div></div>
+
+<p>支持的配置大部分与 util.dumpInstance 相同。</p>
+
+<p>从 MySQL Shell 8.0.28 开始，可直接使用 util.dumpInstance 中的 includeTables 选项进行指定表的备份。</p>
+
+<h2 id="utilloaddumpurl-options">util.loadDump(url[, options])</h2>
+
+<p>导入通过 dump 命令生成的备份集。如，</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># mysqlsh -S /data/mysql/3307/data/mysql.sock
+mysql-js&gt; util.loadDump("/data/backup/full",{loadUsers: true})
+Loading DDL, Data and Users from '/data/backup/full' using 4 threads.
+Opening dump...
+Target is MySQL 8.0.27. Dump was produced from MySQL 8.0.27
+Scanning metadata - done
+Checking for pre-existing objects...
+Executing common preamble SQL
+Executing DDL - done
+Executing view DDL - done
+Starting data load
+2 thds loading - 100% (126.57 MB / 126.57 MB), 11.43 MB/s, 0 / 1 tables done
+Recreating indexes - done
+Executing user accounts SQL...
+NOTE: Skipping CREATE/ALTER USER statements for user 'root'@'localhost'
+NOTE: Skipping GRANT statements for user 'root'@'localhost'
+Executing common postamble SQL
+2 chunks (650.00K rows, 126.57 MB) for 1 tables in 1 schemas were loaded in 10 sec (avg throughput 13.96 MB/s)
+0 warnings were reported during the load.
+</code></pre></div></div>
+
+<p>命令中的 /data/backup/full 是备份目录，loadUsers: true 是导入账号，默认不会导入。</p>
+
+<h1 id="utildumpinstance-的关键特性"><strong>util.dumpInstance 的关键特性</strong></h1>
+
+<p>util.dumpInstance 的关键特性如下：</p>
+
+<ol>
+  <li>多线程备份。并发线程数由 threads 决定，默认是 4。</li>
+  <li>支持单表 chunk 级别的并行备份，前提是表上存在主键或唯一索引。</li>
+  <li>默认是压缩备份。</li>
+  <li>支持备份限速。可通过 maxRate 限制单个线程的数据读取速率。</li>
+</ol>
+
+<h1 id="utilloaddump-的关键特性"><strong>util.loadDump 的关键特性</strong></h1>
+
+<p>util.loadDump 的关键特性如下：</p>
+
+<ol>
+  <li>多线程恢复。并发线程数由 threads 决定，默认是 4。</li>
+  <li>
+    <p>支持断点续传功能。</p>
+
+    <p>在导入的过程中，会在备份目录生成一个进度文件，用于记录导入过程中的进度信息。</p>
+
+    <p>文件名由 progressFile 指定，默认是 load-progress.&lt;server_uuid&gt;.progress。</p>
+
+    <p>导入时，如果备份目录中存在 progressFile，默认会从上次完成的地方继续执行。如果要从头开始执行，需将 resetProgress 设置为 true。</p>
+  </li>
+  <li>支持延迟创建二级索引。</li>
+  <li>支持边备份，边导入。</li>
+  <li>通过 LOAD DATA LOCAL INFILE 命令来导入数据。</li>
+  <li>如果单个文件过大，util.loadDump 在导入时会自动进行切割，以避免产生大事务。</li>
+</ol>
+
+<h1 id="-1"> </h1>
+
+<h1 id="utildumpinstance-的备份流程"><strong>util.dumpInstance 的备份流程</strong></h1>
+
+<p>util.dumpInstance 的备份流程如下图所示。</p>
+
+<p><img src="https://mmbiz.qpic.cn/mmbiz_png/tl2icoFxNliapGibUiaWOoqxic71iboJYU45PW17q5C7cto2lz68UF7c11ibbHu11dGxSPGZsWhS5Inmf2zreBQic0Cx6g/640?wx_fmt=png" alt="图片" /></p>
+
+<p>不难看出，util.dumpInstance 的备份流程与 mysqldump 大致相同，不同的地方主要体现在以下两点：</p>
+
+<ol>
+  <li>util.dumpInstance 会加备份锁。备份锁可用来阻塞备份过程中的 DDL。</li>
+  <li>util.dumpInstance 是并行备份，相对于 mysqldump 的单线程备份，备份效率更高。</li>
+</ol>
+
+<h1 id="-2"> </h1>
+
+<h1 id="utildumpinstance-的参数解析"><strong>util.dumpInstance 的参数解析</strong></h1>
+
+<p>util.dumpInstance 的参数可分为如下几类：</p>
+
+<p><strong>过滤相关</strong></p>
+
+<p>以下是过滤相关的选项。</p>
+
+<ul>
+  <li>
+    <p>excludeSchemas：忽略某些库的备份，多个库之间用逗号隔开，如，</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  excludeSchemas: ["db1", "db2"]
+</code></pre></div>    </div>
+  </li>
+  <li>includeSchemas：指定某些库的备份。</li>
+  <li>
+    <p>excludeTables：忽略某些表的备份，表必须是 schema.table 的格式，多个表之间用逗号隔开，如，</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  excludeTables: ["sbtest.sbtest1", "sbtest.sbtest2"]
+</code></pre></div>    </div>
+  </li>
+  <li>includeTables：指定某些表的备份。</li>
+  <li>events：是否备份定时器，默认为 true。</li>
+  <li>excludeEvents：忽略某些定时器的备份。</li>
+  <li>includeEvents：指定某些定时器的备份。</li>
+  <li>routines：是否备份函数和存储过程，默认为 true。</li>
+  <li>excludeRoutines：忽略某些函数和存储过程的备份。</li>
+  <li>includeRoutines：指定某些函数和存储过程的备份。</li>
+  <li>users：是否备份账号信息，默认为 true。</li>
+  <li>excludeUsers：忽略某些账号的备份，可指定多个账号。</li>
+  <li>includeUsers：指定某些账号的备份，可指定多个账号。</li>
+  <li>triggers：是否备份触发器，默认为 true。</li>
+  <li>excludeTriggers：忽略某些触发器的备份。</li>
+  <li>includeTriggers：指定某些触发器的备份。</li>
+  <li>ddlOnly：是否只备份表结构，默认为 false。</li>
+  <li>dataOnly：是否只备份数据，默认为 false。</li>
+</ul>
+
+<p><strong>并行备份相关</strong></p>
+
+<ul>
+  <li>chunking：是否开启 chunk 级别的并行备份功能，默认为 true。</li>
+  <li>bytesPerChunk：每个 chunk 文件的大小，默认 64M。</li>
+  <li>threads：并发线程数，默认为 4。</li>
+</ul>
+
+<p><strong>OCI（甲骨文云）相关</strong></p>
+
+<ul>
+  <li>ocimds：是否检查备份集与 MySQL Database Service（甲骨文云的 MySQL 云服务，简称 MDS ）的兼容性，默认为 false，不检查。如果设置为 true，会输出所有的不兼容项及解决方法。不兼容项可通过下面的 compatibility 来解决。</li>
+  <li>compatibility：如果要将备份数据导入到 MDS 中，为了保证与后者的兼容性，可在导出的过程中进行相应地调整。具体来说：
+    <ol>
+      <li>create_invisible_pks：对于没有主键的表，会创建一个隐藏主键：my_row_id BIGINT UNSIGNED AUTO_INCREMENT INVISIBLE PRIMARY KEY。隐藏列是 MySQL 8.0.23 引入的。</li>
+      <li>force_innodb：将表的引擎强制设置为 InnoDB。</li>
+      <li>ignore_missing_pks：忽略主键缺失导致的错误，与 create_invisible_pks 互斥，不能同时指定。</li>
+      <li>skip_invalid_accounts：忽略没有密码，或者使用了 MDS 不支持的认证插件的账号。</li>
+      <li>strip_definers：去掉视图、存储过程、函数、定时器、触发器中的 DEFINER=account 子句。</li>
+      <li>strip_restricted_grants：去掉 MDS 中不允许 GRANT 的权限。</li>
+      <li>strip_tablespaces：去掉建表语句中的 TABLESPACE=xxx 子句。</li>
+    </ol>
+  </li>
+  <li>osBucketName，osNamespace，ociConfigFile，ociProfile，ociParManifest，ociParExpireTime：OCI 对象存储相关。</li>
+</ul>
+
+<p><strong>其它选项</strong></p>
+
+<ul>
+  <li>tzUtc：是否设置 TIME_ZONE = ‘+00:00’，默认为 true。</li>
+  <li>consistent：是否开启一致性备份，默认为 true。若设置为 false，则不会加全局读锁，也不会开启事务的一致性快照。</li>
+  <li>dryRun：试运行。此时只会打印备份信息，不会执行备份操作。</li>
+  <li>maxRate：限制单个线程的数据读取速率，单位 byte，默认为 0，不限制。</li>
+  <li>showProgress：是否打印进度信息，如果是 TTY 设备（命令行终端），则为 true，反之，则为 false。</li>
+  <li>defaultCharacterSet：字符集，默认为 utf8mb4。</li>
+  <li>compression：备份文件的压缩算法，默认为 zstd。也可设置为 gzip 或 none（不压缩）。</li>
+</ul>
+
+<h1 id="-3"> </h1>
+
+<h1 id="utilloaddump-的参数解析"><strong>util.loadDump 的参数解析</strong></h1>
+
+<p>util.loadDump 的参数可分为如下几类：</p>
+
+<p><strong>过滤相关</strong></p>
+
+<ul>
+  <li>excludeEvents：忽略某些定时器的导入。</li>
+  <li>excludeRoutines：忽略某些函数和存储过程的导入。</li>
+  <li>excludeSchemas：忽略某些库的导入。</li>
+  <li>excludeTables：忽略某些表的导入。</li>
+  <li>excludeTriggers：忽略某些触发器的导入。</li>
+  <li>excludeUsers：忽略某些账号的导入。</li>
+  <li>includeEvents：导入指定定时器。</li>
+  <li>includeRoutines：导入指定函数和存储过程。</li>
+  <li>includeSchemas：导入指定库。</li>
+  <li>includeTables：导入指定表。</li>
+  <li>includeTriggers：导入指定触发器。</li>
+  <li>includeUsers：导入指定账号。</li>
+  <li>loadData：是否导入数据，默认为 true。</li>
+  <li>loadDdl：是否导入 DDL 语句，默认为 true。</li>
+  <li>loadUsers：是否导入账号，默认为 false。注意，即使将 loadUsers 设置为 true，也不会导入当前正在执行导入操作的用户。</li>
+  <li>ignoreExistingObjects：是否忽略已经存在的对象，默认为 off。</li>
+</ul>
+
+<p><strong>并行导入相关</strong></p>
+
+<ul>
+  <li>backgroundThreads：获取元数据和 DDL 文件内容的线程数。备份集如果存储在本地，backgroundThreads 默认和 threads 一致。</li>
+  <li>threads：并发线程数，默认为 4。</li>
+  <li>maxBytesPerTransaction：指定单个 LOAD DATA 操作可加载的最大字节数。默认与 bytesPerChunk 一致。这个参数可用来规避大事务。</li>
+</ul>
+
+<p><strong>断点续传相关</strong></p>
+
+<ul>
+  <li>progressFile：在导入的过程中，会在备份目录生成一个 progressFile，用于记录加载过程中的进度信息，这个进度信息可用来实现断点续传功能。默认为 load-progress.&lt;server_uuid&gt;.progress。</li>
+  <li>resetProgress：如果备份目录中存在 progressFile，默认会从上次完成的地方继续执行。如果要从头开始执行，需将 resetProgress 设置为 true。该参数默认为 off。</li>
+</ul>
+
+<p><strong>OCI 相关</strong></p>
+
+<p>osBucketName，osNamespace，ociConfigFile，ociProfile。</p>
+
+<p><strong>二级索引相关</strong></p>
+
+<ul>
+  <li>deferTableIndexes：是否延迟（数据加载完毕后）创建二级索引。可设置：off（不延迟），fulltext（只延迟创建全文索引，默认值），all（延迟创建所有索引）。</li>
+  <li>loadIndexes：与 deferTableIndexes 一起使用，用来决定数据加载完毕后，最后的二级索引是否创建，默认为 true。</li>
+</ul>
+
+<p><strong>其它选项</strong></p>
+
+<ul>
+  <li>analyzeTables：表加载完毕后，是否执行 ANALYZE TABLE 操作。默认是 off（不执行），也可设置为 on 或 histogram（只对有直方图信息的表执行）。</li>
+  <li>characterSet：字符集，无需显式设置，默认会从备份集中获取。</li>
+  <li>createInvisiblePKs：是否创建隐式主键，默认从备份集中获取。这个与备份时是否指定了 create_invisible_pks 有关，若指定了则为 true，反之为 false。</li>
+  <li>dryRun：试运行。</li>
+  <li>ignoreVersion：忽略 MySQL 的版本检测。默认情况下，要求备份实例和导入实例的大版本一致。</li>
+  <li>schema：将表导入到指定 schema 中，适用于通过 util.dumpTables 创建的备份。</li>
+  <li>showMetadata：导入时是否打印一致性备份时的位置点信息。</li>
+  <li>showProgress：是否打印进度信息。</li>
+  <li>skipBinlog：是否设置 sql_log_bin=0 ，默认 false。这一点与 mysqldump、mydumper 不同，后面这两个工具默认会禁用 Binlog。</li>
+  <li>updateGtidSet：更新 GTID_PURGED。可设置：off（不更新，默认值）, replace（替代目标实例的 GTID_PURGED）, append（追加）。</li>
+  <li>waitDumpTimeout：util.loadDump 可导入当前正在备份的备份集。处理完所有文件后，如果备份还没有结束（具体来说，是备份集中没有生成 @.done.json），util.loadDump 会报错退出，可指定 waitDumpTimeout 等待一段时间，单位秒。</li>
+</ul>
+
+<h1 id="-4"> </h1>
+
+<h1 id="mysql-shell-dump--load-的注意事项"><strong>MySQL Shell Dump &amp; Load 的注意事项</strong></h1>
+
+<ol>
+  <li>
+    <p>表上存在主键或唯一索引才能进行 chunk 级别的并行备份。字段的数据类型不限。不像 mydumper，分片键只能是整数类型。</p>
+  </li>
+  <li>
+    <p>对于不能进行并行备份的表，目前会备份到一个文件中。如果该文件过大，不用担心大事务的问题，util.loadDump 在导入时会自动进行切割。</p>
+  </li>
+  <li>
+    <p>util.dumpInstance 只能保证 InnoDB 表的备份一致性。</p>
+  </li>
+  <li>
+    <p>默认不会备份 information_schema，mysql，ndbinfo，performance_schema，sys。</p>
+  </li>
+  <li>
+    <p>备份实例支持 MySQL 5.6 及以上版本，导入实例支持 MySQL 5.7 及以上版本。</p>
+  </li>
+  <li>
+    <p>备份的过程中，会将 BLOB 等非文本安全的列转换为 Base64，由此会导致转换后的数据大小超过原数据。导入时，注意 max_allowed_packet 的限制。</p>
+  </li>
+  <li>
+    <p>导入之前，需将目标实例的 local_infile 设置为 ON。</p>
+  </li>
+</ol>
+
+<h1 id="-5"> </h1>
+
+<h1 id="参考"><strong>参考</strong></h1>
+
+<p>[1] <a href="https://dev.mysql.com/doc/mysql-shell/8.0/en/mysql-shell-utilities-dump-instance-schema.html">Instance Dump Utility, Schema Dump Utility, and Table Dump Utility</a></p>
+
+<p>[2] <a href="https://dev.mysql.com/blog-archive/mysql-shell-dump-load-part-1-demo/">MySQL Shell Dump &amp; Load part 1: Demo!</a></p>
+
+<p>[3] <a href="https://dev.mysql.com/blog-archive/mysql-shell-dump-load-part-2-benchmarks/">MySQL Shell Dump &amp; Load part 2: Benchmarks</a></p>
+
+<p>[4] <a href="https://dev.mysql.com/blog-archive/mysql-shell-dump-load-part-3-load-dump/">MySQL Shell Dump &amp; Load part 3: Load Dump</a></p>
+
+<p>[5] <a href="https://dev.mysql.com/blog-archive/mysql-shell-8-0-21-speeding-up-the-dump-process/">MySQL Shell Dump &amp; Load part 4: Dump Instance &amp; Schemas</a></p>
+
+<p>[6] <a href="https://www.percona.com/blog/backup-restore-performance-conclusion-mysqldump-vs-mysql-shell-utilities-vs-mydumper-vs-mysqlpump-vs-xtrabackup/">Backup/Restore Performance Conclusion: mysqldump vs MySQL Shell Utilities vs mydumper vs mysqlpump vs XtraBackup</a></p>
+
+<p>[7] <a href="https://dev.mysql.com/doc/refman/8.0/en/insert-optimization.html">Optimizing INSERT Statements</a></p>
+<blockquote>
+  <p>作者:iVictor<br />
+原文:https://www.cnblogs.com/ivictor/p/16326495.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/31/MySQL%E5%AE%98%E6%96%B9%E5%87%BA%E5%93%81%E6%AF%94mydumper%E6%9B%B4%E5%BF%AB%E7%9A%84%E5%A4%9A%E7%BA%BF%E7%A8%8B%E9%80%BB%E8%BE%91%E5%A4%87%E4%BB%BD%E5%B7%A5%E5%85%B7MySQLShellDumpLoad.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

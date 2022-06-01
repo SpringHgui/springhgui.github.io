@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>零成本搭建个人博客之图床和cdn加速 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="零成本搭建个人博客之图床和cdn加速" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="本文属于零成本搭建个人博客指南系列" />
+<meta property="og:description" content="本文属于零成本搭建个人博客指南系列" />
+<link rel="canonical" href="/cnblog/2022/06/01/%E9%9B%B6%E6%88%90%E6%9C%AC%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2%E4%B9%8B%E5%9B%BE%E5%BA%8A%E5%92%8Ccdn%E5%8A%A0%E9%80%9F.html" />
+<meta property="og:url" content="/cnblog/2022/06/01/%E9%9B%B6%E6%88%90%E6%9C%AC%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2%E4%B9%8B%E5%9B%BE%E5%BA%8A%E5%92%8Ccdn%E5%8A%A0%E9%80%9F.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-06-01T11:45:46+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="零成本搭建个人博客之图床和cdn加速" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-06-01T11:45:46+00:00","datePublished":"2022-06-01T11:45:46+00:00","description":"本文属于零成本搭建个人博客指南系列","headline":"零成本搭建个人博客之图床和cdn加速","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/06/01/%E9%9B%B6%E6%88%90%E6%9C%AC%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2%E4%B9%8B%E5%9B%BE%E5%BA%8A%E5%92%8Ccdn%E5%8A%A0%E9%80%9F.html"},"url":"/cnblog/2022/06/01/%E9%9B%B6%E6%88%90%E6%9C%AC%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2%E4%B9%8B%E5%9B%BE%E5%BA%8A%E5%92%8Ccdn%E5%8A%A0%E9%80%9F.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">零成本搭建个人博客之图床和cdn加速</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-06-01T11:45:46+00:00" itemprop="datePublished">Jun 1, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <blockquote>
+  <p>本文属于<a href="https://allworldg.xyz/tags/%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/">零成本搭建个人博客指南</a>系列</p>
+</blockquote>
+
+<h2 id="为什么要使用图床">为什么要使用图床</h2>
+
+<ol>
+  <li>博客文章中的图片资源文件一般采用本地相对/绝对路径引用，或者使用图床通过外链进行引用展示。本地引用的弊端我认为在于：
+    <ol>
+      <li>图片和博客放在同一个代码托管仓库，会导致页面加载和构建速度随着图片数量和体积变大导致缓慢。</li>
+      <li>本地写作图片路径和静态页面生成后的图片路径实际上是不一样的。例如我在编写时引用的是<code class="language-plaintext highlighter-rouge">/static/images/1.png</code>，静态构建后，该图片实际路径变成了<code class="language-plaintext highlighter-rouge">/images/1.png</code>，如果手动修改，那么本地预览效果则大打折扣。（每个博客框架有一些解决方案，不太通用就不提了）。</li>
+      <li>不易于分享：当分享本地文章时，由于图片是基于本地的，所以无法分享。</li>
+    </ol>
+  </li>
+  <li>使用图床优点：
+    <ol>
+      <li>方便分享以及文章移动：文章引用的是外链，所以可以随意移动文章路径以及分享文章。</li>
+      <li>不影响构建速度：图片不在本地，不占用空间。</li>
+      <li>书写方便：使用<a href="https://obsidian.md/">Obsidian</a>、<a href="https://code.visualstudio.com/">vscode+插件</a>或者<a href="https://typora.io/">typora</a>能自动添加图片以及生成图片链接的编辑软件，结合<a href="https://picgo.github.io/PicGo-Doc/en/guide/">Picgo</a>——自动上传图片的软件，可以十分快捷的插入图床图片。再也不用一张张手动上传图片。</li>
+    </ol>
+  </li>
+  <li>图床缺点：各类厂商图床可能存在的问题包括但不限于：存储空间和流量免费付费问题。稳定性、安全性。我会在下文图床选择中根据不同厂商情况简单提及，有需求的用户可以顺着思路去了解。</li>
+</ol>
+
+<h2 id="图床选择">图床选择</h2>
+
+<ol>
+  <li>国内大厂的对象存储服务：腾讯云阿里云七牛云都有自己的对象存储服务。用户可以创建自己的存储桶，上传文件后自动生成外链访问。
+    <ol>
+      <li>优点：存储费十分便宜，0.01元/GB左右。当作图床基本无需担忧费用。</li>
+      <li>缺点（风险）：流量费用很高，这里流量指的是用户通过外链访问或者下载资源时会生成流量。以腾讯云为例，0.5元/GB流量费用，如果是个人当博客图床小范围使用还好。当访问量上升，或者外链被他人分享使用，就有可能导致费用暴涨，更不用提如果被恶意下载刷流量。目前个人已知的存储桶只能设置上限预警，在欠费几小时后被动关闭。（七牛云各种免费额度很高，不过需要备案域名）</li>
+      <li>解决：使用cdn加速来大幅度减少流量费，同时cdn设置上限阈值。隐藏文件原链接，设置防盗链等方法。这样已经能很大程度降低天价账单的可能性，同时正常使用也不容易碰到恶意攻击的情况。</li>
+    </ol>
+  </li>
+  <li>使用现成图床：例如SMMS图床服务。优点是有免费额度，也有付费选项，无需担心上述费用过高问题。缺点：需自行选择稳定图床厂商，因为有跑路风险。</li>
+  <li>白嫖(不推荐) ：使用<a href="https://github.com/">github</a>、gitee、甚至是csdn、新浪微博等。优点：完全免费，可以把图片上传到任意能上传的位置。缺点：首先个人是不推荐，例如github、gitee被当作图床有可能遭到封禁。同时一旦白嫖网站加入了防盗链规则，那么博客图片直接全部报废，例子有gitee和微博。</li>
+  <li>使用国外大厂的对象存储服务：本质上和国内对象存储服务类似，只不过有些优惠力度很大。例如<a href="https://www.backblaze.com/">backblaze</a>，又称B2(我个人推荐同时也是本篇博客图床最终使用的对象)。好处有：
+    <ol>
+      <li>它的免费计划包括：存储桶前10GB免费、每天1GB下载流量、2500次B、C下载请求次数。并且它的存储费用在几个大厂对比是最便宜的。<img src="https://img.allworldg.xyz/2022/05/f770decba46d0ea9b7d89f2eb6813214.png" alt="" /></li>
+      <li>存储桶无需担心天价流量费：结合<a href="www.cloudflare.com">cloudflare</a>免费的cdn加速，以及cloudflare回流到backblaze的流量免费（回流：当请求到cdn结点发现该资源不存在或者需要更新，cdn会去backblaze获取最新文件），对于白嫖党来说应该算很香了。同时我咨询客服恶意下载问题，客服回应当超过自己设置的上限，会暂停下载，直到用户支付了正常的上限金额后正常开放（免费则是等待第二天免费额度恢复即可）。最后一点我还没有亲自测试过。</li>
+      <li>缺点：免费版cf在国内没有结点，可能加速变成减速，不过cf还是较稳定。后期如果想加入付费计划，可能需要准备一张全币种信用卡。</li>
+    </ol>
+  </li>
+</ol>
+
+<h2 id="图床搭建">图床搭建</h2>
+
+<ol>
+  <li>
+    <p>首先进入<a href="www.backblaze.com">backblaze</a>, 创建一个账号，点击右上角 My Account，然后创建一个桶。<img src="https://img.allworldg.xyz/2022/06/cbd7aa878464e4fd6ee552f7ff12f931.png" alt="" /> <img src="https://img.allworldg.xyz/2022/06/a022d961da1e8bcc8300e1d0571863d5.png" alt="" /></p>
+
+    <p>设置public可以用外链访问（如果设置Private，结合cdn使用访问授权只有七天，需要不断更新）。</p>
+  </li>
+  <li>
+    <p>点击upload尝试上传一张图片，然后在桶文件列表里查看。</p>
+
+    <p><img src="https://img.allworldg.xyz/2022/06/c1a895be1a8de0a1a9a3a44a1e07de4d.png" alt="" /></p>
+
+    <p>通过url即可访问。</p>
+  </li>
+  <li>
+    <p>设置缓存。打开Bucket Settings。输入参数<code class="language-plaintext highlighter-rouge">{"cache-control":"max-age=172800"}</code> ，意味着下文设置的cdn读取一次资源后，会缓存并且隔172800s后才过期重新读取。如果在cdn中设置了资源缓存时长，这个bucket时长相当于无效，但还是当作一个备用方案使用。</p>
+
+    <p><img src="https://img.allworldg.xyz/2022/06/5eb13e1c30ca4a4b02211178b9dc1bf0.png" alt="" /></p>
+
+    <p>需要注意，时间设置过长，相同路径的资源如果发生修改，会在缓存时间到期后才能更新，过短则回源次数变多，自行考虑即可（我当作图床，理论上大一点没事）。</p>
+  </li>
+</ol>
+
+<h2 id="cdn加速">cdn加速</h2>
+
+<p>在图床选择时说过，存储桶流量费很贵，所以我们要通过cdn缓存内容，减少流量费。我这里选择的是Cloudflare，自带https支持，免费流量，免费次数，回流B2免费。</p>
+
+<ol>
+  <li>进入CF指定域名的控制台</li>
+  <li>
+    <p>点击DNS，添加CNAME(Target 是 B2存储桶的Friendly 域名)</p>
+
+    <p><img src="https://img.allworldg.xyz/2022/06/2db7073202f70e4eb0d9893612a79325.png" alt="" /></p>
+  </li>
+  <li>
+    <p>我们也可以自行设置相关资源的缓存规则。</p>
+
+    <p><img src="https://img.allworldg.xyz/2022/06/29b266e62325508f065c2e538ef3894b.png" alt="" /></p>
+  </li>
+  <li>
+    <p>为了不暴露源桶域名，我们需要对域名进行重写。网上教程有很多使用Workers，如今CF推出了Transform Rules，更快更方便。进入URL Rwrite。</p>
+
+    <p><img src="https://img.allworldg.xyz/2022/06/d2cb2e5eb46c9ba1d74c0d66e02fdaa3.png" alt="" /></p>
+
+    <p>然后输入即可。<code class="language-plaintext highlighter-rouge">concat("/file/桶名",http.request.uri.path)</code>，意思是在域名后添加括号里的两个参数。<br />
+ <img src="https://img.allworldg.xyz/2022/06/0c516e201faed9f75e5b5ef71e4ff6da.png" alt="" /></p>
+  </li>
+  <li>可以打开桶内图片，然后试着修改前面的域名，访问成功即可。</li>
+</ol>
+
+<h2 id="图床结合picgo使用">图床结合PicGo使用</h2>
+
+<p>我不想每次上传图片都得打开网站，所以使用PicGo上传图片。</p>
+
+<ol>
+  <li>傻瓜式下载安装<a href="https://picgo.github.io/PicGo-Doc/">PicGo</a>。</li>
+  <li>因为B2支持S3，所以PicGo通过插件列表安装S3插件。</li>
+  <li>B2生成App Key，点击左侧链接，然后点击 Add a New Application Key 。</li>
+</ol>
+
+<p><img src="https://img.allworldg.xyz/2022/06/15548cf6ea38a2c68700c6bcda27a9e2.png" alt="" /> <img src="https://img.allworldg.xyz/2022/06/8d54bdebf258e484051c789f16761122.png" alt="" />注意Allow listing一定要选中，Duration不填代表永久有效。</p>
+<ol>
+  <li>生成的key只会出现一次，可以自行保存，也可以重新创建。</li>
+  <li>点击PicGo软件左侧图床设置，选中Amazon S3（装了插件才有），将对应key信息填入即可。配置完毕即可自行上传。如遇报错大概率是某行信息复制粘贴时多了空格，或者是EndPoint忘填，自行检查。</li>
+</ol>
+
+<p><img src="https://img.allworldg.xyz/2022/06/6e2c962ae44d38c7b40ba82b03e21e22.png" alt="" /></p>
+
+<p>至此，博客站点的基础功能已经实现完毕，剩下的可以根据自己需求随意DIY了。</p>
+<blockquote>
+  <p>作者:allworldg<br />
+原文:https://www.cnblogs.com/allworldg/p/guide-to-setup-blog-with-zero-cost-3.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/06/01/%E9%9B%B6%E6%88%90%E6%9C%AC%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2%E4%B9%8B%E5%9B%BE%E5%BA%8A%E5%92%8Ccdn%E5%8A%A0%E9%80%9F.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

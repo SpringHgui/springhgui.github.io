@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>linux挂载新硬盘并进行分区格式化 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="linux挂载新硬盘并进行分区格式化" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="最近要给小伙伴们写几篇文章，关于《linux下误删除文件之后该如何恢复》。对于没有进程占用的文件想要进行数据恢复，不同的文件系统格式需要使用不同的工具，比如：ext4、xfs等。我找遍了我所有的虚拟机服务器，都没找到ext4文件格式的。因为ext4毕竟还是非常常用的文件系统格式，我写东西就希望能够系统一点，所以本文先介绍下：如何为linux操作系统挂载新硬盘，并将新硬盘格式化为ext4格式。 一、新建硬盘或安装硬盘 一个硬盘可以通过工具分成多个分区，但在linux运维中通常一个新硬盘就一个分区即可。硬盘中的每个分区需要与linux操作系统中的一个文件目录建立挂载关系。后续针对这个目录下的文件读写操作，实际就是针对该磁盘进行文件读写操作。 对于这一步安装硬盘的操作，如果是真实的服务器，将硬盘安装到服务器的机架上即可。 对于虚拟机我们需要新建硬盘，规划硬盘空间。所以下面的操作只针对虚拟机,我使用的是virtualbox虚拟机，其他的虚拟机其实差不多。虚拟机设置-&gt;存储-&gt;控制器SATA-&gt;添加新的硬盘-&gt;创建新的虚拟盘。 然后根据提示选择虚拟盘的格式、大小、宿主机上的存储路径即可。注意虚拟盘的格式是虚拟机的文件存储格式，与linux操作系统的文件格式无关，如果不会选就默认即可。创建完成之后，会在控制器SATA下面多出一个新的硬盘。 二、添加硬盘分区 下面我们来将硬盘挂载到指定的目录，这一步开始就不区分是虚拟机还是服务器了，都是一样的操作。我们通过命令lsblk -f查看一下操作系统现在能够识别的硬盘盘符。我们能够看到sda盘符的硬盘是安装操作系统的时候的硬盘，包含swap、boot分区等。 注意红色的部分sdb盘符的硬盘就是我们新安装的硬盘，下面我们来针对sdb硬盘进行分区。磁盘分区的命令是fdisk /dev/sdb,sdb是我们上文提到的新分区盘符。按照如图所示操作完成之后，新的硬盘就完成了分区操作，一个硬盘只做了一个分区。通过lsblk -f再次查看硬盘分区，我们看到sdb硬盘下多出一个分区sdb1，证明我们的分区操作正确的完成了。 唯一的区别是：旧的硬盘分区都有一个UUID和挂载目录MOUNTPOINT，而我们新建的硬盘分区是没有的。就需要我们下面来完成硬盘分区的格式化与目录挂载。 三、硬盘分区格式化与目录挂载 下面我们来针对分区进行格式化，格式化的操作比较简单，执行mkfs -t ext4 /dev/sdb1命令即可，其中sdb1是我们新建的分区，ext4是linux操作系统支持的一种硬盘存储格式。" />
+<meta property="og:description" content="最近要给小伙伴们写几篇文章，关于《linux下误删除文件之后该如何恢复》。对于没有进程占用的文件想要进行数据恢复，不同的文件系统格式需要使用不同的工具，比如：ext4、xfs等。我找遍了我所有的虚拟机服务器，都没找到ext4文件格式的。因为ext4毕竟还是非常常用的文件系统格式，我写东西就希望能够系统一点，所以本文先介绍下：如何为linux操作系统挂载新硬盘，并将新硬盘格式化为ext4格式。 一、新建硬盘或安装硬盘 一个硬盘可以通过工具分成多个分区，但在linux运维中通常一个新硬盘就一个分区即可。硬盘中的每个分区需要与linux操作系统中的一个文件目录建立挂载关系。后续针对这个目录下的文件读写操作，实际就是针对该磁盘进行文件读写操作。 对于这一步安装硬盘的操作，如果是真实的服务器，将硬盘安装到服务器的机架上即可。 对于虚拟机我们需要新建硬盘，规划硬盘空间。所以下面的操作只针对虚拟机,我使用的是virtualbox虚拟机，其他的虚拟机其实差不多。虚拟机设置-&gt;存储-&gt;控制器SATA-&gt;添加新的硬盘-&gt;创建新的虚拟盘。 然后根据提示选择虚拟盘的格式、大小、宿主机上的存储路径即可。注意虚拟盘的格式是虚拟机的文件存储格式，与linux操作系统的文件格式无关，如果不会选就默认即可。创建完成之后，会在控制器SATA下面多出一个新的硬盘。 二、添加硬盘分区 下面我们来将硬盘挂载到指定的目录，这一步开始就不区分是虚拟机还是服务器了，都是一样的操作。我们通过命令lsblk -f查看一下操作系统现在能够识别的硬盘盘符。我们能够看到sda盘符的硬盘是安装操作系统的时候的硬盘，包含swap、boot分区等。 注意红色的部分sdb盘符的硬盘就是我们新安装的硬盘，下面我们来针对sdb硬盘进行分区。磁盘分区的命令是fdisk /dev/sdb,sdb是我们上文提到的新分区盘符。按照如图所示操作完成之后，新的硬盘就完成了分区操作，一个硬盘只做了一个分区。通过lsblk -f再次查看硬盘分区，我们看到sdb硬盘下多出一个分区sdb1，证明我们的分区操作正确的完成了。 唯一的区别是：旧的硬盘分区都有一个UUID和挂载目录MOUNTPOINT，而我们新建的硬盘分区是没有的。就需要我们下面来完成硬盘分区的格式化与目录挂载。 三、硬盘分区格式化与目录挂载 下面我们来针对分区进行格式化，格式化的操作比较简单，执行mkfs -t ext4 /dev/sdb1命令即可，其中sdb1是我们新建的分区，ext4是linux操作系统支持的一种硬盘存储格式。" />
+<link rel="canonical" href="/cnblog/2022/05/28/linux%E6%8C%82%E8%BD%BD%E6%96%B0%E7%A1%AC%E7%9B%98%E5%B9%B6%E8%BF%9B%E8%A1%8C%E5%88%86%E5%8C%BA%E6%A0%BC%E5%BC%8F%E5%8C%96.html" />
+<meta property="og:url" content="/cnblog/2022/05/28/linux%E6%8C%82%E8%BD%BD%E6%96%B0%E7%A1%AC%E7%9B%98%E5%B9%B6%E8%BF%9B%E8%A1%8C%E5%88%86%E5%8C%BA%E6%A0%BC%E5%BC%8F%E5%8C%96.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-28T16:01:16+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="linux挂载新硬盘并进行分区格式化" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-28T16:01:16+00:00","datePublished":"2022-05-28T16:01:16+00:00","description":"最近要给小伙伴们写几篇文章，关于《linux下误删除文件之后该如何恢复》。对于没有进程占用的文件想要进行数据恢复，不同的文件系统格式需要使用不同的工具，比如：ext4、xfs等。我找遍了我所有的虚拟机服务器，都没找到ext4文件格式的。因为ext4毕竟还是非常常用的文件系统格式，我写东西就希望能够系统一点，所以本文先介绍下：如何为linux操作系统挂载新硬盘，并将新硬盘格式化为ext4格式。 一、新建硬盘或安装硬盘 一个硬盘可以通过工具分成多个分区，但在linux运维中通常一个新硬盘就一个分区即可。硬盘中的每个分区需要与linux操作系统中的一个文件目录建立挂载关系。后续针对这个目录下的文件读写操作，实际就是针对该磁盘进行文件读写操作。 对于这一步安装硬盘的操作，如果是真实的服务器，将硬盘安装到服务器的机架上即可。 对于虚拟机我们需要新建硬盘，规划硬盘空间。所以下面的操作只针对虚拟机,我使用的是virtualbox虚拟机，其他的虚拟机其实差不多。虚拟机设置-&gt;存储-&gt;控制器SATA-&gt;添加新的硬盘-&gt;创建新的虚拟盘。 然后根据提示选择虚拟盘的格式、大小、宿主机上的存储路径即可。注意虚拟盘的格式是虚拟机的文件存储格式，与linux操作系统的文件格式无关，如果不会选就默认即可。创建完成之后，会在控制器SATA下面多出一个新的硬盘。 二、添加硬盘分区 下面我们来将硬盘挂载到指定的目录，这一步开始就不区分是虚拟机还是服务器了，都是一样的操作。我们通过命令lsblk -f查看一下操作系统现在能够识别的硬盘盘符。我们能够看到sda盘符的硬盘是安装操作系统的时候的硬盘，包含swap、boot分区等。 注意红色的部分sdb盘符的硬盘就是我们新安装的硬盘，下面我们来针对sdb硬盘进行分区。磁盘分区的命令是fdisk /dev/sdb,sdb是我们上文提到的新分区盘符。按照如图所示操作完成之后，新的硬盘就完成了分区操作，一个硬盘只做了一个分区。通过lsblk -f再次查看硬盘分区，我们看到sdb硬盘下多出一个分区sdb1，证明我们的分区操作正确的完成了。 唯一的区别是：旧的硬盘分区都有一个UUID和挂载目录MOUNTPOINT，而我们新建的硬盘分区是没有的。就需要我们下面来完成硬盘分区的格式化与目录挂载。 三、硬盘分区格式化与目录挂载 下面我们来针对分区进行格式化，格式化的操作比较简单，执行mkfs -t ext4 /dev/sdb1命令即可，其中sdb1是我们新建的分区，ext4是linux操作系统支持的一种硬盘存储格式。","headline":"linux挂载新硬盘并进行分区格式化","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/28/linux%E6%8C%82%E8%BD%BD%E6%96%B0%E7%A1%AC%E7%9B%98%E5%B9%B6%E8%BF%9B%E8%A1%8C%E5%88%86%E5%8C%BA%E6%A0%BC%E5%BC%8F%E5%8C%96.html"},"url":"/cnblog/2022/05/28/linux%E6%8C%82%E8%BD%BD%E6%96%B0%E7%A1%AC%E7%9B%98%E5%B9%B6%E8%BF%9B%E8%A1%8C%E5%88%86%E5%8C%BA%E6%A0%BC%E5%BC%8F%E5%8C%96.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">linux挂载新硬盘并进行分区格式化</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-28T16:01:16+00:00" itemprop="datePublished">May 28, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>最近要给小伙伴们写几篇文章，关于《linux下误删除文件之后该如何恢复》。对于没有进程占用的文件想要进行数据恢复，不同的文件系统格式需要使用不同的工具，比如：ext4、xfs等。我找遍了我所有的虚拟机服务器，都没找到ext4文件格式的。因为ext4毕竟还是非常常用的文件系统格式，我写东西就希望能够系统一点，所以本文先介绍下：如何为linux操作系统挂载新硬盘，并将新硬盘格式化为ext4格式。</p>
+
+<h2 id="一新建硬盘或安装硬盘">一、新建硬盘或安装硬盘</h2>
+
+<p>一个硬盘可以通过工具分成多个分区，但在linux运维中通常一个新硬盘就一个分区即可。硬盘中的每个分区需要与linux操作系统中的一个文件目录建立挂载关系。后续针对这个目录下的文件读写操作，实际就是针对该磁盘进行文件读写操作。<br />
+ <strong>对于这一步安装硬盘的操作，如果是真实的服务器，将硬盘安装到服务器的机架上即可。</strong> 对于虚拟机我们需要新建硬盘，规划硬盘空间。所以下面的操作只针对虚拟机,我使用的是virtualbox虚拟机，其他的虚拟机其实差不多。虚拟机设置-&gt;存储-&gt;控制器SATA-&gt;添加新的硬盘-&gt;创建新的虚拟盘。</p>
+
+<p><img src="https://img2022.cnblogs.com/other/1815316/202205/1815316-20220527070350853-1405448491.png" alt="" /></p>
+
+<p>然后根据提示选择虚拟盘的格式、大小、宿主机上的存储路径即可。注意虚拟盘的格式是虚拟机的文件存储格式，与linux操作系统的文件格式无关，如果不会选就默认即可。创建完成之后，会在控制器SATA下面多出一个新的硬盘。<br />
+ <img src="https://img2022.cnblogs.com/other/1815316/202205/1815316-20220527070351254-1545587936.png" alt="" /></p>
+
+<h2 id="二添加硬盘分区">二、添加硬盘分区</h2>
+
+<p>下面我们来将硬盘挂载到指定的目录，这一步开始就不区分是虚拟机还是服务器了，都是一样的操作。我们通过命令<code class="language-plaintext highlighter-rouge">lsblk -f</code>查看一下操作系统现在能够识别的硬盘盘符。我们能够看到sda盘符的硬盘是安装操作系统的时候的硬盘，包含swap、boot分区等。<br />
+ <img src="https://img2022.cnblogs.com/other/1815316/202205/1815316-20220527070351521-2048647942.png" alt="" /></p>
+
+<p>注意红色的部分sdb盘符的硬盘就是我们新安装的硬盘，下面我们来针对sdb硬盘进行分区。磁盘分区的命令是<code class="language-plaintext highlighter-rouge">fdisk /dev/sdb</code>,sdb是我们上文提到的新分区盘符。按照如图所示操作完成之后，新的硬盘就完成了分区操作，一个硬盘只做了一个分区。通过<code class="language-plaintext highlighter-rouge">lsblk -f</code>再次查看硬盘分区，我们看到sdb硬盘下多出一个分区sdb1，证明我们的分区操作正确的完成了。<br />
+ <img src="https://img2022.cnblogs.com/other/1815316/202205/1815316-20220527070351862-463966617.png" alt="" /><br />
+ 唯一的区别是：旧的硬盘分区都有一个UUID和挂载目录MOUNTPOINT，而我们新建的硬盘分区是没有的。就需要我们下面来完成硬盘分区的格式化与目录挂载。</p>
+
+<h2 id="三硬盘分区格式化与目录挂载">三、硬盘分区格式化与目录挂载</h2>
+
+<p>下面我们来针对分区进行格式化，格式化的操作比较简单，执行<code class="language-plaintext highlighter-rouge">mkfs -t ext4 /dev/sdb1</code>命令即可，其中sdb1是我们新建的分区，ext4是linux操作系统支持的一种硬盘存储格式。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[root ~]# mkdir -p /data;        #新建一个目录用于挂载新硬盘
+[root ~]# mount /dev/sdb1 /data;   #挂载新硬盘到目录
+[root ~]# lsblk -f
+NAME            FSTYPE      LABEL UUID                                   MOUNTPOINT
+sdb                                                                      
+└─sdb1          ext4              0f75f926-222b-4385-84ac-8c69c613aa0a   /data
+</code></pre></div></div>
+
+<p>格式化完成之后，我们需要将已经格式化之后的分区，挂载到linux操作系统的一个目录下面。所有操作完成之后，我们再用<code class="language-plaintext highlighter-rouge">lsblk -f</code>查看分区，可以看到我们新添加了硬盘sdb，新建了分区sdb1，完成sdb1分区格式化之后sdb1分区有了自己的UUID，格式化的存储格式是ext4，完成了挂载操作之后有了MOUNTPOINT。以后该操作系统下针对<code class="language-plaintext highlighter-rouge">/data</code>目录的读写操作，其实都是针对我们刚刚添加的硬盘sdb进行的。</p>
+
+<h2 id="四重启后不失效">四、重启后不失效</h2>
+
+<p>上面完成的挂载关系，在操作系统重启之后就失效了。如果希望下次操作系统重启的时候自动挂载，需要在<code class="language-plaintext highlighter-rouge">/etc/fstab </code>文件中添加下面的一行记录实现自动挂载。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/dev/sdb1  /data  ext4 defaults 0 0
+</code></pre></div></div>
+
+<p>执行如下命令会重新加载配置文件，并使其生效：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mount -a
+</code></pre></div></div>
+
+<h2 id="推荐阅读">推荐阅读</h2>
+
+<p>限于博文篇幅，更多精彩内容我就不一一列举了，推荐阅读观看</p>
+
+<p><a href="https://mp.weixin.qq.com/mp/appmsgalbum?__biz=MzU0NDU5MTk1MQ==&amp;action=getalbum&amp;album_id=1562400735496060930#wechat_redirect">《原创精品视频及配套文档：springboot-已录制97节(免费)》</a></p>
+<blockquote>
+  <p>作者:字母哥博客<br />
+原文:https://www.cnblogs.com/zimug/p/16316110.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/28/linux%E6%8C%82%E8%BD%BD%E6%96%B0%E7%A1%AC%E7%9B%98%E5%B9%B6%E8%BF%9B%E8%A1%8C%E5%88%86%E5%8C%BA%E6%A0%BC%E5%BC%8F%E5%8C%96.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

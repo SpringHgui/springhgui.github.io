@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>Excel导表工具(开源) | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="Excel导表工具(开源)" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="功能 https://camo.githubusercontent.com/c37d2f366bf5470e234f597e0f0e97ab69c23ccc24c4d98da82485f5ef826ec2/68747470733a2f2f67697465652e636f6d2f736d616c6c2d706572696c6c612f7069632d676f2f7261772f6d61737465722f696d6167652d32303232303533313134343835333433302e706e67 支持int、float、bool、string基础类型 支持数组 支持kv 支持枚举 支持unity类型vector3,vector2,color 自动生成csharp类 单个excel中多个sheet，依次导出" />
+<meta property="og:description" content="功能 https://camo.githubusercontent.com/c37d2f366bf5470e234f597e0f0e97ab69c23ccc24c4d98da82485f5ef826ec2/68747470733a2f2f67697465652e636f6d2f736d616c6c2d706572696c6c612f7069632d676f2f7261772f6d61737465722f696d6167652d32303232303533313134343835333433302e706e67 支持int、float、bool、string基础类型 支持数组 支持kv 支持枚举 支持unity类型vector3,vector2,color 自动生成csharp类 单个excel中多个sheet，依次导出" />
+<link rel="canonical" href="/cnblog/2022/06/01/Excel%E5%AF%BC%E8%A1%A8%E5%B7%A5%E5%85%B7%E5%BC%80%E6%BA%90.html" />
+<meta property="og:url" content="/cnblog/2022/06/01/Excel%E5%AF%BC%E8%A1%A8%E5%B7%A5%E5%85%B7%E5%BC%80%E6%BA%90.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-06-01T11:45:42+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="Excel导表工具(开源)" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-06-01T11:45:42+00:00","datePublished":"2022-06-01T11:45:42+00:00","description":"功能 https://camo.githubusercontent.com/c37d2f366bf5470e234f597e0f0e97ab69c23ccc24c4d98da82485f5ef826ec2/68747470733a2f2f67697465652e636f6d2f736d616c6c2d706572696c6c612f7069632d676f2f7261772f6d61737465722f696d6167652d32303232303533313134343835333433302e706e67 支持int、float、bool、string基础类型 支持数组 支持kv 支持枚举 支持unity类型vector3,vector2,color 自动生成csharp类 单个excel中多个sheet，依次导出","headline":"Excel导表工具(开源)","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/06/01/Excel%E5%AF%BC%E8%A1%A8%E5%B7%A5%E5%85%B7%E5%BC%80%E6%BA%90.html"},"url":"/cnblog/2022/06/01/Excel%E5%AF%BC%E8%A1%A8%E5%B7%A5%E5%85%B7%E5%BC%80%E6%BA%90.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">Excel导表工具(开源)</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-06-01T11:45:42+00:00" itemprop="datePublished">Jun 1, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h2 id="功能">功能</h2>
+
+<p>https://camo.githubusercontent.com/c37d2f366bf5470e234f597e0f0e97ab69c23ccc24c4d98da82485f5ef826ec2/68747470733a2f2f67697465652e636f6d2f736d616c6c2d706572696c6c612f7069632d676f2f7261772f6d61737465722f696d6167652d32303232303533313134343835333433302e706e67</p>
+
+<ul>
+  <li>支持int、float、bool、string基础类型</li>
+  <li>支持数组</li>
+  <li>支持kv</li>
+  <li>支持枚举</li>
+  <li>支持unity类型vector3,vector2,color</li>
+  <li>自动生成csharp类</li>
+  <li>单个excel中多个sheet，依次导出</li>
+</ul>
+
+<h2 id="使用">使用</h2>
+
+<ol>
+  <li>设置config.txt文件，按需求配置；</li>
+</ol>
+
+<p>#为注释行必须；结尾</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#excel存放路径;
+excelPath:./Excel/;
+#数据保存路径;
+dataPath:./DataTable/;
+#c#类保存路径;
+classPath:./CSharp/;
+#输出类型;
+exportType:Json;
+isExportServer:False
+</code></pre></div></div>
+
+<ol>
+  <li>双击运行DataTable.exe，等待执行完毕；</li>
+</ol>
+
+<h2 id="配表">配表</h2>
+
+<ul>
+  <li>第一行注释</li>
+  <li>第二行字段类型</li>
+  <li>第三行变量名（属性名）</li>
+  <li>第一列留空</li>
+  <li>数组：类型+[] e.g: int[]</li>
+  <li>
+    <p>kv使用</p>
+
+    <p>类型：dic&lt;string,int&gt;</p>
+
+    <p>变量名：变量名+:+key值</p>
+
+    <p>e.g:</p>
+
+    <p>| dic&lt;string,float&gt; | dic&lt;string,float&gt; | dic&lt;string,float&gt; |
+  | — | — | — |</p>
+
+    <table>
+      <tbody>
+        <tr>
+          <td>Attribute:atk</td>
+          <td>Attribute:def</td>
+          <td>Attribute:spd</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
+  <li>枚举：自动生成的枚举类型从1开始，Enum类型为：Enum+变量名字段；</li>
+</ul>
+
+<h2 id="json序列化">Json序列化</h2>
+
+<p>使用json库需要对Vector3等Unity字段魔改；</p>
+
+<p>Litjson库魔改：将自定义类型注册进json库；</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>namespace LitJson.Extensions
+{
+    public static class JsonExtensions
+    {
+
+        public static void WriteProperty(this JsonWriter w, string name, long value)
+        {
+            w.WritePropertyName(name);
+            w.Write(value);
+        }
+
+        public static void WriteProperty(this JsonWriter w, string name, string value)
+        {
+            w.WritePropertyName(name);
+            w.Write(value);
+        }
+
+        public static void WriteProperty(this JsonWriter w, string name, bool value)
+        {
+            w.WritePropertyName(name);
+            w.Write(value);
+        }
+
+        public static void WriteProperty(this JsonWriter w, string name, double value)
+        {
+            w.WritePropertyName(name);
+            w.Write(value);
+        }
+
+    }
+}
+</code></pre></div></div>
+
+<hr />
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> using UnityEngine;
+ using System;
+ using System.Collections;
+ 
+ using LitJson.Extensions;
+
+ namespace LitJson
+ {
+
+#if UNITY_EDITOR
+     [UnityEditor.InitializeOnLoad]
+#endif
+     /// &lt;summary&gt;
+     /// Unity内建类型拓展
+     /// &lt;/summary&gt;
+     public static class UnityTypeBindings
+     {
+
+         static bool registerd;
+
+         static UnityTypeBindings()
+         {
+             Register();
+         }
+
+         public static void Register()
+         {
+
+             if (registerd) return;
+             registerd = true;
+
+             // 注册Type类型的Exporter
+             JsonMapper.RegisterExporter&lt;Type&gt;((v, w) =&gt; { w.Write(v.FullName); });
+
+             JsonMapper.RegisterImporter&lt;string, Type&gt;((s) =&gt; { return Type.GetType(s); });
+
+             // 注册Vector2类型的Exporter
+             Action&lt;Vector2, JsonWriter&gt; writeVector2 = (v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("x", v.x);
+                 w.WriteProperty("y", v.y);
+                 w.WriteObjectEnd();
+             };
+
+             JsonMapper.RegisterExporter&lt;Vector2&gt;((v, w) =&gt; { writeVector2(v, w); });
+
+             // 注册Vector3类型的Exporter
+             Action&lt;Vector3, JsonWriter&gt; writeVector3 = (v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("x", v.x);
+                 w.WriteProperty("y", v.y);
+                 w.WriteProperty("z", v.z);
+                 w.WriteObjectEnd();
+             };
+
+             JsonMapper.RegisterExporter&lt;Vector3&gt;((v, w) =&gt; { writeVector3(v, w); });
+
+             // 注册Vector4类型的Exporter
+             JsonMapper.RegisterExporter&lt;Vector4&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("x", v.x);
+                 w.WriteProperty("y", v.y);
+                 w.WriteProperty("z", v.z);
+                 w.WriteProperty("w", v.w);
+                 w.WriteObjectEnd();
+             });
+
+             // 注册Quaternion类型的Exporter
+             JsonMapper.RegisterExporter&lt;Quaternion&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("x", v.x);
+                 w.WriteProperty("y", v.y);
+                 w.WriteProperty("z", v.z);
+                 w.WriteProperty("w", v.w);
+                 w.WriteObjectEnd();
+             });
+
+             // 注册Color类型的Exporter
+             JsonMapper.RegisterExporter&lt;Color&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("r", v.r);
+                 w.WriteProperty("g", v.g);
+                 w.WriteProperty("b", v.b);
+                 w.WriteProperty("a", v.a);
+                 w.WriteObjectEnd();
+             });
+
+             // 注册Color32类型的Exporter
+             JsonMapper.RegisterExporter&lt;Color32&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("r", v.r);
+                 w.WriteProperty("g", v.g);
+                 w.WriteProperty("b", v.b);
+                 w.WriteProperty("a", v.a);
+                 w.WriteObjectEnd();
+             });
+
+             // 注册Bounds类型的Exporter
+             JsonMapper.RegisterExporter&lt;Bounds&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+
+                 w.WritePropertyName("center");
+                 writeVector3(v.center, w);
+
+                 w.WritePropertyName("size");
+                 writeVector3(v.size, w);
+
+                 w.WriteObjectEnd();
+             });
+
+             // 注册Rect类型的Exporter
+             JsonMapper.RegisterExporter&lt;Rect&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("x", v.x);
+                 w.WriteProperty("y", v.y);
+                 w.WriteProperty("width", v.width);
+                 w.WriteProperty("height", v.height);
+                 w.WriteObjectEnd();
+             });
+
+             // 注册RectOffset类型的Exporter
+             JsonMapper.RegisterExporter&lt;RectOffset&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("top", v.top);
+                 w.WriteProperty("left", v.left);
+                 w.WriteProperty("bottom", v.bottom);
+                 w.WriteProperty("right", v.right);
+                 w.WriteObjectEnd();
+             });
+
+         }
+
+     }
+ }
+</code></pre></div></div>
+
+<p>后续计划加入protobuf和bytes导出；</p>
+
+<p>计划可导出.go文件；</p>
+
+<p>相比其他导表工具，优势就是简单使用，不用看长长的文档；</p>
+
+<p>有bug或修改建议欢迎交流；</p>
+
+<p>开源地址：<a href="https://github.com/Rebort1012/DataTable.git">https://github.com/Rebort1012/DataTable.git</a></p>
+
+<p>个人博客：<a href="http://perilla.work/">perilla.work</a></p>
+<blockquote>
+  <p>作者:小紫苏<br />
+原文:https://www.cnblogs.com/littleperilla/p/16330928.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/06/01/Excel%E5%AF%BC%E8%A1%A8%E5%B7%A5%E5%85%B7%E5%BC%80%E6%BA%90.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

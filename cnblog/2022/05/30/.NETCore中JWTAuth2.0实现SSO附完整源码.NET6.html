@@ -1,0 +1,1406 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>.NET Core中JWT+Auth2.0实现SSO，附完整源码（.NET6） | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content=".NET Core中JWT+Auth2.0实现SSO，附完整源码（.NET6）" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="目录" />
+<meta property="og:description" content="目录" />
+<link rel="canonical" href="/cnblog/2022/05/30/.NETCore%E4%B8%ADJWTAuth2.0%E5%AE%9E%E7%8E%B0SSO%E9%99%84%E5%AE%8C%E6%95%B4%E6%BA%90%E7%A0%81.NET6.html" />
+<meta property="og:url" content="/cnblog/2022/05/30/.NETCore%E4%B8%ADJWTAuth2.0%E5%AE%9E%E7%8E%B0SSO%E9%99%84%E5%AE%8C%E6%95%B4%E6%BA%90%E7%A0%81.NET6.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-30T09:02:08+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content=".NET Core中JWT+Auth2.0实现SSO，附完整源码（.NET6）" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-30T09:02:08+00:00","datePublished":"2022-05-30T09:02:08+00:00","description":"目录","headline":".NET Core中JWT+Auth2.0实现SSO，附完整源码（.NET6）","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/30/.NETCore%E4%B8%ADJWTAuth2.0%E5%AE%9E%E7%8E%B0SSO%E9%99%84%E5%AE%8C%E6%95%B4%E6%BA%90%E7%A0%81.NET6.html"},"url":"/cnblog/2022/05/30/.NETCore%E4%B8%ADJWTAuth2.0%E5%AE%9E%E7%8E%B0SSO%E9%99%84%E5%AE%8C%E6%95%B4%E6%BA%90%E7%A0%81.NET6.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">.NET Core中JWT+Auth2.0实现SSO，附完整源码（.NET6）</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-30T09:02:08+00:00" itemprop="datePublished">May 30, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p><strong>目录</strong></p>
+
+<ul>
+  <li>一、简介</li>
+  <li>二、实现目标
+    <ul>
+      <li>1、一处登录，全部登录</li>
+      <li>2、一处退出，全部退出</li>
+      <li>3、双token机制</li>
+    </ul>
+  </li>
+  <li>三、功能实现和核心代码
+    <ul>
+      <li>1、一处登录，全部登录实现</li>
+      <li>2、一处退出，全部退出实现</li>
+      <li>3、双token机制实现</li>
+    </ul>
+  </li>
+  <li>四、效果演示</li>
+</ul>
+
+<hr />
+
+<p>回到顶部</p>
+
+<h1 id="一简介">一、简介</h1>
+
+<p><strong>单点登录(SingleSignOn，SSO)</strong></p>
+
+<p>指的是在多个应用系统中，只需登录一次，就可以访问其他相互信任的应用系统。</p>
+
+<p><strong>JWT</strong></p>
+
+<p>Json Web Token，这里不详细描述，简单说是一种认证机制。</p>
+
+<p><strong>Auth2.0</strong></p>
+
+<p>Auth2.0是一个认证流程，一共有四种方式，这里用的是最常用的授权码方式，流程为：</p>
+
+<p>1、系统A向认证中心先获取一个授权码code。</p>
+
+<p>2、系统A通过授权码code获取 token，refresh_token，expiry_time，scope。</p>
+
+<p>token：系统A向认证方获取资源请求时带上的token。</p>
+
+<p>refresh_token：token的有效期比较短，用来刷新token用。</p>
+
+<p>expiry_time：token过期时间。</p>
+
+<p>scope：资源域，系统A所拥有的资源权限，比喻scope:[“userinfo”]，系统A只拥有获取用户信息的权限。像平时网站接入微信登录也是只能授权获取微信用户基本信息。</p>
+
+<p>这里的SSO都是公司自己的系统，都是获取用户信息，所以这个为空，第三方需要接入我们的登录时才需要scope来做资源权限判断。</p>
+
+<p>回到顶部</p>
+
+<h1 id="二实现目标">二、实现目标</h1>
+
+<h2 id="1一处登录全部登录"><strong>1、一处登录，全部登录</strong></h2>
+
+<p>流程图为：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/630011/202205/630011-20220526233544954-1229936888.png" alt="" /></p>
+
+<p>1、浏览器访问A系统，发现A系统未登录，跳转到统一登录中心（SSO），带上A系统的回调地址，</p>
+
+<p>地址为：https://sso.com/SSO/Login?redirectUrl=https://web1.com/Account/LoginRedirect&amp;clientId=web1，输入用户名，密码，登录成功，生成授权码code，创建一个全局会话（cookie，redis），带着授权码跳转回A系统地址：https://web1.com/Account/LoginRedirect?AuthCode=xxxxxxxx。然后A系统的回调地址用这个AuthCode调用SSO获取token，获取到token，创建一个局部会话(cookie，redis），再跳转到https://web1.com。这样A系统就完成了登录。</p>
+
+<p>2、浏览器访问B系统，发现B系统没登录，跳转到统一登录中心（SSO），带上B系统的回调地址，</p>
+
+<p>地址为：https://sso.com/SSO/Login?redirectUrl=https://web2.com/Account/LoginRedirect&amp;clientId=web2，SSO有全局会话证明已经登录过，直接用全局会话code获取B系统的授权码code，</p>
+
+<p>带着授权码跳转回B系统https://web2.com/Account/LoginRedirect?AuthCode=xxxxxxxx，然后B系统的回调地址用这个AuthCode调用SSO获取token，获取到token创建一个局部会话(cookie，redis），再跳转到https://web2.com。整个过程不用输入用户名密码，这些跳转基本是无感的，所以B就自动登录好了。</p>
+
+<p><strong>为什么要多个授权码而不直接带token跳转回A，B系统呢？因为地址上的参数是很容易被拦截到的，可能token会被截取到，非常不安全</strong></p>
+
+<p><strong>还有为了安全，授权码只能用一次便销毁，A系统的token和B系统的token是独立的，不能相互访问。</strong></p>
+
+<h2 id="2一处退出全部退出"><strong>2、一处退出，全部退出</strong></h2>
+
+<p>流程图为：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/630011/202205/630011-20220527001225168-1901767920.png" alt="" /></p>
+
+<p>A系统退出，把自己的会话删除，然后跳转到SSO的退出登录地址：https://sso.com/SSO/Logout?redirectUrl=https://web1.com/Account/LoginRedirect&amp;clientId=web1，SSO删除全局会话，然后调接口删除获取了token的系统，然后在跳转到登录页面，https://sso.com/SSO/Login?redirectUrl=https://web1.com/Account/LoginRedirect&amp;clientId=web1，这样就实现了一处退出，全部退出了。</p>
+
+<h2 id="3双token机制">3、双token机制</h2>
+
+<p>也就是带刷新token，为什么要刷新token呢？因为基于token式的鉴权授权有着天生的缺陷</p>
+
+<p>token设置时间长，token泄露了，重放攻击。</p>
+
+<p>token设置短了，老是要登录。问题还有很多，因为token本质决定，大部分是解决不了的。</p>
+
+<p>所以就需要用到双Token机制，SSO返回token和refreshToken，token用来鉴权使用，refreshToken刷新token使用，</p>
+
+<p>比喻token有效期10分钟，refreshToken有效期2天，这样就算token泄露了，最多10分钟就会过期，影响没那么大，系统定时9分钟刷新一次token，</p>
+
+<p>这样系统就能让token滑动过期了，避免了频繁重新登录。</p>
+
+<p>回到顶部</p>
+
+<h1 id="三功能实现和核心代码"> 三、功能实现和核心代码</h1>
+
+<h2 id="1一处登录全部登录实现">1、一处登录，全部登录实现</h2>
+
+<p>建三个项目，SSO的项目，web1的项目，web2项目。</p>
+
+<p>这里的流程就是web1跳转SSO输用户名登录成功获取code，把会话写到SSO的cookie，然后跳转回来根据code跟SSO获取token登录成功；</p>
+
+<p>然后访问web2跳转到SSO，SSO已经登录，自动获取code跳回web2根据code获取token。</p>
+
+<p>能实现一处登录处处登录的关键是SSO的cookie。</p>
+
+<p>然后这里有一个核心的问题，如果我们生成的token有效期都是24小时，那么web1登录成功，获取的token有效期是24小时，</p>
+
+<p>等到过了12个小时，我访问web2，web2也得到一个24小时的token，这样再过12小时，web1的登录过期了，web2还没过期，</p>
+
+<p>这样就是web2是登录状态，然而web1却不是登录状态需要重新登录，这样就违背了一处登录处处登录的理念。</p>
+
+<p>所以后面获取的token，只能跟第一次登录的token的过期时间是一样的。怎么做呢，就是SSO第一次登录时过期时间缓存下来，后面根据SSO会话获取的code，</p>
+
+<p>换到的token的过期时间都和第一次一样。</p>
+
+<p><strong>SSO项目</strong></p>
+
+<p>SSO项目配置文件appsettings.json中加入web1，web2的信息，用来验证来源和生成对应项目的jwt token，实际项目应该存到数据库。</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "AppSetting": {
+    "appHSSettings": [
+      {
+        "domain": "https://localhost:7001",
+        "clientId": "web1",
+        "clientSecret": "Nu4Ohg8mfpPnNxnXu53W4g0yWLqF0mX2"
+      },
+      {
+        "domain": "https://localhost:7002",
+        "clientId": "web2",
+        "clientSecret": "pQeP5X9wejpFfQGgSjyWB8iFdLDGHEV8"
+      }
+
+    ]
+  }
+ 
+}
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>domain：接入系统的域名，可以用来校验请求来源是否合法。</p>
+
+<p>clientId：接入系统标识，请求token时传进来识别是哪个系统。</p>
+
+<p>clientSecret：接入系统密钥，用来生成对称加密的JWT。</p>
+
+<p>建一个IJWTService定义JWT生成需要的方法</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> /// &lt;summary&gt;
+    /// JWT服务接口
+    /// &lt;/summary&gt;
+    public interface IJWTService
+    {
+        /// &lt;summary&gt;
+        /// 获取授权码
+        /// &lt;/summary&gt;
+        /// &lt;param name="userName"&gt;&lt;/param&gt;
+        /// &lt;param name="password"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        /// &lt;exception cref="NotImplementedException"&gt;&lt;/exception&gt;
+         ResponseModel&lt;string&gt; GetCode(string clientId, string userName, string password);
+        /// &lt;summary&gt;
+        /// 根据会话Code获取授权码
+        /// &lt;/summary&gt;
+        /// &lt;param name="clientId"&gt;&lt;/param&gt;
+        /// &lt;param name="sessionCode"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        ResponseModel&lt;string&gt; GetCodeBySessionCode(string clientId, string sessionCode);
+
+        /// &lt;summary&gt;
+        /// 根据授权码获取Token+RefreshToken
+        /// &lt;/summary&gt;
+        /// &lt;param name="authCode"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;Token+RefreshToken&lt;/returns&gt;
+        ResponseModel&lt;GetTokenDTO&gt; GetTokenWithRefresh(string authCode);
+
+        /// &lt;summary&gt;
+        /// 根据RefreshToken刷新Token
+        /// &lt;/summary&gt;
+        /// &lt;param name="refreshToken"&gt;&lt;/param&gt;
+        /// &lt;param name="clientId"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        string GetTokenByRefresh(string refreshToken, string clientId);
+    }
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>建一个抽象类JWTBaseService加模板方法实现详细的逻辑</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> /// &lt;summary&gt;
+    /// jwt服务
+    /// &lt;/summary&gt;
+    public abstract class JWTBaseService : IJWTService
+    {
+        protected readonly IOptions&lt;AppSettingOptions&gt; _appSettingOptions;
+        protected readonly Cachelper _cachelper;
+        public JWTBaseService(IOptions&lt;AppSettingOptions&gt; appSettingOptions, Cachelper cachelper)
+        {
+            _appSettingOptions = appSettingOptions;
+            _cachelper = cachelper;
+        }
+
+        /// &lt;summary&gt;
+        /// 获取授权码
+        /// &lt;/summary&gt;
+        /// &lt;param name="userName"&gt;&lt;/param&gt;
+        /// &lt;param name="password"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        /// &lt;exception cref="NotImplementedException"&gt;&lt;/exception&gt;
+        public ResponseModel&lt;string&gt; GetCode(string clientId, string userName, string password)
+        {
+            ResponseModel&lt;string&gt; result = new ResponseModel&lt;string&gt;();
+
+            string code = string.Empty;
+            AppHSSetting appHSSetting = _appSettingOptions.Value.appHSSettings.Where(s =&gt; s.clientId == clientId).FirstOrDefault();
+            if (appHSSetting == null)
+            {
+                result.SetFail("应用不存在");
+                return result;
+            }
+            //真正项目这里查询数据库比较
+            if (!(userName == "admin" &amp;&amp; password == "123456"))
+            {
+                result.SetFail("用户名或密码不正确");
+                return result;
+            }
+
+            //用户信息
+            CurrentUserModel currentUserModel = new CurrentUserModel
+            {
+                id = 101,
+                account = "admin",
+                name = "张三",
+                mobile = "13800138000",
+                role = "SuperAdmin"
+            };
+
+            //生成授权码
+            code = Guid.NewGuid().ToString().Replace("-", "").ToUpper();
+            string key = $"AuthCode:{code}";
+            string appCachekey = $"AuthCodeClientId:{code}";
+            //缓存授权码
+            _cachelper.StringSet&lt;CurrentUserModel&gt;(key, currentUserModel, TimeSpan.FromMinutes(10));
+            //缓存授权码是哪个应用的
+            _cachelper.StringSet&lt;string&gt;(appCachekey, appHSSetting.clientId, TimeSpan.FromMinutes(10));
+            //创建全局会话
+            string sessionCode = $"SessionCode:{code}";
+            SessionCodeUser sessionCodeUser = new SessionCodeUser
+            {
+                expiresTime = DateTime.Now.AddHours(1),
+                currentUser = currentUserModel
+            };
+            _cachelper.StringSet&lt;CurrentUserModel&gt;(sessionCode, currentUserModel, TimeSpan.FromDays(1));
+            //全局会话过期时间
+            string sessionExpiryKey = $"SessionExpiryKey:{code}";
+            DateTime sessionExpirTime = DateTime.Now.AddDays(1);
+            _cachelper.StringSet&lt;DateTime&gt;(sessionExpiryKey, sessionExpirTime, TimeSpan.FromDays(1));
+            Console.WriteLine($"登录成功，全局会话code:{code}");
+            //缓存授权码取token时最长的有效时间
+            _cachelper.StringSet&lt;DateTime&gt;($"AuthCodeSessionTime:{code}", sessionExpirTime, TimeSpan.FromDays(1));
+
+            result.SetSuccess(code);
+            return result;
+        }
+        /// &lt;summary&gt;
+        /// 根据会话code获取授权码
+        /// &lt;/summary&gt;
+        /// &lt;param name="clientId"&gt;&lt;/param&gt;
+        /// &lt;param name="sessionCode"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        public ResponseModel&lt;string&gt; GetCodeBySessionCode(string clientId, string sessionCode)
+        {
+            ResponseModel&lt;string&gt; result = new ResponseModel&lt;string&gt;();
+            string code = string.Empty;
+            AppHSSetting appHSSetting = _appSettingOptions.Value.appHSSettings.Where(s =&gt; s.clientId == clientId).FirstOrDefault();
+            if (appHSSetting == null)
+            {
+                result.SetFail("应用不存在");
+                return result;
+            }
+            string codeKey = $"SessionCode:{sessionCode}";
+            CurrentUserModel currentUserModel = _cachelper.StringGet&lt;CurrentUserModel&gt;(codeKey);
+            if (currentUserModel == null)
+            {
+                return result.SetFail("会话不存在或已过期", string.Empty);
+            }
+
+            //生成授权码
+            code = Guid.NewGuid().ToString().Replace("-", "").ToUpper();
+            string key = $"AuthCode:{code}";
+            string appCachekey = $"AuthCodeClientId:{code}";
+            //缓存授权码
+            _cachelper.StringSet&lt;CurrentUserModel&gt;(key, currentUserModel, TimeSpan.FromMinutes(10));
+            //缓存授权码是哪个应用的
+            _cachelper.StringSet&lt;string&gt;(appCachekey, appHSSetting.clientId, TimeSpan.FromMinutes(10));
+
+            //缓存授权码取token时最长的有效时间
+            DateTime expirTime = _cachelper.StringGet&lt;DateTime&gt;($"SessionExpiryKey:{sessionCode}");
+            _cachelper.StringSet&lt;DateTime&gt;($"AuthCodeSessionTime:{code}", expirTime, expirTime - DateTime.Now);
+
+            result.SetSuccess(code);
+            return result;
+
+        }
+
+        /// &lt;summary&gt;
+        /// 根据刷新Token获取Token
+        /// &lt;/summary&gt;
+        /// &lt;param name="refreshToken"&gt;&lt;/param&gt;
+        /// &lt;param name="clientId"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        public string GetTokenByRefresh(string refreshToken, string clientId)
+        {
+            //刷新Token是否在缓存
+            CurrentUserModel currentUserModel = _cachelper.StringGet&lt;CurrentUserModel&gt;($"RefreshToken:{refreshToken}");
+            if(currentUserModel==null)
+            {
+                return String.Empty;
+            }
+            //刷新token过期时间
+            DateTime refreshTokenExpiry = _cachelper.StringGet&lt;DateTime&gt;($"RefreshTokenExpiry:{refreshToken}");
+            //token默认时间为600s
+            double tokenExpiry = 600;
+            //如果刷新token的过期时间不到600s了，token过期时间为刷新token的过期时间
+            if(refreshTokenExpiry&gt;DateTime.Now&amp;&amp;refreshTokenExpiry&lt;DateTime.Now.AddSeconds(600))
+            {
+                tokenExpiry = (refreshTokenExpiry - DateTime.Now).TotalSeconds;
+            }
+
+                //从新生成Token
+                string token = IssueToken(currentUserModel, clientId, tokenExpiry);
+                return token;
+
+        }
+
+        /// &lt;summary&gt;
+        /// 根据授权码,获取Token
+        /// &lt;/summary&gt;
+        /// &lt;param name="userInfo"&gt;&lt;/param&gt;
+        /// &lt;param name="appHSSetting"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        public ResponseModel&lt;GetTokenDTO&gt; GetTokenWithRefresh(string authCode)
+        {
+            ResponseModel&lt;GetTokenDTO&gt; result = new ResponseModel&lt;GetTokenDTO&gt;();
+
+            string key = $"AuthCode:{authCode}";
+            string clientIdCachekey = $"AuthCodeClientId:{authCode}";
+            string AuthCodeSessionTimeKey = $"AuthCodeSessionTime:{authCode}";
+
+            //根据授权码获取用户信息
+            CurrentUserModel currentUserModel = _cachelper.StringGet&lt;CurrentUserModel&gt;(key);
+            if (currentUserModel == null)
+            {
+                throw new Exception("code无效");
+            }
+            //清除authCode，只能用一次
+            _cachelper.DeleteKey(key);
+
+            //获取应用配置
+            string clientId = _cachelper.StringGet&lt;string&gt;(clientIdCachekey);
+            //刷新token过期时间
+            DateTime sessionExpiryTime = _cachelper.StringGet&lt;DateTime&gt;(AuthCodeSessionTimeKey);
+            DateTime tokenExpiryTime = DateTime.Now.AddMinutes(10);//token过期时间10分钟
+             //如果刷新token有过期期比token默认时间短，把token过期时间设成和刷新token一样
+            if (sessionExpiryTime &gt; DateTime.Now &amp;&amp; sessionExpiryTime &lt; tokenExpiryTime)
+            {
+                tokenExpiryTime = sessionExpiryTime;
+            }
+            //获取访问token
+            string token = this.IssueToken(currentUserModel, clientId, (sessionExpiryTime - DateTime.Now).TotalSeconds);
+
+            TimeSpan refreshTokenExpiry;
+            if (sessionExpiryTime != default(DateTime))
+            {
+                refreshTokenExpiry = sessionExpiryTime - DateTime.Now;
+            }
+            else
+            {
+                refreshTokenExpiry = TimeSpan.FromSeconds(60 * 60 * 24);//默认24小时
+            }
+            //获取刷新token
+            string refreshToken = this.IssueToken(currentUserModel, clientId, refreshTokenExpiry.TotalSeconds);
+            //缓存刷新token
+            _cachelper.StringSet($"RefreshToken:{refreshToken}", currentUserModel, refreshTokenExpiry);
+            //缓存刷新token过期时间
+            _cachelper.StringSet($"RefreshTokenExpiry:{refreshToken}",DateTime.Now.AddSeconds(refreshTokenExpiry.TotalSeconds), refreshTokenExpiry);
+            result.SetSuccess(new GetTokenDTO() { token = token, refreshToken = refreshToken, expires = 60 * 10 });
+            Console.WriteLine($"client_id:{clientId}获取token,有效期:{sessionExpiryTime.ToString("yyyy-MM-dd HH:mm:ss")},token:{token}");
+            return result;
+        }
+
+        #region private
+        /// &lt;summary&gt;
+        /// 签发token
+        /// &lt;/summary&gt;
+        /// &lt;param name="userModel"&gt;&lt;/param&gt;
+        /// &lt;param name="clientId"&gt;&lt;/param&gt;
+        /// &lt;param name="second"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        private string IssueToken(CurrentUserModel userModel, string clientId, double second = 600)
+        {
+            var claims = new[]
+            {
+                   new Claim(ClaimTypes.Name, userModel.name),
+                   new Claim("Account", userModel.account),
+                   new Claim("Id", userModel.id.ToString()),
+                   new Claim("Mobile", userModel.mobile),
+                   new Claim(ClaimTypes.Role,userModel.role),
+            };
+            //var appHSSetting = getAppInfoByAppKey(clientId);
+            //var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appHSSetting.clientSecret));
+            //var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            var creds = GetCreds(clientId);
+            /**
+             * Claims (Payload)
+                Claims 部分包含了一些跟这个 token 有关的重要信息。 JWT 标准规定了一些字段，下面节选一些字段:
+                iss: The issuer of the token，签发主体，谁给的
+                sub: The subject of the token，token 主题
+                aud: 接收对象，给谁的
+                exp: Expiration Time。 token 过期时间，Unix 时间戳格式
+                iat: Issued At。 token 创建时间， Unix 时间戳格式
+                jti: JWT ID。针对当前 token 的唯一标识
+                除了规定的字段外，可以包含其他任何 JSON 兼容的字段。
+             * */
+            var token = new JwtSecurityToken(
+                issuer: "SSOCenter", //谁给的
+                audience: clientId, //给谁的
+                claims: claims,
+                expires: DateTime.Now.AddSeconds(second),//token有效期
+                notBefore: null,//立即生效  DateTime.Now.AddMilliseconds(30),//30s后有效
+                signingCredentials: creds);
+            string returnToken = new JwtSecurityTokenHandler().WriteToken(token);
+            return returnToken;
+        }
+
+        /// &lt;summary&gt;
+        /// 根据appKey获取应用信息
+        /// &lt;/summary&gt;
+        /// &lt;param name="clientId"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        private AppHSSetting getAppInfoByAppKey(string clientId)
+        {
+            AppHSSetting appHSSetting = _appSettingOptions.Value.appHSSettings.Where(s =&gt; s.clientId == clientId).FirstOrDefault();
+            return appHSSetting;
+        }
+        /// &lt;summary&gt;
+        /// 获取加密方式
+        /// &lt;/summary&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        protected abstract SigningCredentials GetCreds(string clientId);
+        
+        #endregion
+    }
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>新建类JWTHSService实现对称加密</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> /// &lt;summary&gt;
+    /// JWT对称可逆加密
+    /// &lt;/summary&gt;
+    public class JWTHSService : JWTBaseService
+    {
+        public JWTHSService(IOptions&lt;AppSettingOptions&gt; options, Cachelper cachelper):base(options,cachelper)
+        {
+
+        }
+        /// &lt;summary&gt;
+        /// 生成对称加密签名凭证
+        /// &lt;/summary&gt;
+        /// &lt;param name="clientId"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        protected override SigningCredentials GetCreds(string clientId)
+        {
+           var appHSSettings=getAppInfoByAppKey(clientId);
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(appHSSettings.clientSecret));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+            return creds;
+        }
+        /// &lt;summary&gt;
+        /// 根据appKey获取应用信息
+        /// &lt;/summary&gt;
+        /// &lt;param name="clientId"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        private AppHSSetting getAppInfoByAppKey(string clientId)
+        {
+            AppHSSetting appHSSetting = _appSettingOptions.Value.appHSSettings.Where(s =&gt; s.clientId == clientId).FirstOrDefault();
+            return appHSSetting;
+        }
+       
+    }
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>新建JWTRSService类实现非对称加密，和上面的对称加密，只需要一个就可以里，这里把两种都写出来了</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/// &lt;summary&gt;
+    /// JWT非对称加密
+    /// &lt;/summary&gt;
+    public class JWTRSService : JWTBaseService
+    {
+  
+        public JWTRSService(IOptions&lt;AppSettingOptions&gt; options, Cachelper cachelper):base(options, cachelper)
+        {
+ 
+        }
+        /// &lt;summary&gt;
+        /// 生成非对称加密签名凭证
+        /// &lt;/summary&gt;
+        /// &lt;param name="clientId"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        protected override SigningCredentials GetCreds(string clientId)
+        {
+            var appRSSetting = getAppInfoByAppKey(clientId);
+            var rsa = RSA.Create();
+            byte[] privateKey = Convert.FromBase64String(appRSSetting.privateKey);//这里只需要私钥，不要begin,不要end
+            rsa.ImportPkcs8PrivateKey(privateKey, out _);
+            var key = new RsaSecurityKey(rsa);
+            var creds = new SigningCredentials(key, SecurityAlgorithms.RsaSha256);
+            return creds;
+        }
+        /// &lt;summary&gt;
+        /// 根据appKey获取应用信息
+        /// &lt;/summary&gt;
+        /// &lt;param name="clientId"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        private AppRSSetting getAppInfoByAppKey(string clientId)
+        {
+            AppRSSetting appRSSetting = _appSettingOptions.Value.appRSSettings.Where(s =&gt; s.clientId == clientId).FirstOrDefault();
+            return appRSSetting;
+        }
+
+    }
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>什么时候用JWT的对称加密，什么时候用JWT的非对称加密呢？</p>
+
+<p>对称加密：双方保存同一个密钥，签名速度快，但因为双方密钥一样，所以安全性比非对称加密低一些。</p>
+
+<p>非对称加密：认证方保存私钥，系统方保存公钥，签名速度比对称加密慢，但公钥私钥互相不能推导，所以安全性高。</p>
+
+<p>所以注重性能的用对称加密，注重安全的用非对称加密，一般是公司的系统用对称加密，第三方接入的话用非对称加密。</p>
+
+<p><strong>web1项目：</strong></p>
+
+<p>appsettings.json存着web1的信息</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "AllowedHosts": "*",
+  "SSOSetting": {
+    "issuer": "SSOCenter",
+    "audience": "web1",
+    "clientId": "web1",
+    "clientSecret": "Nu4Ohg8mfpPnNxnXu53W4g0yWLqF0mX2"
+  }
+}
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>Program.cs文件加入认证代码，加入builder.Services.AddAuthentication(。。。和加入app.UseAuthentication()，完整代码如下：</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using RSAExtensions;
+using SSO.Demo.Web1.Models;
+using SSO.Demo.Web1.Utils;
+using System.Security.Cryptography;
+using System.Text;
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddControllersWithViews();
+builder.Services.AddHttpClient();
+builder.Services.AddSingleton&lt;Cachelper&gt;();
+builder.Services.Configure&lt;AppOptions&gt;(builder.Configuration.GetSection("AppOptions"));
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =&gt;
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            //Audience,Issuer,clientSecret的值要和sso的一致
+
+            //JWT有一些默认的属性，就是给鉴权时就可以筛选了
+            ValidateIssuer = true,//是否验证Issuer
+            ValidateAudience = true,//是否验证Audience
+            ValidateLifetime = true,//是否验证失效时间
+            ValidateIssuerSigningKey = true,//是否验证client secret
+            ValidIssuer = builder.Configuration["SSOSetting:issuer"],//
+            ValidAudience = builder.Configuration["SSOSetting:audience"],//Issuer，这两项和前面签发jwt的设置一致
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["SSOSetting:clientSecret"]))//client secret
+        };
+    });
+
+#region 非对称加密-鉴权
+//var rsa = RSA.Create();
+//byte[] publickey = Convert.FromBase64String(AppSetting.PublicKey); //公钥，去掉begin...  end ...
+////rsa.ImportPkcs8PublicKey 是一个扩展方法，来源于RSAExtensions包
+//rsa.ImportPkcs8PublicKey(publickey);
+//var key = new RsaSecurityKey(rsa);
+//var signingCredentials = new SigningCredentials(key, SecurityAlgorithms.RsaPKCS1);
+
+//builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//    .AddJwtBearer(options =&gt;
+//    {
+//        options.TokenValidationParameters = new TokenValidationParameters
+//        {
+//            //Audience,Issuer,clientSecret的值要和sso的一致
+
+//            //JWT有一些默认的属性，就是给鉴权时就可以筛选了
+//            ValidateIssuer = true,//是否验证Issuer
+//            ValidateAudience = true,//是否验证Audience
+//            ValidateLifetime = true,//是否验证失效时间
+//            ValidateIssuerSigningKey = true,//是否验证client secret
+//            ValidIssuer = builder.Configuration["SSOSetting:issuer"],//
+//            ValidAudience = builder.Configuration["SSOSetting:audience"],//Issuer，这两项和前面签发jwt的设置一致
+//            IssuerSigningKey = signingCredentials.Key
+//        };
+//    });
+
+#endregion
+
+var app = builder.Build();
+ServiceLocator.Instance = app.Services; //用于手动获取DI对象
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Home/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+
+app.UseRouting();
+app.UseAuthentication();//这个加在UseAuthorization 前
+app.UseAuthorization();
+
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.Run();
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>然后加接口根据授权code获取token，增加AccountController</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> /// &lt;summary&gt;
+    /// 用户信息
+    /// &lt;/summary&gt;
+
+    public class AccountController : Controller
+    {
+        private IHttpClientFactory _httpClientFactory;
+        private readonly Cachelper _cachelper;
+        public AccountController(IHttpClientFactory httpClientFactory, Cachelper cachelper)
+        {
+            _httpClientFactory = httpClientFactory;
+            _cachelper = cachelper;
+        }
+
+        /// &lt;summary&gt;
+        /// 获取用户信息，接口需要进行权限校验
+        /// &lt;/summary&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        [MyAuthorize]
+        [HttpPost]
+        public ResponseModel&lt;UserDTO&gt; GetUserInfo()
+        {
+            ResponseModel&lt;UserDTO&gt; user = new ResponseModel&lt;UserDTO&gt;();
+            return user;
+        }
+        /// &lt;summary&gt;
+        /// 登录成功回调
+        /// &lt;/summary&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        public ActionResult LoginRedirect()
+        {
+            return View();
+        }
+        //根据authCode获取token
+        [HttpPost]
+        public async Task&lt;ResponseModel&lt;GetTokenDTO&gt;&gt; GetAccessCode([FromBody] GetAccessCodeRequest request)
+        {
+            ResponseModel&lt;GetTokenDTO&gt; result = new ResponseModel&lt;GetTokenDTO&gt;();
+            //请求SSO获取 token
+            var client = _httpClientFactory.CreateClient();
+            var param = new { authCode = request.authCode };
+            string jsonData = System.Text.Json.JsonSerializer.Serialize(param);
+            StringContent paramContent = new StringContent(jsonData);
+
+            //请求sso获取token
+            var response = await client.PostAsync("https://localhost:7000/SSO/GetToken", new StringContent(jsonData, Encoding.UTF8, "application/json"));
+            string resultStr = await response.Content.ReadAsStringAsync();
+            result = System.Text.Json.JsonSerializer.Deserialize&lt;ResponseModel&lt;GetTokenDTO&gt;&gt;(resultStr);
+            if (result.code == 0) //成功
+            {
+                //成功,缓存token到局部会话
+                string token = result.data.token;
+                string key = $"SessionCode:{request.sessionCode}";
+                string tokenKey = $"token:{token}";
+                _cachelper.StringSet&lt;string&gt;(key, token, TimeSpan.FromSeconds(result.data.expires));
+                _cachelper.StringSet&lt;bool&gt;(tokenKey, true, TimeSpan.FromSeconds(result.data.expires));
+                Console.WriteLine($"获取token成功，局部会话code:{request.sessionCode},{Environment.NewLine}token:{token}");
+            }
+
+            return result;
+        }
+        /// &lt;summary&gt;
+        /// 退出登录
+        /// &lt;/summary&gt;
+        /// &lt;param name="request"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        [HttpPost]
+        public  ResponseModel LogOut([FromBody] LogOutRequest request)
+        {
+            string key = $"SessionCode:{request.SessionCode}";
+            //根据会话取出token
+            string token = _cachelper.StringGet&lt;string&gt;(key);
+            if (!string.IsNullOrEmpty(token))
+            {
+                //清除token
+                string tokenKey = $"token:{token}";
+                _cachelper.DeleteKey(tokenKey);
+            }
+            Console.WriteLine($"会话Code:{request.SessionCode}退出登录");
+            return new ResponseModel().SetSuccess();
+        }
+    }
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>还有得到的token还没过期，如果我退出登录了，怎么判断这个会话token失效了呢？</p>
+
+<p>这里需要拦截认证过滤器，判断token在缓存中被删除，则认证不通过，增加文件MyAuthorize</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>　　/// &lt;summary&gt;
+    /// 拦截认证过滤器
+    /// &lt;/summary&gt;
+    public class MyAuthorize : Attribute, IAuthorizationFilter
+    {
+        private static Cachelper _cachelper = ServiceLocator.Instance.GetService&lt;Cachelper&gt;();
+
+        public void OnAuthorization(AuthorizationFilterContext context)
+        {
+            string id = context.HttpContext.User.FindFirst("id")?.Value;
+            if(string.IsNullOrEmpty(id))
+            {
+                //token检验失败
+                context.Result = new StatusCodeResult(401); //返回鉴权失败
+                return;
+            }
+
+            Console.WriteLine("我是Authorization过滤器");
+            //请求的地址
+            var url = context.HttpContext.Request.Path.Value;
+            //获取打印头部信息
+            var heads = context.HttpContext.Request.Headers;
+
+            //取到token "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoi5byg5LiJIiwiQWNjb3VudCI6ImFkbWluIiwiSWQiOiIxMDEiLCJNb2JpbGUiOiIxMzgwMDEzODAwMCIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IlN1cGVyQWRtaW4iLCJleHAiOjE2NTMwNjA0MDIsImlzcyI6IlNTT0NlbnRlciIsImF1ZCI6IndlYjIifQ.aAi5a0zr_nLQQaSxSBqEhHZQ6ALFD_rWn2tnLt38DeA"
+            string token = heads["Authorization"];
+            token = token.Replace("Bearer", "").TrimStart();//去掉 "Bearer "才是真正的token
+            if (string.IsNullOrEmpty(token))
+            {
+                Console.WriteLine("校验不通过");
+                return;
+            }
+            //redis校验这个token的有效性，确定来源是sso和确定会话没过期
+            string tokenKey = $"token:{token}";
+            bool isVaid = _cachelper.StringGet&lt;bool&gt;(tokenKey);
+            //token无效
+            if (isVaid == false)
+            {
+                Console.WriteLine($"token无效,token:{token}");
+                context.Result = new StatusCodeResult(401); //返回鉴权失败
+            }
+        }
+    }
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>然后需要认证的控制器或方法头部加上[MyAuthorize]即能自动认证。</p>
+
+<p>web1需要登录的页面</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@{
+    ViewData["Title"] = "Home Page";
+}
+
+&lt;div class="text-center"&gt;
+       &lt;h1 class="display-4"&gt;欢迎来到Web1&lt;/h1&gt;
+    &lt;p&gt;Learn about &lt;a href="https://web2.com:7002"&gt;跳转到Web2&lt;/a&gt;.&lt;/p&gt;
+        &lt;p&gt;Learn about &lt;a onclick="logOut()" href="javascript:void(0);"&gt;退出登录&lt;/a&gt;.&lt;/p&gt;
+&lt;/div&gt;
+@section Scripts{
+    &lt;script src="~/js/Common.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+                    getUserInfo()
+            //获取用户信息
+            function getUserInfo(){
+                //1.cookie是否有 token
+                const token=getCookie('token')
+                console.log('gettoken',token)
+                if(!token)
+                {
+                    redirectLogin()
+                }
+                $.ajax({
+          type: 'POST',
+          url: '/Account/GetUserInfo',
+          headers:{"Authorization":'Bearer ' + token},
+          success: success,
+          error:error
+        });
+            }
+            function success(){
+                console.log('成功')
+            }
+            function error(xhr, exception){
+                if(xhr.status===401) //鉴权失败
+                {
+                    console.log('未鉴权')
+                    redirectLogin()
+                }
+            }
+                      //重定向到登录
+            function redirectLogin(){
+                     window.location.href="https://sso.com:7000/SSO/Login?clientId=web1&amp;redirectUrl=https://web1.com:7001/Account/LoginRedirect"
+            }
+            //退出登录
+            function logOut(){
+                clearCookie("token") //清除cookie token
+                 clearCookie("refreshToken") //清除cookie refreshToken
+                  clearCookie("sessionCode")  //清除cookie 会话
+
+                  //跳转到SSO退出登录
+                    window.location.href="https://sso.com:7000/SSO/LogOut?clientId=web1&amp;redirectUrl=https://web1.com:7001/Account/LoginRedirect"
+               
+            }
+
+&lt;/script&gt;
+}
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>sso登录完要跳转回web1的页面</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+    Layout = null;
+}
+   &lt;script src="~/lib/jquery/dist/jquery.min.js"&gt;&lt;/script&gt;
+      &lt;script src="~/js/Common.js"&gt;&lt;/script&gt;
+   &lt;script&gt;
+       GetAccessToken();
+       //根据code获取token
+       function GetAccessToken(){
+   
+          var params=GetParam()
+                  //code
+          var authCode=params["authCode"]
+          var sessionCode=params["sessionCode"]
+          console.log('authcode',authCode)
+          var params={authCode,sessionCode}     
+$.ajax({
+  url:'/Account/GetAccessCode',
+  type:"POST",
+  data:JSON.stringify(params),
+  contentType:"application/json; charset=utf-8",
+  dataType:"json",
+  success: function(data){
+     console.log('token',data)
+     if(data.code===0) //成功
+     { 
+         console.log('设置cookie')
+         //把token存到 cookie,过期时间为token有效时间少一分钟
+         setCookie("token",data.data.token,data.data.expires-60,"/")
+         //刷新token,有效期1天
+         setCookie("refreshToken",data.data.refreshToken,24*60*60,"/")
+         setCookie("SessionCode",sessionCode,24*60*60,"/")
+         //跳转到主页
+          window.location.href="/Home/Index"
+     }
+  }})
+
+       }
+           
+   &lt;/script&gt;
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>到这里web1的核心代码就完成了，web2的代码跟web1除了配置里面的加密key，其他全部一样，就不再贴出代码了，后面源码有。</p>
+
+<p>到这里，就实现了一处登录，全部登录了。</p>
+
+<h2 id="2一处退出全部退出实现">2、一处退出，全部退出实现</h2>
+
+<p>一处退出，处处退出的流程像实现目标中的流程图，web1系统退出，跳转到SSO，让SSO发http请求退出其他的系统，跳转回登录页。</p>
+
+<p>退出有个核心的问题就是，SSO只能让全部系统在当前浏览器上退出，比喻用户A在电脑1的浏览器登录了，在电脑2的浏览器也登录了，在电脑1上退出只能退出电脑1浏览器的登录，</p>
+
+<p>电脑2的登录不受影响，web1退出了，SSO中的http请求退出web2的时候是不经过浏览器请求的，web2怎么知道清除那个token呢？</p>
+
+<p>这里需要在SSO登录的时候生成了一个全局会话，SSO的cookie这时可以生成一个全局code，每个系统登录的时候带过去作为token的缓存key，这样就能保证全部系统的局部会话缓存key是同一个了，</p>
+
+<p>退出登录的时候只需要删除这个缓存key的token即可。</p>
+
+<p>SSO的登录页面Login.cshtml</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+&lt;form id="form"&gt;
+    &lt;div&gt;用户名：&lt;input type="text" id=userName name="userName" /&gt;&lt;/div&gt;
+    &lt;div&gt;密码：&lt;input type="password" id="password" name="password" /&gt;&lt;/div&gt;
+    &lt;div&gt;&lt;input type="button" value="提交" onclick="login()" /&gt;&lt;/div&gt;
+&lt;/form&gt;
+
+&lt;script src="~/lib/jquery/dist/jquery.min.js"&gt;&lt;/script&gt;
+&lt;script src="~/js/Common.js"&gt;&lt;/script&gt;
+&lt;script&gt;
+    sessionCheck();
+    //会话检查
+    function sessionCheck(){
+          //获取参数集合
+            const urlParams=GetParam();
+            const clientId=urlParams['clientId'];
+            const redirectUrl=urlParams['redirectUrl']
+            const sessionCode=getCookie("SessionCode")
+            if(!sessionCode)
+            {
+                return;
+            }
+            //根据授权码获取code
+            var params={clientId,sessionCode}
+            $.ajax({
+            url:'/SSO/GetCodeBySessionCode',
+            data:JSON.stringify(params),
+            method:'post',
+            dataType:'json',
+            contentType:'application/json',
+            success:function(data){
+                if(data.code===0)
+                {
+                     const code=data.data
+                      window.location.href=redirectUrl+'?authCode='+code+"&amp;sessionCode="+sessionCode
+                }
+            }
+            })
+    }
+
+        function login(){
+            //获取参数集合
+            const urlParams=GetParam();
+
+            const clientId=urlParams['clientId'];
+            const redirectUrl=urlParams['redirectUrl']
+                const userName=$("#userName").val()
+                const password=$("#password").val()
+                const params={clientId,userName,password}
+            $.ajax({
+                    url:'/SSO/GetCode',
+                    data:JSON.stringify(params),
+                    method:'post',
+                    dataType:'json',
+                    contentType:"application/json",
+                    success:function(data){
+                        //获得code，跳转回客户页面
+                        if(data.code===0)
+                        {    
+                        const code=data.data
+
+                       //存储会话,这里的时间最好减去几分钟，不然那边的token过期，这里刚好多了几秒没过期又重新登录了
+                        setCookie("SessionCode",code,24*60*60,"/")
+                      window.location.href=redirectUrl+'?authCode='+code+'&amp;sessionCode='+code
+                        }
+                
+                    }
+                })
+            }
+
+&lt;/script&gt;
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>这里的SessionCode是关键，作为一个全局code，系统登录会同步到个系统，用于统一退出登录时用</p>
+
+<p>SSO的退出登录页面LogOut.cshtml</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+&lt;p&gt;退出登录中...&lt;/p&gt;
+&lt;script src="~/lib/jquery/dist/jquery.min.js"&gt;&lt;/script&gt;
+&lt;script src="~/js/Common.js?v=1"&gt;&lt;/script&gt;
+&lt;script&gt;
+      logOut()
+      function logOut()
+      {
+          var sessionCode=getCookie("SessionCode")
+      //清除会话
+        clearCookie("SessionCode")
+        //获取参数集合
+              const urlParams=GetParam();
+        //跳转到登录
+          const clientId=urlParams['clientId'];
+              const redirectUrl=urlParams['redirectUrl']
+
+              var params={sessionCode}
+              //退出登录
+              $.ajax({
+    url:'/SSO/LogOutApp',
+    type:"POST",
+    data:JSON.stringify(params),
+    contentType:"application/json; charset=utf-8",
+    dataType:"json",
+    success: function(data){
+       console.log('token',data)
+       if(data.code===0) //成功
+       {
+           //跳转到登录页面
+            window.location.href='/SSO/Login'+'?clientId='+clientId+'&amp;redirectUrl='+redirectUrl
+       }
+    }})
+
+      }
+
+&lt;/script&gt;
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>退出登录接口：</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 　　　　/// &lt;summary&gt;
+        /// 退出登录
+        /// &lt;/summary&gt;
+        /// &lt;param name="request"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        [HttpPost]
+        public async Task&lt;ResponseModel&gt; LogOutApp([FromBody] LogOutRequest request)
+        {
+            //删除全局会话
+            string sessionKey = $"SessionCode:{request.sessionCode}";
+            _cachelper.DeleteKey(sessionKey);
+            var client = _httpClientFactory.CreateClient();
+            var param = new { sessionCode = request.sessionCode };
+            string jsonData = System.Text.Json.JsonSerializer.Serialize(param);
+            StringContent paramContent = new StringContent(jsonData);
+
+            //这里实战中是用数据库或缓存取
+            List&lt;string&gt; urls = new List&lt;string&gt;()
+            {
+                "https://localhost:7001/Account/LogOut",
+                "https://localhost:7002/Account/LogOut"
+            };
+            //这里可以异步mq处理，不阻塞返回
+            foreach (var url in urls)
+            {
+                //web1退出登录
+                var logOutResponse = await client.PostAsync(url, new StringContent(jsonData, Encoding.UTF8, "application/json"));
+                string resultStr = await logOutResponse.Content.ReadAsStringAsync();
+                ResponseModel response = System.Text.Json.JsonSerializer.Deserialize&lt;ResponseModel&gt;(resultStr);
+                if (response.code == 0) //成功
+                {
+                    Console.WriteLine($"url:{url},会话Id:{request.sessionCode},退出登录成功");
+                }
+                else
+                {
+                    Console.WriteLine($"url:{url},会话Id:{request.sessionCode},退出登录失败");
+                }
+            };
+            return new ResponseModel().SetSuccess();
+
+        }
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>web1，web2的退出登录接口</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> 　　　　/// &lt;summary&gt;
+        /// 退出登录
+        /// &lt;/summary&gt;
+        /// &lt;param name="request"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        [HttpPost]
+        public  ResponseModel LogOut([FromBody] LogOutRequest request)
+        {
+            string key = $"SessionCode:{request.SessionCode}";
+            //根据会话取出token
+            string token = _cachelper.StringGet&lt;string&gt;(key);
+            if (!string.IsNullOrEmpty(token))
+            {
+                //清除token
+                string tokenKey = $"token:{token}";
+                _cachelper.DeleteKey(tokenKey);
+            }
+            Console.WriteLine($"会话Code:{request.SessionCode}退出登录");
+            return new ResponseModel().SetSuccess();
+        }
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>到这里，一处退出，全部退出也完成了。</p>
+
+<h2 id="3双token机制实现">3、双token机制实现</h2>
+
+<p>token和refresh_token生成算法一样就可以了，只是token的有效期短，refresh_token的有效期长。</p>
+
+<p>那刷新token时怎么知道这个是刷新token呢，SSO生成刷新token的时候，把它保存到缓存中，刷新token的时候判断缓存中有就是刷新token。</p>
+
+<p>生成双token的代码：</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>　　　　 /// &lt;summary&gt;
+        /// 根据授权码,获取Token
+        /// &lt;/summary&gt;
+        /// &lt;param name="userInfo"&gt;&lt;/param&gt;
+        /// &lt;param name="appHSSetting"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        public ResponseModel&lt;GetTokenDTO&gt; GetTokenWithRefresh(string authCode)
+        {
+            ResponseModel&lt;GetTokenDTO&gt; result = new ResponseModel&lt;GetTokenDTO&gt;();
+
+            string key = $"AuthCode:{authCode}";
+            string clientIdCachekey = $"AuthCodeClientId:{authCode}";
+            string AuthCodeSessionTimeKey = $"AuthCodeSessionTime:{authCode}";
+
+            //根据授权码获取用户信息
+            CurrentUserModel currentUserModel = _cachelper.StringGet&lt;CurrentUserModel&gt;(key);
+            if (currentUserModel == null)
+            {
+                throw new Exception("code无效");
+            }
+            //清除authCode，只能用一次
+            _cachelper.DeleteKey(key);
+
+            //获取应用配置
+            string clientId = _cachelper.StringGet&lt;string&gt;(clientIdCachekey);
+            //刷新token过期时间
+            DateTime sessionExpiryTime = _cachelper.StringGet&lt;DateTime&gt;(AuthCodeSessionTimeKey);
+            DateTime tokenExpiryTime = DateTime.Now.AddMinutes(10);//token过期时间10分钟
+             //如果刷新token有过期期比token默认时间短，把token过期时间设成和刷新token一样
+            if (sessionExpiryTime &gt; DateTime.Now &amp;&amp; sessionExpiryTime &lt; tokenExpiryTime)
+            {
+                tokenExpiryTime = sessionExpiryTime;
+            }
+            //获取访问token
+            string token = this.IssueToken(currentUserModel, clientId, (sessionExpiryTime - DateTime.Now).TotalSeconds);
+
+            TimeSpan refreshTokenExpiry;
+            if (sessionExpiryTime != default(DateTime))
+            {
+                refreshTokenExpiry = sessionExpiryTime - DateTime.Now;
+            }
+            else
+            {
+                refreshTokenExpiry = TimeSpan.FromSeconds(60 * 60 * 24);//默认24小时
+            }
+            //获取刷新token
+            string refreshToken = this.IssueToken(currentUserModel, clientId, refreshTokenExpiry.TotalSeconds);
+            //缓存刷新token
+            _cachelper.StringSet(refreshToken, currentUserModel, refreshTokenExpiry);
+            result.SetSuccess(new GetTokenDTO() { token = token, refreshToken = refreshToken, expires = 60 * 10 });
+            Console.WriteLine($"client_id:{clientId}获取token,有效期:{sessionExpiryTime.ToString("yyyy-MM-dd HH:mm:ss")},token:{token}");
+            return result;
+        }
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>根据刷新token获取token代码：</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>　　　　 /// &lt;summary&gt;
+        /// 根据刷新Token获取Token
+        /// &lt;/summary&gt;
+        /// &lt;param name="refreshToken"&gt;&lt;/param&gt;
+        /// &lt;param name="clientId"&gt;&lt;/param&gt;
+        /// &lt;returns&gt;&lt;/returns&gt;
+        public string GetTokenByRefresh(string refreshToken, string clientId)
+        {
+            //刷新Token是否在缓存
+            CurrentUserModel currentUserModel = _cachelper.StringGet&lt;CurrentUserModel&gt;($"RefreshToken:{refreshToken}");
+            if(currentUserModel==null)
+            {
+                return String.Empty;
+            }
+            //刷新token过期时间
+            DateTime refreshTokenExpiry = _cachelper.StringGet&lt;DateTime&gt;($"RefreshTokenExpiry:{refreshToken}");
+            //token默认时间为600s
+            double tokenExpiry = 600;
+            //如果刷新token的过期时间不到600s了，token过期时间为刷新token的过期时间
+            if(refreshTokenExpiry&gt;DateTime.Now&amp;&amp;refreshTokenExpiry&lt;DateTime.Now.AddSeconds(600))
+            {
+                tokenExpiry = (refreshTokenExpiry - DateTime.Now).TotalSeconds;
+            }
+
+                //从新生成Token
+                string token = IssueToken(currentUserModel, clientId, tokenExpiry);
+                return token;
+
+        }
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>回到顶部</p>
+
+<h1 id="四效果演示">四、效果演示</h1>
+
+<p>这里项目的SSO地址是：https://localhost:7000 ，web1地址是：https://localhost:7001，web2地址是：https://localhost:7002</p>
+
+<p>修改hosts文件，让他们在不同域名下，cookie不能共享。</p>
+
+<p>win10路径：C:\Windows\System32\drivers\etc\hosts 在最后加入</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>127.0.0.1 sso.com
+127.0.0.1 web1.com
+127.0.0.1 web2.com
+</code></pre></div></div>
+
+<p>这样得到新的地址，SSO地址:https://sso.com:7000 ，web1地址是：https://web1.com，web2地址是：https://web2.com</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/630011/202205/630011-20220529235911715-1346968904.gif" alt="" /></p>
+
+<p>1、 这里一开始，访问https://web2.com没登录跳转到https://sso.com。</p>
+
+<p>2、然后访问https://web1.com也没登录，也跳转到了https://sso.com，证明web1，web2都没登录。</p>
+
+<p>3、然后在跳转的sso登录后跳转回web1，然后点https://web2.com的连接跳转到https://web2.com，自动登录了。</p>
+
+<p>4、然后在web1退出登录，web2刷新页面，也退出了登录。</p>
+
+<p>再看一下这些操作下SSO日志打印的记录。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/630011/202205/630011-20220530000640115-965384197.png" alt="" /></p>
+
+<p>到这里.NET6下基于JWT+OAuth2.0的SSO就完成了。</p>
+
+<p>最后附源码：</p>
+
+<p>百度云盘：https://pan.baidu.com/s/1MZbFC7KojIRT0LEL5HBkGg    <em>提取码：qcn1</em></p>
+
+<p>github： https://github.com/weixiaolong325/SSO.Demo.SSO   （github网络有点问题，还没上传完整，用百度云盘的，晚点上传完整到github）</p>
+<blockquote>
+  <p>作者:包子wxl<br />
+原文:https://www.cnblogs.com/wei325/p/16316004.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/30/.NETCore%E4%B8%ADJWTAuth2.0%E5%AE%9E%E7%8E%B0SSO%E9%99%84%E5%AE%8C%E6%95%B4%E6%BA%90%E7%A0%81.NET6.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

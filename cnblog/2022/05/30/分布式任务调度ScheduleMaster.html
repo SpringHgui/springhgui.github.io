@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>分布式任务调度ScheduleMaster | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="分布式任务调度ScheduleMaster" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="1.什么是ScheduleMaster ScheduleMaster是分布式任务调度系统,是国内的一位开发者写的。简称：集中任务调度系统，最简单的理解ScheduleMaster，就是对不同的系统里面的调度任务做统一管理的框架。 例如我们现在有多个系统，每个系统针对自己处理不同的业务场景。衍生出自己的调度任务，想象一下，如果每个系统人为去维护，那随着调度任务越来越多，人是崩溃的吧，可见维护和技术成本是巨大的，这时我们需要选择分布式任务系统框架做统一的管理 当然有目前有很多相对优秀分布式任务系统框架，我们主要学习 ScheduleMaster 2.使用ScheduleMaster 1.首先我们需要使用NET Core web Api创建几个模拟的微服务，分别为 考勤、算薪、邮件、短信 2.下载开源的ScheduleMaster，并且使用ScheduleMaster调度我们的微服务接口" />
+<meta property="og:description" content="1.什么是ScheduleMaster ScheduleMaster是分布式任务调度系统,是国内的一位开发者写的。简称：集中任务调度系统，最简单的理解ScheduleMaster，就是对不同的系统里面的调度任务做统一管理的框架。 例如我们现在有多个系统，每个系统针对自己处理不同的业务场景。衍生出自己的调度任务，想象一下，如果每个系统人为去维护，那随着调度任务越来越多，人是崩溃的吧，可见维护和技术成本是巨大的，这时我们需要选择分布式任务系统框架做统一的管理 当然有目前有很多相对优秀分布式任务系统框架，我们主要学习 ScheduleMaster 2.使用ScheduleMaster 1.首先我们需要使用NET Core web Api创建几个模拟的微服务，分别为 考勤、算薪、邮件、短信 2.下载开源的ScheduleMaster，并且使用ScheduleMaster调度我们的微服务接口" />
+<link rel="canonical" href="/cnblog/2022/05/30/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6ScheduleMaster.html" />
+<meta property="og:url" content="/cnblog/2022/05/30/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6ScheduleMaster.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-30T09:02:54+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="分布式任务调度ScheduleMaster" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-30T09:02:54+00:00","datePublished":"2022-05-30T09:02:54+00:00","description":"1.什么是ScheduleMaster ScheduleMaster是分布式任务调度系统,是国内的一位开发者写的。简称：集中任务调度系统，最简单的理解ScheduleMaster，就是对不同的系统里面的调度任务做统一管理的框架。 例如我们现在有多个系统，每个系统针对自己处理不同的业务场景。衍生出自己的调度任务，想象一下，如果每个系统人为去维护，那随着调度任务越来越多，人是崩溃的吧，可见维护和技术成本是巨大的，这时我们需要选择分布式任务系统框架做统一的管理 当然有目前有很多相对优秀分布式任务系统框架，我们主要学习 ScheduleMaster 2.使用ScheduleMaster 1.首先我们需要使用NET Core web Api创建几个模拟的微服务，分别为 考勤、算薪、邮件、短信 2.下载开源的ScheduleMaster，并且使用ScheduleMaster调度我们的微服务接口","headline":"分布式任务调度ScheduleMaster","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/30/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6ScheduleMaster.html"},"url":"/cnblog/2022/05/30/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6ScheduleMaster.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">分布式任务调度ScheduleMaster</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-30T09:02:54+00:00" itemprop="datePublished">May 30, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h5 id="1什么是schedulemaster">1.什么是ScheduleMaster</h5>
+
+<p><strong><a href="https://github.com/hey-hoho/ScheduleMasterCore">ScheduleMaster</a></strong>是<code class="language-plaintext highlighter-rouge">分布式任务调度</code>系统,是国内的一位开发者写的。简称：集中任务调度系统，最简单的理解ScheduleMaster，就是对不同的系统里面的调度任务<strong>做统一管理的框架</strong>。</p>
+
+<p>例如我们现在有多个系统，每个系统针对自己处理不同的业务场景。衍生出自己的调度任务，想象一下，如果每个系统人为去维护，那随着调度任务越来越多，人是崩溃的吧，可见<strong>维护</strong>和<strong>技术</strong>成本是巨大的，这时我们需要选择<strong>分布式任务系统框架</strong>做统一的管理</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/1264751/202205/1264751-20220525234045823-1600780667.png" alt="" /></p>
+
+<p>当然有目前有很多相对优秀<strong>分布式任务系统框架</strong>，我们主要学习 <strong>ScheduleMaster</strong></p>
+
+<h5 id="2使用schedulemaster">2.使用ScheduleMaster</h5>
+
+<p>1.首先我们需要使用<strong>NET Core web Api</strong>创建几个模拟的微服务，分别为 <strong>考勤</strong>、<strong>算薪</strong>、<strong>邮件</strong>、<strong>短信</strong></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/1264751/202205/1264751-20220526214850467-1118050687.png" alt="" /></p>
+
+<p>2.下载开源的<strong>ScheduleMaster</strong>，并且使用<strong>ScheduleMaster</strong>调度我们的微服务接口</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- sqlserver："Persist Security Info = False; User ID =sa; Password =123456; Initial Catalog =schedule_master; Server =."
+- postgresql："Server=localhost;Port=5432;Database=schedule_master;User Id=postgres;Password=123456;Pooling=true;MaxPoolSize=20;"
+- mysql："Data Source=localhost;Database=schedule_master;User ID=root;Password=123456;pooling=true;CharSet=utf8mb4;port=3306;sslmode=none;TreatTinyAsBoolean=true"
+</code></pre></div></div>
+
+<blockquote>
+  <p>修改Host的配置文件和支持的数据库,框架默认使用Mysql</p>
+
+  <p>修改Web的配置文件和支持的数据库,框架默认使用Mysql</p>
+</blockquote>
+
+<p><img src="https://img2022.cnblogs.com/blog/1264751/202205/1264751-20220526215152981-320533951.png" alt="" /></p>
+
+<p>3.进入<strong>Hos.ScheduleMaster.Web</strong>项目的发布目录，<code class="language-plaintext highlighter-rouge">dotnet Hos.ScheduleMaster.Web.dll</code>启动项目 ，此时会生成数据库</p>
+
+<blockquote>
+  <p>登录账号：admin</p>
+
+  <p>密码：111111</p>
+</blockquote>
+
+<p>4.进入Hos.ScheduleMaster.QuartzHost项目的发布目录,执行命令，启动项目</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>dotnet Hos.ScheduleMaster.QuartzHost.dll --urls http://*:30003
+</code></pre></div></div>
+
+<h6 id="1配置http调度任务">1.配置Http调度任务</h6>
+
+<p>5.准备就绪后，使用后台查看<strong>节点管理</strong>，可以看到web<strong>主节点30000</strong>和<strong>任务调度的接口30002</strong>已经在运行</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/1264751/202205/1264751-20220526223302408-326437718.png" alt="" /></p>
+
+<p>6.使用<strong>任务列表</strong>菜单，<strong>创建定时调度</strong>任务，<strong>配置基础信息</strong>和<strong>元数据配置</strong>，然后点击保存就开始执行任务<br />
+ <img src="https://img2022.cnblogs.com/blog/1264751/202205/1264751-20220526223733135-809747347.png" alt="" /></p>
+
+<h6 id="2配置程序集调度任务">2.配置程序集调度任务</h6>
+
+<p>1.创建一个类库，安装ScheduleMaster库， 创建一个类继承TaskBase，实现抽象方法，然后编译程序集</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>namespace TaskExcuteService
+{
+    class AssemblyTask : TaskBase
+    {
+        public override void Run(TaskContext context)
+        {
+            context.WriteLog("程序集任务");
+        }
+    }
+}
+</code></pre></div></div>
+
+<p>2.找到debug目录，去掉Base程序集，然后添加为压缩文件</p>
+
+<p>3.在web界面找到<strong>任务配置</strong>，选择程序集进行基本配置，配置<strong>元数据</strong>，输入程序集名称，然后输入类，并将程序集上传，保存就可以运行了</p>
+
+<h5 id="3使用api接入任务">3.使用Api接入任务</h5>
+
+<p>为了方便业务系统更好的接入调度系统，<strong>ScheduleMaster</strong>创建任务不仅可以在控制台中实现，系统也提供了<strong>WebAPI</strong>供业务系统使用代码接入，这种方式对延时任务来说尤其重要。</p>
+
+<h6 id="1api-server-对接流程">1.API Server 对接流程</h6>
+
+<ul>
+  <li>在控制台中创建好专用的API对接用户账号。</li>
+  <li>使用对接账号的用户名设置为http header中的<code class="language-plaintext highlighter-rouge">ms_auth_user</code>值。</li>
+  <li>使用经过哈希运算过的秘钥设置为http header中的<code class="language-plaintext highlighter-rouge">ms_auth_secret值</code>，计算规则：按{用户名}{hash(密码)}{用户名}的格式拼接得到字符串str，然后再对str做一次hash运算即得到最终秘钥，hash函数是小写的32位MD5算法。</li>
+  <li>
+    <p>使用form格式发起http调用，如果非法用户会返回401-Unauthorized。</p>
+
+    <p>HttpClient client = new HttpClient();
+  client.DefaultRequestHeaders.Add(“ms_auth_user”, “admin”);
+  client.DefaultRequestHeaders.Add(“ms_auth_secret”, SecurityHelper.MD5($”admin{SecurityHelper.MD5(“111111”)}}admin”));</p>
+  </li>
+</ul>
+
+<p>所有接口采用统一的返回格式，字段如下：</p>
+
+<p>| 参数名称 | 参数类型 | 说明 |
+| — | — | — |</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Success</td>
+      <td>bool</td>
+      <td>是否成功</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Status</td>
+      <td>int</td>
+      <td>结果状态，0-请求失败 1-请求成功 2-登录失败 3-参数异常 4-数据异常</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Message</td>
+      <td>string</td>
+      <td>返回的消息</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Data</td>
+      <td>object</td>
+      <td>返回的数据</td>
+    </tr>
+  </tbody>
+</table>
+
+<h6 id="2创建程序集任务">2.创建程序集任务</h6>
+
+<p>使用API创建任务的方式不支持上传程序包，所以在任务需要启动时要确保程序包已通过其他方式上传，否则会启动失败。</p>
+
+<ul>
+  <li>接口地址：<code class="language-plaintext highlighter-rouge">http://yourip:30000/api/task/create</code></li>
+  <li>请求类型：<code class="language-plaintext highlighter-rouge">POST</code></li>
+  <li>参数格式：<code class="language-plaintext highlighter-rouge">application/x-www-form-urlencoded</code></li>
+  <li>返回结果：创建成功返回任务id</li>
+  <li>参数列表：</li>
+</ul>
+
+<p>| 参数名称 | 参数类型 | 是否必填 | 说明 |
+| — | — | — | — |</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>MetaType</td>
+      <td>int</td>
+      <td>是</td>
+      <td>任务类型，这里固定是1</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Title</td>
+      <td>string</td>
+      <td>是</td>
+      <td>任务名称</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>RunLoop</td>
+      <td>bool</td>
+      <td>是</td>
+      <td>是否按周期执行</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>CronExpression</td>
+      <td>string</td>
+      <td>否</td>
+      <td>cron表达式，如果RunLoop为true则必填</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>AssemblyName</td>
+      <td>string</td>
+      <td>是</td>
+      <td>程序集名称</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>ClassName</td>
+      <td>string</td>
+      <td>是</td>
+      <td>执行类名称，包含完整命名空间</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>StartDate</td>
+      <td>DateTime</td>
+      <td>是</td>
+      <td>任务开始时间</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>EndDate</td>
+      <td>DateTime</td>
+      <td>否</td>
+      <td>任务停止时间，为空表示不限停止时间</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Remark</td>
+      <td>string</td>
+      <td>否</td>
+      <td>任务描述说明</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Keepers</td>
+      <td>List&lt;int&gt;</td>
+      <td>否</td>
+      <td>监护人id</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Nexts</td>
+      <td>List&lt;guid&gt;</td>
+      <td>否</td>
+      <td>子级任务id</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Executors</td>
+      <td>List&lt;string&gt;</td>
+      <td>否</td>
+      <td>执行节点名称</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>RunNow</td>
+      <td>bool</td>
+      <td>否</td>
+      <td>创建成功是否立即启动</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Params</td>
+      <td>List&lt;ScheduleParam&gt;</td>
+      <td>否</td>
+      <td>自定义参数列表，也可以通过CustomParamsJson字段直接传json格式字符串</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><code class="language-plaintext highlighter-rouge">ScheduleParam：</code></p>
+
+<p>| 参数名称 | 参数类型 | 是否必填 | 说明 |
+| — | — | — | — |</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>ParamKey</td>
+      <td>string</td>
+      <td>是</td>
+      <td>参数名称</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>ParamValue</td>
+      <td>string</td>
+      <td>是</td>
+      <td>参数值</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>ParamRemark</td>
+      <td>string</td>
+      <td>否</td>
+      <td>参数说明</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>HttpClient client = new HttpClient();
+List&lt;KeyValuePair&lt;string, string&gt;&gt; args = new List&lt;KeyValuePair&lt;string, string&gt;&gt;();
+args.Add(new KeyValuePair&lt;string, string&gt;("MetaType", "1"));
+args.Add(new KeyValuePair&lt;string, string&gt;("RunLoop", "true"));
+args.Add(new KeyValuePair&lt;string, string&gt;("CronExpression", "33 0/8 * * * ?"));
+args.Add(new KeyValuePair&lt;string, string&gt;("Remark", "By Xunit Tester Created"));
+args.Add(new KeyValuePair&lt;string, string&gt;("StartDate", DateTime.Today.ToString("yyyy-MM-dd HH:mm:ss")));
+args.Add(new KeyValuePair&lt;string, string&gt;("Title", "程序集接口测试任务"));
+args.Add(new KeyValuePair&lt;string, string&gt;("AssemblyName", "Hos.ScheduleMaster.Demo"));
+args.Add(new KeyValuePair&lt;string, string&gt;("ClassName", "Hos.ScheduleMaster.Demo.Simple"));
+args.Add(new KeyValuePair&lt;string, string&gt;("CustomParamsJson", "[{\"ParamKey\":\"k1\",\"ParamValue\":\"1111\",\"ParamRemark\":\"r1\"},{\"ParamKey\":\"k2\",\"ParamValue\":\"2222\",\"ParamRemark\":\"r2\"}]"));
+args.Add(new KeyValuePair&lt;string, string&gt;("Keepers", "1"));
+args.Add(new KeyValuePair&lt;string, string&gt;("Keepers", "2"));
+//args.Add(new KeyValuePair&lt;string, string&gt;("Nexts", ""));
+//args.Add(new KeyValuePair&lt;string, string&gt;("Executors", ""));
+HttpContent reqContent = new FormUrlEncodedContent(args);
+var response = await client.PostAsync("http://localhost:30000/api/Task/Create", reqContent);
+var content = await response.Content.ReadAsStringAsync();
+Debug.WriteLine(content);
+</code></pre></div></div>
+
+<h6 id="3创建http任务">3.创建HTTP任务</h6>
+
+<ul>
+  <li>接口地址：<code class="language-plaintext highlighter-rouge">http://yourip:30000/api/task/create</code></li>
+  <li>请求类型：<code class="language-plaintext highlighter-rouge">POST</code></li>
+  <li>参数格式：<code class="language-plaintext highlighter-rouge">application/x-www-form-urlencoded</code></li>
+  <li>返回结果：创建成功返回任务id</li>
+  <li>参数列表：</li>
+</ul>
+
+<p>| 参数名称 | 参数类型 | 是否必填 | 说明 |
+| — | — | — | — |</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>MetaType</td>
+      <td>int</td>
+      <td>是</td>
+      <td>任务类型，这里固定是2</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Title</td>
+      <td>string</td>
+      <td>是</td>
+      <td>任务名称</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>RunLoop</td>
+      <td>bool</td>
+      <td>是</td>
+      <td>是否按周期执行</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>CronExpression</td>
+      <td>string</td>
+      <td>否</td>
+      <td>cron表达式，如果RunLoop为true则必填</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>StartDate</td>
+      <td>DateTime</td>
+      <td>是</td>
+      <td>任务开始时间</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>EndDate</td>
+      <td>DateTime</td>
+      <td>否</td>
+      <td>任务停止时间，为空表示不限停止时间</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Remark</td>
+      <td>string</td>
+      <td>否</td>
+      <td>任务描述说明</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>HttpRequestUrl</td>
+      <td>string</td>
+      <td>是</td>
+      <td>请求地址</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>HttpMethod</td>
+      <td>string</td>
+      <td>是</td>
+      <td>请求方式，仅支持GET\POST\PUT\DELETE</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>HttpContentType</td>
+      <td>string</td>
+      <td>是</td>
+      <td>参数格式，仅支持application/json和application/x-www-form-urlencoded</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>HttpHeaders</td>
+      <td>string</td>
+      <td>否</td>
+      <td>自定义请求头，ScheduleParam列表的json字符串</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>HttpBody</td>
+      <td>string</td>
+      <td>是</td>
+      <td>如果是json格式参数，则是对应参数的json字符串；如果是form格式参数，则是对应ScheduleParam列表的json字符串。</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Keepers</td>
+      <td>List&lt;int&gt;</td>
+      <td>否</td>
+      <td>监护人id</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Nexts</td>
+      <td>List&lt;guid&gt;</td>
+      <td>否</td>
+      <td>子级任务id</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Executors</td>
+      <td>List&lt;string&gt;</td>
+      <td>否</td>
+      <td>执行节点名称</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>RunNow</td>
+      <td>bool</td>
+      <td>否</td>
+      <td>创建成功是否立即启动</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>HttpClient client = new HttpClient();
+List&lt;KeyValuePair&lt;string, string&gt;&gt; args = new List&lt;KeyValuePair&lt;string, string&gt;&gt;();
+args.Add(new KeyValuePair&lt;string, string&gt;("MetaType", "2"));
+args.Add(new KeyValuePair&lt;string, string&gt;("RunLoop", "true"));
+args.Add(new KeyValuePair&lt;string, string&gt;("CronExpression", "22 0/8 * * * ?"));
+args.Add(new KeyValuePair&lt;string, string&gt;("Remark", "By Xunit Tester Created"));
+args.Add(new KeyValuePair&lt;string, string&gt;("StartDate", DateTime.Today.ToString("yyyy-MM-dd HH:mm:ss")));
+args.Add(new KeyValuePair&lt;string, string&gt;("Title", "Http接口测试任务"));
+args.Add(new KeyValuePair&lt;string, string&gt;("HttpRequestUrl", "http://localhost:56655/api/1.0/value/jsonpost"));
+args.Add(new KeyValuePair&lt;string, string&gt;("HttpMethod", "POST"));
+args.Add(new KeyValuePair&lt;string, string&gt;("HttpContentType", "application/json"));
+args.Add(new KeyValuePair&lt;string, string&gt;("HttpHeaders", "[]"));
+args.Add(new KeyValuePair&lt;string, string&gt;("HttpBody", "{ \"Posts\": [{ \"PostId\": 666, \"Title\": \"tester\", \"Content\":\"testtesttest\" }], \"BlogId\": 111, \"Url\":\"qweqrrttryrtyrtrtrt\" }"));
+HttpContent reqContent = new FormUrlEncodedContent(args);
+var response = await client.PostAsync("http://localhost:30000/api/Task/Create", reqContent);
+var content = await response.Content.ReadAsStringAsync();
+Debug.WriteLine(content);
+</code></pre></div></div>
+
+<h6 id="4创建延时任务">4.创建延时任务</h6>
+
+<ul>
+  <li>接口地址：<code class="language-plaintext highlighter-rouge">http://yourip:30000/api/delaytask/create</code></li>
+  <li>请求类型：<code class="language-plaintext highlighter-rouge">POST</code></li>
+  <li>参数格式：<code class="language-plaintext highlighter-rouge">application/x-www-form-urlencoded</code></li>
+  <li>返回结果：创建成功返回任务id</li>
+  <li>参数列表：</li>
+</ul>
+
+<p>| 参数名称 | 参数类型 | 是否必填 | 说明 |
+| — | — | — | — |</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>SourceApp</td>
+      <td>string</td>
+      <td>是</td>
+      <td>来源</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>Topic</td>
+      <td>string</td>
+      <td>是</td>
+      <td>主题</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>ContentKey</td>
+      <td>string</td>
+      <td>是</td>
+      <td>业务关键字</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>DelayTimeSpan</td>
+      <td>int</td>
+      <td>是</td>
+      <td>延迟相对时间</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>DelayAbsoluteTime</td>
+      <td>DateTime</td>
+      <td>是</td>
+      <td>延迟绝对时间</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>NotifyUrl</td>
+      <td>string</td>
+      <td>是</td>
+      <td>回调地址</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>NotifyDataType</td>
+      <td>string</td>
+      <td>是</td>
+      <td>回调参数格式，仅支持application/json和application/x-www-form-urlencoded</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td>NotifyBody</td>
+      <td>string</td>
+      <td>是</td>
+      <td>回调参数，json格式字符串</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>for (int i = 0; i &lt; 5; i++)
+{
+    int rndNum = new Random().Next(20, 500);
+    List&lt;KeyValuePair&lt;string, string&gt;&gt; args = new List&lt;KeyValuePair&lt;string, string&gt;&gt;();
+    args.Add(new KeyValuePair&lt;string, string&gt;("SourceApp", "TestApp"));
+    args.Add(new KeyValuePair&lt;string, string&gt;("Topic", "TestApp.Trade.TimeoutCancel"));
+    args.Add(new KeyValuePair&lt;string, string&gt;("ContentKey", i.ToString()));
+    args.Add(new KeyValuePair&lt;string, string&gt;("DelayTimeSpan", rndNum.ToString()));
+    args.Add(new KeyValuePair&lt;string, string&gt;("DelayAbsoluteTime", DateTime.Now.AddSeconds(rndNum).ToString("yyyy-MM-dd HH:mm:ss")));
+    args.Add(new KeyValuePair&lt;string, string&gt;("NotifyUrl", "http://localhost:56655/api/1.0/value/delaypost"));
+    args.Add(new KeyValuePair&lt;string, string&gt;("NotifyDataType", "application/json"));
+    args.Add(new KeyValuePair&lt;string, string&gt;("NotifyBody", "{ \"Posts\": [{ \"PostId\": 666, \"Title\": \"tester\", \"Content\":\"testtesttest\" }], \"BlogId\": 111, \"Url\":\"qweqrrttryrtyrtrtrt\" }"));
+    HttpContent reqContent = new FormUrlEncodedContent(args);
+    var response = await client.PostAsync("http://localhost:30000/api/DelayTask/Create", reqContent);
+    var content = await response.Content.ReadAsStringAsync();
+    Debug.WriteLine(content);
+}
+</code></pre></div></div>
+
+<h5 id="4框架简单分析">4.框架简单分析</h5>
+
+<h6 id="1全局设计">1.全局设计</h6>
+
+<p>根据官网的设计图，以及操作的流程，简单总结一下任务全局流程为<strong>客户端</strong>—–&gt;<strong>master</strong>——&gt;<strong>work</strong>—–&gt;<strong>执行任务</strong>。从大的架构方向的思想就是，将原有<strong>单个服务</strong>中<strong>业务和任务调度混合</strong>的方式做一些<strong>改变</strong>，使<strong>业务</strong>和<strong>调度</strong>分离，专门把<strong>任务</strong>调度部分<strong>剥离</strong>出来，作为一个独立的进程，来统一<strong>调用</strong>和<strong>管理</strong>任务，而<strong>原有服务</strong>只做<strong>业务处理</strong>。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/1264751/202205/1264751-20220527235359301-1055466833.png" alt="" /></p>
+
+<h6 id="2master和work分析">2.Master和Work分析</h6>
+
+<p>我们主要从<strong>主节点</strong>，<strong>从节点</strong>，<strong>数据表</strong>这几个方面来简单分析，整个业务的时序流程，从本质来看并不复杂<strong>master</strong>和<strong>Work</strong>之间的关系是相互配合的，可能乍一看下面整个图有点混乱，下面来解释一下，其实Master节点将<strong>任务添加</strong>到<strong>数据</strong>中，然后<strong>work</strong>节点，去从对应的<strong>数据表中取出</strong>任务数据，然后根据<strong>任务</strong>对应的<strong>配置</strong>，<strong>生成</strong>配置信息，调用<strong>Quartz执行任务</strong>，这就是我们整个框架中最核心的业务。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/1264751/202205/1264751-20220527233553561-1318276245.png" alt="" /></p>
+
+<p>当然master和work除了主要<strong>承载</strong>了整个管理系统的<strong>UI可视化</strong>、后台<strong>业务操作</strong>、<strong>任务执行</strong>之外，如果从细节以及实现方式来说主要做了以下事情：</p>
+
+<p><code class="language-plaintext highlighter-rouge">Master</code></p>
+
+<ul>
+  <li>1.<strong>分配任务执行</strong>和<strong>选择节点</strong></li>
+  <li>2.对<strong>work节点进行健康检查</strong>，对<strong>任务进行故障转移</strong></li>
+</ul>
+
+<p><code class="language-plaintext highlighter-rouge">Work</code></p>
+
+<ul>
+  <li>1.取出任务配置信息</li>
+  <li>2.使用Quartz根据配置运行任务</li>
+  <li>3.使用反射调用程序集</li>
+  <li>4.使用httpclient调用http 接口
+    <blockquote>
+      <p>作者:有梦想的鱼i<br />
+原文:https://www.cnblogs.com/yuxl01/p/16311534.html</p>
+    </blockquote>
+  </li>
+</ul>
+
+  </div><a class="u-url" href="/cnblog/2022/05/30/%E5%88%86%E5%B8%83%E5%BC%8F%E4%BB%BB%E5%8A%A1%E8%B0%83%E5%BA%A6ScheduleMaster.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

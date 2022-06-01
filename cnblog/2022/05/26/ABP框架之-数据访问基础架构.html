@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>ABP框架之——数据访问基础架构 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="ABP框架之——数据访问基础架构" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="大家好，我是张飞洪，感谢您的阅读，我会不定期和你分享学习心得，希望我的文章能成为你成长路上的一块垫脚石，我们一起精进。" />
+<meta property="og:description" content="大家好，我是张飞洪，感谢您的阅读，我会不定期和你分享学习心得，希望我的文章能成为你成长路上的一块垫脚石，我们一起精进。" />
+<link rel="canonical" href="/cnblog/2022/05/26/ABP%E6%A1%86%E6%9E%B6%E4%B9%8B-%E6%95%B0%E6%8D%AE%E8%AE%BF%E9%97%AE%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84.html" />
+<meta property="og:url" content="/cnblog/2022/05/26/ABP%E6%A1%86%E6%9E%B6%E4%B9%8B-%E6%95%B0%E6%8D%AE%E8%AE%BF%E9%97%AE%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-26T12:48:01+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="ABP框架之——数据访问基础架构" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-26T12:48:01+00:00","datePublished":"2022-05-26T12:48:01+00:00","description":"大家好，我是张飞洪，感谢您的阅读，我会不定期和你分享学习心得，希望我的文章能成为你成长路上的一块垫脚石，我们一起精进。","headline":"ABP框架之——数据访问基础架构","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/26/ABP%E6%A1%86%E6%9E%B6%E4%B9%8B-%E6%95%B0%E6%8D%AE%E8%AE%BF%E9%97%AE%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84.html"},"url":"/cnblog/2022/05/26/ABP%E6%A1%86%E6%9E%B6%E4%B9%8B-%E6%95%B0%E6%8D%AE%E8%AE%BF%E9%97%AE%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">ABP框架之——数据访问基础架构</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-26T12:48:01+00:00" itemprop="datePublished">May 26, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <blockquote>
+  <p>大家好，我是张飞洪，感谢您的阅读，我会不定期和你分享学习心得，希望我的文章能成为你成长路上的一块垫脚石，我们一起精进。</p>
+</blockquote>
+
+<p>几乎所有的业务应用程序都要适用一种数据库基础架构，用来实现数据访问逻辑，以便从数据库读取或写入数据，我们还需要处理数据库事务，以确保数据源中的一致性。</p>
+
+<p>ABP框架可以与任何数据库兼容，同时它提供了EF Core和MongoDB的内置集成包。您将通过定义<code class="language-plaintext highlighter-rouge">DbContext</code>类、将实体映射到数据库表、实现仓储库以及在有实体时部署加载相关实体的不同方式，学习如何将EF Core与ABP框架结合使用。您还将看到如何将MongoDB用作第二个数据库提供程序选项。</p>
+
+<p>本章介绍了ABP的基本数据访问架构，包括以下主题：</p>
+
+<ul>
+  <li>定义实体</li>
+  <li>定义D库</li>
+  <li>EF核心集成</li>
+  <li>了解UoW</li>
+</ul>
+
+<p>ABP通过接口和基类来标准化实体的定义</p>
+
+<h1 id="1-定义实体">1 定义实体</h1>
+
+<h2 id="11-聚合根类aggregateroot">1.1 聚合根类（AggregateRoot）</h2>
+
+<p>聚合一般包括多个实体或者值对象，聚合根可以理解为根实体或者叫主实体。聚合的概念我们会在后面第10节的DDD会详细讲到，这里只是做个大概了解。</p>
+
+<p>在ABP框架中，您可以从一个AggregateRoot类派生来定义主实体和聚合根，<code class="language-plaintext highlighter-rouge">BasicAggregateRoot</code>是定义聚合根的最简单的类。<br />
+ 以下示例实体类派生自BasicAggregateRoot类：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>namespace FormsApp
+{
+    public class Form : BasicAggregateRoot&lt;Guid&gt; //
+    {
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public bool IsDraft { get; set; }
+        public ICollection&lt;Question&gt; Questions { get; set; }
+    }
+}
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">BasicAggregateRoot</code>只是将<code class="language-plaintext highlighter-rouge">Id</code>属性定义为PK，并将PK类型作为泛型参数。在本例中，<code class="language-plaintext highlighter-rouge">Form</code>的PK类型是<code class="language-plaintext highlighter-rouge">Guid</code>。只要底层数据库支持，就可以使用任何类型作为PK（例如<code class="language-plaintext highlighter-rouge">int</code>, <code class="language-plaintext highlighter-rouge">string</code>等）。</p>
+
+<p>还有其他一些基类可以从中派生聚合根，如下所述：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">AggregateRoot</code> 有其他属性来支持乐观并发和对象扩展特性</li>
+  <li><code class="language-plaintext highlighter-rouge">CreationAuditedAggregateRoot</code> 继承自  <code class="language-plaintext highlighter-rouge">AggregateRoot</code>类，并添加 <code class="language-plaintext highlighter-rouge">CreationTime</code> (<code class="language-plaintext highlighter-rouge">DateTime</code>) 和  <code class="language-plaintext highlighter-rouge">CreatorId</code> (<code class="language-plaintext highlighter-rouge">Guid</code>) 属性来存储创建审核信息。</li>
+  <li><code class="language-plaintext highlighter-rouge">AuditedAggregateRoot</code> 继承*   <code class="language-plaintext highlighter-rouge">CreationAuditedAggregateRoot</code>类，并添加  <code class="language-plaintext highlighter-rouge">LastModificationTime</code> (<code class="language-plaintext highlighter-rouge">DateTime</code>) 和<code class="language-plaintext highlighter-rouge">LastModifierId</code> (<code class="language-plaintext highlighter-rouge">Guid</code>)属性来存储修改审核信息。</li>
+  <li><code class="language-plaintext highlighter-rouge">FullAuditedAggregateRoot</code>继承自<code class="language-plaintext highlighter-rouge">AuditedAggregateRoot</code>类，并添加 <code class="language-plaintext highlighter-rouge">DeletionTime</code> (<code class="language-plaintext highlighter-rouge">DateTime</code>) 和 <code class="language-plaintext highlighter-rouge">DeleterId</code> (<code class="language-plaintext highlighter-rouge">Guid</code>) 属性来存储删除审核信息。它还通过实现<code class="language-plaintext highlighter-rouge">ISoftDelete</code>接口添加了<code class="language-plaintext highlighter-rouge">IsDeleted</code> (<code class="language-plaintext highlighter-rouge">bool</code>)，实现实体软删除。</li>
+</ul>
+
+<h2 id="12-实体类entity">1.2 实体类（Entity）</h2>
+
+<p><code class="language-plaintext highlighter-rouge">Entity</code>基类类似于<code class="language-plaintext highlighter-rouge">AggregateRoot</code>类，但它们用于<strong>子集合实体</strong>，而不是主（根）实体。例如，上面的<code class="language-plaintext highlighter-rouge">Form</code>聚合根示例包含一系列问题子实体集合，它派生自实体类，如以下代码段所示：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class Question : Entity&lt;Guid&gt; //
+{
+    public Guid FormId { get; set; }
+    public string Title { get; set; }
+    public bool AllowMultiSelect { get; set; }
+    //public ICollection&lt;Option&gt; Options { get; set; }
+}
+</code></pre></div></div>
+
+<p>与<code class="language-plaintext highlighter-rouge">AggregateRoot</code>类一样，<code class="language-plaintext highlighter-rouge">Entity</code>类还定义了给定类型的<code class="language-plaintext highlighter-rouge">Id</code>属性。在本例中，<code class="language-plaintext highlighter-rouge">Question</code>实体还有一组<code class="language-plaintext highlighter-rouge">Option</code>，其中<code class="language-plaintext highlighter-rouge">Option</code>是另一种实体类型。</p>
+
+<p>还有一些其他预定义的基本实体类，如<code class="language-plaintext highlighter-rouge">CreationAuditedEntity</code>, <code class="language-plaintext highlighter-rouge">AuditedEntity</code>和<code class="language-plaintext highlighter-rouge">FullAuditedEntity</code>。它们类似于上面介绍的审计聚合根类。</p>
+
+<h2 id="13-带复合主键实体">1.3 带复合主键实体</h2>
+
+<p>关系数据库支持CPK（复合键），即PK由多个值组成，复合键对于具有多对多关系表特别有用。<br />
+ 假设要为<code class="language-plaintext highlighter-rouge">Form</code>设置多个<code class="language-plaintext highlighter-rouge">Managers</code>，向<code class="language-plaintext highlighter-rouge">Form</code>类添加<code class="language-plaintext highlighter-rouge">Managers</code>集合属性，如下所示：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class Form : BasicAggregateRoot&lt;Guid&gt;
+{
+    ...
+    public ICollection&lt;FormManager&gt; Managers { get; set; }
+}
+
+public class FormManager : Entity
+{
+    public Guid FormId { get; set; }
+    public Guid UserId { get; set; }
+    public Guid IsOwner { get; set; }
+    public override object[] GetKeys()
+    {
+        return new object[] {FormId, UserId};
+    }
+}
+</code></pre></div></div>
+
+<p>从非泛型<code class="language-plaintext highlighter-rouge">Entity</code>类继承时，必须实现<code class="language-plaintext highlighter-rouge">GetKeys</code>方法以返回键数组。这样，ABP可以在需要的地方使用CPK值。在本例中，<code class="language-plaintext highlighter-rouge">FormId</code>和<code class="language-plaintext highlighter-rouge">UserId</code>是其他表的FK，它们构建<code class="language-plaintext highlighter-rouge">FormManager</code>实体的CPK。</p>
+
+<h3 id="聚合根的cpks">聚合根的CPKs</h3>
+
+<p><code class="language-plaintext highlighter-rouge">AggregateRoot</code>类也有用于CPK的非通用版本，但为聚合根实体设置CPK并不常见。</p>
+
+<h2 id="14-guid主键">1.4 GUID主键</h2>
+
+<p>ABP主要使用GUIDs作为预构建实体的PK类型。GUIDs通常与自动增量IDs（如<code class="language-plaintext highlighter-rouge">int</code>或<code class="language-plaintext highlighter-rouge">long</code>，由关系数据库支持）进行比较。与自动递增键相比，使用GUIDs作为PK有一些众所周知的好处：</p>
+
+<h3 id="guid-vs-自动增量id">GUID vs 自动增量ID</h3>
+
+<p><strong>1）GUID优点：</strong></p>
+
+<ul>
+  <li>GUID 全局唯一，适合分布式系统，方便拆分或合并表。</li>
+  <li>无需数据库往返即可在客户端生成 GUID。</li>
+  <li>GUID 是无法猜测的，某些情况下它们可能更安全（例如，如果最终用户看到一个实体的 ID，他们就找不到另一个实体的 ID）。</li>
+</ul>
+
+<p>与自动递增整数值相比，GUID也有一些缺点，如下所示：</p>
+
+<p><strong>2）GUID缺点：</strong></p>
+
+<ul>
+  <li>GUID 占16个字节，int 4个字节， long 8个字节。</li>
+  <li>GUID 本质上不是连续的，这会导致聚集索引出现性能问题。</li>
+</ul>
+
+<blockquote>
+  <p>ABP 提供<code class="language-plaintext highlighter-rouge">IGuidGenerator</code>，默认生成顺序<code class="language-plaintext highlighter-rouge">Guid</code>值，解决了聚集索引的性能问题。建议用<code class="language-plaintext highlighter-rouge">IGuidGenerator</code>设置<code class="language-plaintext highlighter-rouge">Id</code>，而不是<code class="language-plaintext highlighter-rouge">Guid.NewGuid()</code>，如果你不设置<code class="language-plaintext highlighter-rouge">Id</code>，仓储库默认会使用<code class="language-plaintext highlighter-rouge">IGuidGenerator</code>。</p>
+</blockquote>
+
+<p>GUID与自动增量PKs是软件开发中的热门话题，目前还没有明确的赢家。ABP适用于任何PK类型，因此您可以根据自己的需求进行选择。</p>
+
+<p><code class="language-plaintext highlighter-rouge">Repository</code>模式是抽象数据访问代码的常用方法。在接下来的部分中，您将学习如何使用ABP框架的通用存储库方法查询或操作数据库中的数据。当需要扩展通用存储库并添加自己的存储库方法时，您还可以创建自定义存储库。</p>
+
+<h1 id="2-定义仓储库">2 定义仓储库</h1>
+
+<h2 id="21-通用仓储库">2.1 通用仓储库</h2>
+
+<p>一旦有了一个实体，就可以直接注入并使用该实体的通用存储库。下面是一个使用存储库的示例类：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>using Volo.Abp.DependencyInjection;
+using Volo.Abp.Domain.Repositories;
+namespace FormsApp
+{
+    public class FormService : ITransientDependency
+    {
+        private readonly IRepository&lt;Form, Guid&gt; _formRepository;
+        public FormService(IRepository&lt;Form, Guid&gt; formRepository)
+        {
+            _formRepository = formRepository;
+        }
+        public async Task&lt;List&lt;Form&gt;&gt; GetDraftForms()
+        {
+            return await _formRepository.GetListAsync(f =&gt; f.IsDraft);
+        }
+    }
+}
+</code></pre></div></div>
+
+<p>在本例中，我们注入了<code class="language-plaintext highlighter-rouge">IRepository&lt;Form, Guid&gt;</code>，<code class="language-plaintext highlighter-rouge">Form</code>实体的默认通用存储库。然后，我们使用<code class="language-plaintext highlighter-rouge">GetListAsync</code>方法从数据库中获取经过筛选的表单列表。通用<code class="language-plaintext highlighter-rouge">IRepository</code>接口有两个通用参数：实体类型（本例中为<code class="language-plaintext highlighter-rouge">Form</code>）和PK类型（本例中为<code class="language-plaintext highlighter-rouge">Guid</code>）。</p>
+
+<h3 id="非聚合根实体的存储库">非聚合根实体的存储库</h3>
+
+<p>默认情况下，通用存储库<strong>仅适用于聚合根实体</strong>，因为通过聚合根对象访问聚合是最佳做法。但是，如果您使用的是关系数据库，则可以为其他实体类型启用通用存储库。我们将在EF Core集成部分看到如何配置。</p>
+
+<h2 id="22-增删改查方法">2.2 增删改查方法</h2>
+
+<p>通用存储库提供了许多用于查询、插入、更新和删除实体的内置方法。</p>
+
+<ul>
+  <li>InsertAsync 用于插入新实体</li>
+  <li>InsertManyAsync 用于插入多个实体</li>
+  <li>UpdateAsync 用于更新现有实体</li>
+  <li>UpdateManyAsync 用于更新多个实体</li>
+  <li>DeleteAsync 用于删除现有实体</li>
+  <li>DeleteManyAsync 用于删除多个实体</li>
+</ul>
+
+<blockquote>
+  <p>所有仓储库方法都是异步的，强烈建议尽可能使用 <code class="language-plaintext highlighter-rouge">async</code>/<code class="language-plaintext highlighter-rouge">await</code>模式，因为在 .NET 中，将异步与同步混合潜在的死锁、超时和可伸缩性问题，不容易检测。</p>
+</blockquote>
+
+<p>如果您使用的是EF Core，这些方法可能不会立即执行实际的数据库操作，因为EF Core使用的是更改跟踪系统。它仅在调用<code class="language-plaintext highlighter-rouge">DbContext.SaveChanges</code>方法时保存更改。当当前HTTP请求成功完成时，ABP 框架的UoW系统会自动调用<code class="language-plaintext highlighter-rouge">SaveChanges</code>方法。如果要立即将更改保存到数据库中，可以将<code class="language-plaintext highlighter-rouge">autoSave</code>参数作为<code class="language-plaintext highlighter-rouge">true</code>传递给存储库方法。</p>
+
+<p>以下示例创建一个新的<code class="language-plaintext highlighter-rouge">Form</code>实体，并立即将其保存到<code class="language-plaintext highlighter-rouge">InsertAsync</code>方法中的数据库中：</p>
+
+<p><strong>1）autoSave</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>await _formRepository.InsertAsync(new Form(), autoSave: true);
+</code></pre></div></div>
+
+<blockquote>
+  <p>EF Core 中，以上方法不会立即执行刷库，因为 EF Core 使用更改跟踪系统。它仅在你调用DbContext.SaveChanges方法时保存更改。如果要立即执行，可以将autoSave设置为true。</p>
+</blockquote>
+
+<p><strong>2）CancellationToken</strong></p>
+
+<blockquote>
+  <p>所有仓储库默认带有一个CancellationToken参数，在需要的时候用来取消数据库操作，比如关闭浏览器后，无需继续执行冗长的数据库查询操作。大部分情况下，我们无需手动传入cancellation token，因为ABP框架会自动从HTTP请求中捕捉并使用取消令牌。</p>
+</blockquote>
+
+<h2 id="23-查询单个实体">2.3 查询单个实体</h2>
+
+<ul>
+  <li>GetAsync：根据Id或表达式返回单个实体。如果未找到请求的实体，则抛出EntityNotFoundException</li>
+  <li>FindAsync：根据Id或表达式返回单个实体。如果未找到请求的实体，则返回null。</li>
+</ul>
+
+<p>FindAsync适用于有自定义逻辑，否则使用GetAsync</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public async Task&lt;Form&gt; GetFormAsync(Guid formId)
+{
+    return await _formRepository.GetAsync(formId);
+}
+
+public async Task&lt;Form&gt; GetFormAsync(string name)
+{
+    return await _formRepository.GetAsync(form =&gt; form.Name == name);
+}
+</code></pre></div></div>
+
+<h2 id="24-查询实体列表">2.4 查询实体列表</h2>
+
+<ul>
+  <li>GetListAsync：返回满足给定条件的所有实体或实体列表</li>
+  <li>
+    <p>GetPagedListAsync：分页查询</p>
+
+    <p>public async Task&lt;List&lt;Form&gt;&gt; GetFormsAsync(string name)
+  {
+      return await _formRepository.GetListAsync(form =&gt; form.Name.Contains(name));
+  }</p>
+  </li>
+</ul>
+
+<h2 id="25-linq高级查询">2.5 LINQ高级查询</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class FormService2 : ITransientDependency
+{
+    private readonly IRepository&lt;Form, Guid&gt;  _formRepository;
+    private readonly IAsyncQueryableExecuter  _asyncExecuter;
+    public FormService2(IRepository&lt;Form, Guid&gt; formRepository,IAsyncQueryableExecuter asyncExecuter)
+    {
+        _formRepository = formRepository;
+        _asyncExecuter = asyncExecuter;
+    } 
+
+    public async Task&lt;List&lt;Form&gt;&gt; GetOrderedFormsAsync(string name)
+    {
+    	//var queryable = await _formRepository.WithDetailsAsync(x =&gt; x.Category);
+        var queryable = await _formRepository.GetQueryableAsync();
+        var query = from form in queryable
+            where form.Name.Contains(name)
+            orderby form.Name
+            select form;
+        return await _asyncExecuter.ToListAsync(query);
+    } 
+}
+</code></pre></div></div>
+
+<p>为什么不用return await query.ToListAsync() ？</p>
+
+<blockquote>
+  <p>ToListAsync它是由 EF Core定义的扩展方法，位于Microsoft.EntityFrameworkCoreNuGet 包内。如果你想保持你的应用层独立于 ORM，ABP 的IAsyncQueryableExecuter服务提供了必要的抽象。</p>
+</blockquote>
+
+<h2 id="26-异步扩展方法">2.6 异步扩展方法</h2>
+
+<p>ABP 框架为IRepository接口提供所有标准异步 LINQ 扩展方法：</p>
+
+<p>AllAsync, AnyAsync, AverageAsync, ContainsAsync, CountAsync, FirstAsync, FirstOrDefaultAsync, LastAsync, LastOrDefaultAsync, LongCountAsync, MaxAsync, MinAsync, SingleAsync, SingleOrDefaultAsync, SumAsync, ToArrayAsync, ToListAsync.</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public async Task&lt;int&gt; GetCountAsync()
+{
+    return await _formRepository.CountAsync(x =&gt; x.Name.StartsWith("A"));
+}
+</code></pre></div></div>
+
+<blockquote>
+  <p>注意：以上方法只对IRepository有效。</p>
+</blockquote>
+
+<h2 id="26-复合主键查询">2.6 复合主键查询</h2>
+
+<p>复合主键不能使用该IRepository&lt;TEntity, TKey&gt;接口，因为它是获取单个 PK ( Id) 类型。我们可以使用IRepository</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class FormManagementService : ITransientDependency
+{
+    private readonly IRepository&lt;FormManager&gt; _formManagerRepository;
+    public FormManagementService(IRepository&lt;FormManager&gt; formManagerRepository)
+    {
+        _formManagerRepository = formManagerRepository;
+    }
+    public async Task&lt;List&lt;FormManager&gt;&gt; GetManagersAsync(Guid formId)
+    {
+        return await _formManagerRepository.GetListAsync(fm =&gt; fm.FormId == formId);
+    }
+}
+</code></pre></div></div>
+
+<h2 id="27-其他仓储库类型">2.7 其他仓储库类型</h2>
+
+<ul>
+  <li>IBasicRepository&lt;TEntity, TPrimaryKey&gt;和IBasicRepository</li>
+  <li>IReadOnlyRepository&lt;TEntity, TKey&gt;, IReadOnlyRepository</li>
+</ul>
+
+<h2 id="28-自定义存储库">2.8 自定义存储库</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public interface IFormRepository : IRepository&lt;Form, Guid&gt;
+{
+    Task&lt;List&lt;Form&gt;&gt; GetListAsync(string name,bool includeDrafts = false);
+}
+</code></pre></div></div>
+
+<ul>
+  <li>定义在Domain项目中</li>
+  <li>从通用仓储库派生</li>
+  <li>如果不想包含通用仓储库的方法，也可以派生自IRepository（无泛型参数）接口，这是一个空接口</li>
+</ul>
+
+<h1 id="结尾">结尾</h1>
+
+<p>由于文章有点长，分作上下两篇，下篇待续……</p>
+
+<p>+</p>
+
+<h2 id="_打个赏喝个咖啡_">(^_^)打个赏喝个咖啡(^_^)</h2>
+
+<p><img src="https://images.cnblogs.com/cnblogs_com/jackyfei/1334006/o_wx.png" alt="微信支付" /></p>
+<blockquote>
+  <p>作者:张飞洪[厦门]
+原文:https://www.cnblogs.com/jackyfei/p/16305833.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/26/ABP%E6%A1%86%E6%9E%B6%E4%B9%8B-%E6%95%B0%E6%8D%AE%E8%AE%BF%E9%97%AE%E5%9F%BA%E7%A1%80%E6%9E%B6%E6%9E%84.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

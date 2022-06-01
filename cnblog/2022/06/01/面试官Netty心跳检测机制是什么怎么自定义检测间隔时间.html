@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>面试官：Netty心跳检测机制是什么，怎么自定义检测间隔时间？ | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="面试官：Netty心跳检测机制是什么，怎么自定义检测间隔时间？" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="哈喽！大家好，我是小奇，一位热爱分享的程序员 小奇打算以轻松幽默的对话方式来分享一些技术，如果你觉得通过小奇的文章学到了东西，那就给小奇一个赞吧 文章持续更新" />
+<meta property="og:description" content="哈喽！大家好，我是小奇，一位热爱分享的程序员 小奇打算以轻松幽默的对话方式来分享一些技术，如果你觉得通过小奇的文章学到了东西，那就给小奇一个赞吧 文章持续更新" />
+<link rel="canonical" href="/cnblog/2022/06/01/%E9%9D%A2%E8%AF%95%E5%AE%98Netty%E5%BF%83%E8%B7%B3%E6%A3%80%E6%B5%8B%E6%9C%BA%E5%88%B6%E6%98%AF%E4%BB%80%E4%B9%88%E6%80%8E%E4%B9%88%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A3%80%E6%B5%8B%E9%97%B4%E9%9A%94%E6%97%B6%E9%97%B4.html" />
+<meta property="og:url" content="/cnblog/2022/06/01/%E9%9D%A2%E8%AF%95%E5%AE%98Netty%E5%BF%83%E8%B7%B3%E6%A3%80%E6%B5%8B%E6%9C%BA%E5%88%B6%E6%98%AF%E4%BB%80%E4%B9%88%E6%80%8E%E4%B9%88%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A3%80%E6%B5%8B%E9%97%B4%E9%9A%94%E6%97%B6%E9%97%B4.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-06-01T11:45:44+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="面试官：Netty心跳检测机制是什么，怎么自定义检测间隔时间？" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-06-01T11:45:44+00:00","datePublished":"2022-06-01T11:45:44+00:00","description":"哈喽！大家好，我是小奇，一位热爱分享的程序员 小奇打算以轻松幽默的对话方式来分享一些技术，如果你觉得通过小奇的文章学到了东西，那就给小奇一个赞吧 文章持续更新","headline":"面试官：Netty心跳检测机制是什么，怎么自定义检测间隔时间？","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/06/01/%E9%9D%A2%E8%AF%95%E5%AE%98Netty%E5%BF%83%E8%B7%B3%E6%A3%80%E6%B5%8B%E6%9C%BA%E5%88%B6%E6%98%AF%E4%BB%80%E4%B9%88%E6%80%8E%E4%B9%88%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A3%80%E6%B5%8B%E9%97%B4%E9%9A%94%E6%97%B6%E9%97%B4.html"},"url":"/cnblog/2022/06/01/%E9%9D%A2%E8%AF%95%E5%AE%98Netty%E5%BF%83%E8%B7%B3%E6%A3%80%E6%B5%8B%E6%9C%BA%E5%88%B6%E6%98%AF%E4%BB%80%E4%B9%88%E6%80%8E%E4%B9%88%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A3%80%E6%B5%8B%E9%97%B4%E9%9A%94%E6%97%B6%E9%97%B4.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">面试官：Netty心跳检测机制是什么，怎么自定义检测间隔时间？</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-06-01T11:45:44+00:00" itemprop="datePublished">Jun 1, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <blockquote>
+  <p>哈喽！大家好，我是小奇，一位热爱分享的程序员<br />
+ 小奇打算以轻松幽默的对话方式来分享一些技术，如果你觉得通过小奇的文章学到了东西，那就给小奇一个赞吧<br />
+ 文章持续更新</p>
+</blockquote>
+
+<h1 id="一前言">一、前言</h1>
+
+<blockquote>
+  <p>书接上回，昨天在地里干了一天的活，累坏我了，今天是个周末，我得去镇上买点好吃的然后宅家歇上一天，打打游戏，看看电视剧，嘛钱不钱的，乐呵乐呵得了。。。</p>
+</blockquote>
+
+<blockquote>
+  <p>首当其冲必须买点熟食，回去再喝上二两小酒，美滋滋。</p>
+</blockquote>
+
+<p><img src="https://img-blog.csdnimg.cn/de77ca455613462d9a3880fe8a6c18c5.png#pic_center" alt="在这里插入图片描述" /></p>
+
+<blockquote>
+  <p>今天正好碰上镇上赶集，人真多呀，小奇最喜欢凑热闹了，挤一波。</p>
+</blockquote>
+
+<p><img src="https://img-blog.csdnimg.cn/7602fbe8969b4642b689d8bb4a2319aa.png#pic_center" alt="在这里插入图片描述" /></p>
+
+<blockquote>
+  <p>周末宅家水果必须得整点，不然光吃零食上火，砂糖橘必须炫上，多买点跟老板砍砍价。</p>
+</blockquote>
+
+<p><img src="https://img-blog.csdnimg.cn/8b1c0350c2c94d53bb40750b2b1fbf5c.png#pic_center" alt="在这里插入图片描述" /></p>
+
+<blockquote>
+  <p>我：老板这砂糖橘怎么卖啊！</p>
+</blockquote>
+
+<blockquote>
+  <p>老板：六块钱一斤。</p>
+</blockquote>
+
+<blockquote>
+  <p>我：我要多要点能便宜点不。</p>
+</blockquote>
+
+<blockquote>
+  <p>老板：你要多少嘞！</p>
+</blockquote>
+
+<blockquote>
+  <p>我：三斤！！！</p>
+</blockquote>
+
+<blockquote>
+  <p>老板：那你就给20块钱吧。</p>
+</blockquote>
+
+<blockquote>
+  <p>我：？？？我没听错吧，六块钱一斤，三斤20怎么还贵了呢。</p>
+</blockquote>
+
+<blockquote>
+  <p>老板：哎呀你反应过来了啊，看你蔫了吧唧的以为你转不过弯呢。</p>
+</blockquote>
+
+<blockquote>
+  <p>我：靠，我好歹也是经历过九年义务教育的好吧，三斤15块钱好吧，给我装起来。</p>
+</blockquote>
+
+<blockquote>
+  <p>买完了骑上我的小三轮肥家。</p>
+</blockquote>
+
+<p><img src="https://img-blog.csdnimg.cn/0d193f5269ce415c8bd5953145de33a4.png#pic_center" alt="在这里插入图片描述" /></p>
+
+<blockquote>
+  <p>就在我漂移在乡间小路上的时候，我的手机突然响了。。。</p>
+</blockquote>
+
+<blockquote>
+  <p><strong>我：“喂您好”。</strong></p>
+</blockquote>
+
+<blockquote>
+  <p><strong>对面：“您好，请问是小奇吗”。</strong></p>
+</blockquote>
+
+<blockquote>
+  <p><strong>我：“是我，你是？”。</strong></p>
+</blockquote>
+
+<blockquote>
+  <p><strong>对面：“我是XXX公司的，我看到hr推给我你的简历，我感觉还不错，你什么时候方便来现场面试一下”。</strong></p>
+</blockquote>
+
+<blockquote>
+  <p><strong>我：“现在不方便现场面试了”。</strong></p>
+</blockquote>
+
+<blockquote>
+  <p><strong>对面：“好吧，那你现在方便吗？我们现在线上面试一下吧”。</strong></p>
+</blockquote>
+
+<blockquote>
+  <p><strong>我：“好的”。</strong></p>
+</blockquote>
+
+<h1 id="二面试">二、面试</h1>
+
+<blockquote>
+  <p><strong>面试官：我看你简历上写的精通Netty，那你能说一下Netty怎么保证能够长时间连接呢？</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>我：通过心跳检测机制来判断Netty是否正常连接。</p>
+</blockquote>
+
+<blockquote>
+  <p><strong>面试官：什么是心跳检测机制呢？</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>我：比如医生怎么知道你的心脏是否正常运作呢，肯定是心脏在以一定的频率跳动，医生通过监听器监听到了跳动就知道你的心脏是好的。</p>
+</blockquote>
+
+<blockquote>
+  <p>所以在Netty中也是一样的，客户端和服务端怎么知道对方是否还在正常运行呢，就是对方定期向自己发送一条消息，这样的话我就知道对方还在正常运行，后续有活要干的话我就可以直接发给对方让对方处理。</p>
+</blockquote>
+
+<blockquote>
+  <p>相反如果服务端长时间没有给客户端发送心跳，那么客户端可以认为服务端死亡，后面再有读写请求就不会发送给相应的服务端了。</p>
+</blockquote>
+
+<blockquote>
+  <p><strong>面试官：如果我想自定义心跳检测的时间间隔怎么实现？</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>我：可以实现IdleStateHandler()方法</p>
+</blockquote>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public IdleStateHandler(int readerIdleTimeSeconds, int writerIdleTimeSeconds, int allIdleTimeSeconds) {
+  this((long)readerIdleTimeSeconds, (long)writerIdleTimeSeconds, (long)allIdleTimeSeconds, TimeUnit.SECONDS);
+ }
+</code></pre></div></div>
+
+<blockquote>
+  <p><strong>面试官：这里的三个参数是什么意思，间隔的时间单位是多少？</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>方法里有三个参数，默认时间都是秒</p>
+</blockquote>
+
+<blockquote>
+  <p>readerIdleTimeSeconds：读超时，当在指定的时间间隔内没有读取到数据就会超时。</p>
+</blockquote>
+
+<blockquote>
+  <p>writerIdleTimeSeconds：写超时，当在指定的时间间隔内没有写入成功就会超时。</p>
+</blockquote>
+
+<blockquote>
+  <p>allIdleTimeSeconds：读/.写超时，当在指定的时间间隔内没有读或写操作的时候，就会超时。</p>
+</blockquote>
+
+<blockquote>
+  <p><strong>面试官：“小伙子不错呀，什么时候能回北京入职呢”</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>我：“额。。。等等吧，现在还有好多家公司等着谈薪资呢，我得挑一家合适的。”</p>
+</blockquote>
+
+<blockquote>
+  <p><strong>面试官：“你要多少我都给你，来我这吧”</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>我：“额。。。那就月薪100个W吧”。</p>
+</blockquote>
+
+<blockquote>
+  <p><strong>面试官：“喂，你说什么我听不见，信号不好。。。”</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>我：“喂喂喂”（嘟嘟嘟嘟嘟嘟嘟嘟。。。）。</p>
+</blockquote>
+
+<h1 id="三总结">三、总结</h1>
+
+<blockquote>
+  <p>这里的相关内容还没有整理完毕，文章后面持续更新，建议收藏。</p>
+</blockquote>
+
+<blockquote>
+  <p>文章中涉及到的命令大家一定要像我一样每个都敲几遍，只有在敲的过程中才能发现自己对命令是否真正的掌握了。</p>
+</blockquote>
+
+<blockquote>
+  <p>如果觉得我的文章还不错的话就点个赞吧
+作者:旷世奇才927<br />
+原文:https://www.cnblogs.com/xiaoqiJava/p/16329097.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/06/01/%E9%9D%A2%E8%AF%95%E5%AE%98Netty%E5%BF%83%E8%B7%B3%E6%A3%80%E6%B5%8B%E6%9C%BA%E5%88%B6%E6%98%AF%E4%BB%80%E4%B9%88%E6%80%8E%E4%B9%88%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A3%80%E6%B5%8B%E9%97%B4%E9%9A%94%E6%97%B6%E9%97%B4.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

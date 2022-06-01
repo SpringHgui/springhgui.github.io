@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>深入浅出Nginx实战与架构 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="深入浅出Nginx实战与架构" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="本文主要内容如下(让读者朋友们深入浅出地理解Nginx，有代码有示例有图)： 1.Nginx是什么？ 2.Nginx具有哪些功能？ 3.Nginx的应用场景有哪些？ 4.Nginx的衍生生态有哪些？ 5.Nginx开源相关资料有哪些？ 6.Nginx怎么样安装？ 7.Nginx常用的配置包含哪些？以及是怎么配置的？ 8.Nginx的安全策略需要从哪些方面考虑？ 9.Nginx架构是怎样的？ 10.总结" />
+<meta property="og:description" content="本文主要内容如下(让读者朋友们深入浅出地理解Nginx，有代码有示例有图)： 1.Nginx是什么？ 2.Nginx具有哪些功能？ 3.Nginx的应用场景有哪些？ 4.Nginx的衍生生态有哪些？ 5.Nginx开源相关资料有哪些？ 6.Nginx怎么样安装？ 7.Nginx常用的配置包含哪些？以及是怎么配置的？ 8.Nginx的安全策略需要从哪些方面考虑？ 9.Nginx架构是怎样的？ 10.总结" />
+<link rel="canonical" href="/cnblog/2022/05/30/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BANginx%E5%AE%9E%E6%88%98%E4%B8%8E%E6%9E%B6%E6%9E%84.html" />
+<meta property="og:url" content="/cnblog/2022/05/30/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BANginx%E5%AE%9E%E6%88%98%E4%B8%8E%E6%9E%B6%E6%9E%84.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-30T09:03:13+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="深入浅出Nginx实战与架构" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-30T09:03:13+00:00","datePublished":"2022-05-30T09:03:13+00:00","description":"本文主要内容如下(让读者朋友们深入浅出地理解Nginx，有代码有示例有图)： 1.Nginx是什么？ 2.Nginx具有哪些功能？ 3.Nginx的应用场景有哪些？ 4.Nginx的衍生生态有哪些？ 5.Nginx开源相关资料有哪些？ 6.Nginx怎么样安装？ 7.Nginx常用的配置包含哪些？以及是怎么配置的？ 8.Nginx的安全策略需要从哪些方面考虑？ 9.Nginx架构是怎样的？ 10.总结","headline":"深入浅出Nginx实战与架构","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/30/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BANginx%E5%AE%9E%E6%88%98%E4%B8%8E%E6%9E%B6%E6%9E%84.html"},"url":"/cnblog/2022/05/30/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BANginx%E5%AE%9E%E6%88%98%E4%B8%8E%E6%9E%B6%E6%9E%84.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">深入浅出Nginx实战与架构</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-30T09:03:13+00:00" itemprop="datePublished">May 30, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p><strong>本文主要内容如下(让读者朋友们深入浅出地理解Nginx，有代码有示例有图)：</strong></p>
+
+<ul>
+  <li>1.Nginx是什么？</li>
+  <li>2.Nginx具有哪些功能？</li>
+  <li>3.Nginx的应用场景有哪些？</li>
+  <li>4.Nginx的衍生生态有哪些？</li>
+  <li>5.Nginx开源相关资料有哪些？</li>
+  <li>6.Nginx怎么样安装？</li>
+  <li>7.Nginx常用的配置包含哪些？以及是怎么配置的？</li>
+  <li>8.Nginx的安全策略需要从哪些方面考虑？</li>
+  <li>9.Nginx架构是怎样的？</li>
+  <li>10.总结</li>
+</ul>
+
+<h2 id="一nginx是什么">一、Nginx是什么？</h2>
+
+<p>Nginx是一款免费开源的高性能HTTP服务器及反向代理服务器产品。</p>
+
+<h2 id="二nginx具有哪些功能">二、Nginx具有哪些功能？</h2>
+
+<ul>
+  <li>1.正向代理与反向代理。</li>
+  <li>2.负载均衡。</li>
+  <li>3.Web缓存。</li>
+  <li>4.动静分离。</li>
+</ul>
+
+<h2 id="三nginx的应用场景有哪些">三、Nginx的应用场景有哪些？</h2>
+
+<p>从我个人的实践经验出发，我用Nginx做了这么几件事情，如下所示：</p>
+
+<ul>
+  <li>1.个人网站(如YC-Framework官网就是放在Nginx对应的目录下)或者是公司官网。</li>
+  <li>2.外部网关代理(内部网关用SpringCloud Gateway，外部网关用Nginx)。</li>
+  <li>3.基于Nginx+FTP的文件服务搭建。</li>
+  <li>4.Nginx代理后端服务集群(负载均衡机制的体现)。</li>
+  <li>5.基于Nginx Basic认证控制系统访问权限。</li>
+  <li>6.内网映射代理。</li>
+  <li>7.配置https。</li>
+  <li>8.黑白名单。</li>
+</ul>
+
+<h2 id="四nginx的衍生生态有哪些">四、Nginx的衍生生态有哪些？</h2>
+
+<p>衍生生态比较出名的一个叫Openresty。Openresty是一款基于 Nginx和LuaJIT的Web平台，它既具有Nginx拥有的功能，同时由于大量精良的Lua库，使其更加灵活，能构造出很多玩法。一句话概括，功能更强大了。</p>
+
+<p>关于Openresty安装可以阅读我的这篇文章：<br />
+<a href="https://youcongtech.com/2020/12/12/OpenResty%E6%BA%90%E7%A0%81%E7%BC%96%E8%AF%91%E5%AE%89%E8%A3%85/">OpenResty源码编译安装</a></p>
+
+<h2 id="五nginx开源相关资料有哪些">五、Nginx开源相关资料有哪些？</h2>
+
+<p>Nginx官方网站：<br />
+<a href="https://nginx.org/en/">https://nginx.org/en/</a></p>
+
+<p>Nginx官方文档：<br />
+<a href="http://nginx.org/en/docs/contributing_changes.html">http://nginx.org/en/docs/contributing_changes.html</a></p>
+
+<p>Nginx源代码：<br />
+<a href="https://github.com/nginx/nginx">https://github.com/nginx/nginx</a></p>
+
+<p>如果大家觉得英文方面阅读方面有一些困难，不用担心。一方面可以借助Google翻译或其它翻译工具降低阅读困难，另外一方面可借助国内内容网站所包含的丰富内容(如博客园、知乎、掘金、51CTO、思否、CSDN等这样的)。</p>
+
+<p>除此之外，Nginx的商业化解决方案可供一些朋友参考，Nginx的商业网站：<br />
+<a href="https://www.nginx.com/">https://www.nginx.com/</a></p>
+
+<h2 id="六nginx怎么样安装">六、Nginx怎么样安装？</h2>
+
+<p>过去我写了不少文章，可供大家参考：</p>
+
+<p><a href="https://www.cnblogs.com/youcong/p/10104798.html">Windows安装Nginx</a></p>
+
+<p><a href="https://www.cnblogs.com/youcong/p/9118753.html">Centos7之Java开发环境构建(包含Nginx安装)</a></p>
+
+<p><a href="https://www.cnblogs.com/youcong/p/9123722.html">Ubuntu16.04之开发环境构建(包含Nginx安装)</a></p>
+
+<h2 id="七nginx常用的配置包含哪些以及是怎么配置的">七、Nginx常用的配置包含哪些？以及是怎么配置的？</h2>
+
+<h3 id="1nginx怎样配置https">1.Nginx怎样配置HTTPS？</h3>
+
+<p>?</p>
+
+<p>| 1<br /><br />2<br /><br />3<br /><br />4<br /><br />5<br /><br />6<br /><br />7<br /><br />8<br /><br />9<br /><br />10<br /><br />11<br /><br />12<br /><br />13<br /><br />14<br /><br />15<br /><br />16<br /><br />17<br /><br />18<br /><br />19<br /><br />20<br /><br />21<br /><br />22 | <code class="language-plaintext highlighter-rouge">server {</code><br /><br /><code class="language-plaintext highlighter-rouge">        </code><code class="language-plaintext highlighter-rouge">listen       443 ssl;</code><br /><br /><code class="language-plaintext highlighter-rouge">       </code> <br /><br /><code class="language-plaintext highlighter-rouge">        </code><code class="language-plaintext highlighter-rouge">server_name  framework.youcongtech.com;</code><br /><br /><code class="language-plaintext highlighter-rouge">       </code> <br /><br /><code class="language-plaintext highlighter-rouge">        </code><code class="language-plaintext highlighter-rouge">ssl_certificate /home/tech/7788450_framework.youcongtech.com.pem;</code><br /><br /><code class="language-plaintext highlighter-rouge">        </code><code class="language-plaintext highlighter-rouge">ssl_certificate_key /home/tech/7788450_framework.youcongtech.com.key;</code><br /><br /> <br /><br /><code class="language-plaintext highlighter-rouge">        </code><code class="language-plaintext highlighter-rouge">ssl_session_cache    shared:SSL:1m;</code><br /><br /><code class="language-plaintext highlighter-rouge">        </code><code class="language-plaintext highlighter-rouge">ssl_session_timeout  5m;</code><br /><br /> <br /><br /><code class="language-plaintext highlighter-rouge">        </code><code class="language-plaintext highlighter-rouge">ssl_ciphers  HIGH:!aNULL:!MD5;</code><br /><br /><code class="language-plaintext highlighter-rouge">        </code><code class="language-plaintext highlighter-rouge">ssl_prefer_server_ciphers  </code><code class="language-plaintext highlighter-rouge">on</code><code class="language-plaintext highlighter-rouge">;</code><br /><br /> <br /><br /><code class="language-plaintext highlighter-rouge">        </code><code class="language-plaintext highlighter-rouge">location / {</code><br /><br /><code class="language-plaintext highlighter-rouge">            </code><code class="language-plaintext highlighter-rouge">try_files $uri $uri/ /index.html;</code><br /><br /><code class="language-plaintext highlighter-rouge">            </code><code class="language-plaintext highlighter-rouge">root /home/tech/project/yc-framework-docs;</code><br /><br /><code class="language-plaintext highlighter-rouge">            </code><code class="language-plaintext highlighter-rouge">index  index.html index.htm;</code><br /><br /><code class="language-plaintext highlighter-rouge">           </code><code class="language-plaintext highlighter-rouge"># root   html;</code><br /><br /><code class="language-plaintext highlighter-rouge">           </code><code class="language-plaintext highlighter-rouge"># index  index.html index.htm;</code><br /><br /><code class="language-plaintext highlighter-rouge">        </code><code class="language-plaintext highlighter-rouge">}</code><br /><br /><code class="language-plaintext highlighter-rouge">    </code><code class="language-plaintext highlighter-rouge">}</code> |
+| — | — |</p>
+
+<p>这个是我官网的证书配置，大家可访问<a href="https://framework.youcongtech.com/#/">分布式微服务框架：YC-Framework官网</a>查看效果。</p>
+
+<h3 id="2nginx开启ssl以后如何将http重定向到https呢">2.Nginx开启SSL以后如何将HTTP重定向到HTTPS呢？</h3>
+
+<p><a href="https://framework.youcongtech.com/#/">YC-Framework官网</a>采用的是第二种方法。</p>
+
+<h4 id="1第一种方法">(1)第一种方法</h4>
+
+<p>?</p>
+
+<p>| 1<br /><br />2<br /><br />3<br /><br />4<br /><br />5 | <code class="language-plaintext highlighter-rouge">server {</code><br /><br /><code class="language-plaintext highlighter-rouge">    </code><code class="language-plaintext highlighter-rouge">listen 80;</code><br /><br /><code class="language-plaintext highlighter-rouge">    </code><code class="language-plaintext highlighter-rouge">server_name localhost;</code><br /><br /><code class="language-plaintext highlighter-rouge">    </code><code class="language-plaintext highlighter-rouge">return</code> <code class="language-plaintext highlighter-rouge">301 https:</code><code class="language-plaintext highlighter-rouge">//127.0.0.1$request_uri;</code><br /><br /><code class="language-plaintext highlighter-rouge">}</code> |
+| — | — |</p>
+
+<h4 id="2第二种方法">(2)第二种方法</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>server {
+    listen 80;
+    server_name localhost;
+    rewrite ^(.*)$ https://$host$1 permanent;
+}
+</code></pre></div></div>
+
+<h3 id="3nginx如何配置静态资源映射">(3)Nginx如何配置静态资源映射？</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>location /img/ {
+   alias /home/tech/img/;
+   autoindex on;
+}
+</code></pre></div></div>
+
+<h3 id="4nginx如何代理内部服务器某个中间件如mysql">(4)Nginx如何代理内部服务器某个中间件(如MySQL)?</h3>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>stream {
+    upstream inner_mysql {
+       hash $remote_addr consistent;
+       server 192.168.1.188:3389 weight=5 max_fails=3 fail_timeout=30s;
+    }
+    server {
+       listen 17865; # 数据库服务器监听端口
+       proxy_connect_timeout 60s;
+       proxy_timeout 300s; # 设置客户端和代理服务之间的超时时间，如果5分钟内没操作将自动断开。
+       proxy_pass inner_mysql;
+    }
+}
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<h3 id="5nginx如何配置跨域">(5)Nginx如何配置跨域？</h3>
+
+<p>?</p>
+
+<p>| 1<br /><br />2<br /><br />3<br /><br />4<br /><br />5<br /><br />6<br /><br />7<br /><br />8 | <code class="language-plaintext highlighter-rouge">#允许跨域请求的域，* 代表所有</code><br /><br /><code class="language-plaintext highlighter-rouge">add_header </code><code class="language-plaintext highlighter-rouge">'Access-Control-Allow-Origin'</code> <code class="language-plaintext highlighter-rouge">*;</code><br /><br /><code class="language-plaintext highlighter-rouge">#允许请求的header</code><br /><br /><code class="language-plaintext highlighter-rouge">add_header </code><code class="language-plaintext highlighter-rouge">'Access-Control-Allow-Headers'</code> <code class="language-plaintext highlighter-rouge">*;</code><br /><br /><code class="language-plaintext highlighter-rouge">#允许带上cookie请求</code><br /><br /><code class="language-plaintext highlighter-rouge">add_header </code><code class="language-plaintext highlighter-rouge">'Access-Control-Allow-Credentials'</code> <code class="language-plaintext highlighter-rouge">'true'</code><code class="language-plaintext highlighter-rouge">;</code><br /><br /><code class="language-plaintext highlighter-rouge">#允许请求的方法，比如 GET,POST,PUT,DELETE</code><br /><br /><code class="language-plaintext highlighter-rouge">add_header </code><code class="language-plaintext highlighter-rouge">'Access-Control-Allow-Methods'</code> <code class="language-plaintext highlighter-rouge">*;</code> |
+| — | — |</p>
+
+<h3 id="6nginx如何配置限制连接">(6)Nginx如何配置限制连接？</h3>
+
+<p>?</p>
+
+<p>| 1<br /><br />2<br /><br />3<br /><br />4<br /><br />5 | <code class="language-plaintext highlighter-rouge">location / {</code><br /><br /><code class="language-plaintext highlighter-rouge">    </code><code class="language-plaintext highlighter-rouge">root   /</code><code class="language-plaintext highlighter-rouge">var</code><code class="language-plaintext highlighter-rouge">/www/test;</code><br /><br /><code class="language-plaintext highlighter-rouge">    </code><code class="language-plaintext highlighter-rouge">index  index.php index.html index.htm;</code><br /><br /><code class="language-plaintext highlighter-rouge">    </code><code class="language-plaintext highlighter-rouge">limit_conn addr 5; #是限制每个IP只能发起5个连接</code><br /><br /><code class="language-plaintext highlighter-rouge">}</code> |
+| — | — |</p>
+
+<h3 id="7nginx如何配置限制下载速度">(7)Nginx如何配置限制下载速度？</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>location /download { 
+       limit_rate_after 10m; 
+       limit_rate 128k; 
+ }
+</code></pre></div></div>
+
+<h3 id="8nginx如何限制ip访问">(8)Nginx如何限制IP访问？</h3>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 允许部分ip访问
+allow 123.45.25.6;
+allow 123.68.52.125;
+allow 123.125.25.106;
+ # 禁止其余ip访问
+deny all;
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>该配置可放server和location中。</p>
+
+<h3 id="9nginx如何配置http-basic认证">(9)Nginx如何配置HTTP Basic认证？</h3>
+
+<p>?</p>
+
+<p>| 1<br /><br />2<br /><br />3<br /><br />4<br /><br />5<br /><br />6 | <code class="language-plaintext highlighter-rouge">location /</code><br /><br /><code class="language-plaintext highlighter-rouge">{</code><br /><br /><code class="language-plaintext highlighter-rouge">    </code><code class="language-plaintext highlighter-rouge">auth_basic </code><code class="language-plaintext highlighter-rouge">"网站名称"</code><code class="language-plaintext highlighter-rouge">;</code><br /><br /><code class="language-plaintext highlighter-rouge">    </code><code class="language-plaintext highlighter-rouge">auth_basic_user_file conf.d/passwd; </code><br /><br /><code class="language-plaintext highlighter-rouge">    </code><code class="language-plaintext highlighter-rouge">autoindex </code><code class="language-plaintext highlighter-rouge">on</code><code class="language-plaintext highlighter-rouge">;</code><br /><br /><code class="language-plaintext highlighter-rouge">}</code> |
+| — | — |</p>
+
+<p>详情可阅读这篇文章<a href="https://youcongtech.com/2019/07/22/%E4%B8%BA-Nginx-%E6%B7%BB%E5%8A%A0-HTTP-%E5%9F%BA%E6%9C%AC%E8%AE%A4%E8%AF%81-HTTP-Basic-Authentication/">为 Nginx 添加 HTTP 基本认证(HTTP Basic Authentication)</a></p>
+
+<h3 id="10nginx如何配置超时时间">(10)Nginx如何配置超时时间？</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>proxy_send_timeout 90; #后端服务器数据回传时间(代理发送超时)
+proxy_read_timeout 90; #连接成功后，后端服务器响应时间(代理接收超时)
+</code></pre></div></div>
+
+<h3> </h3>
+
+<h3 id="11nginx请求体过大怎么办">(11)Nginx请求体过大怎么办？</h3>
+
+<p>这种场景通常出现在Nginx代理后端服务中。问题的报错信息如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>413 Request Entity Too Large
+</code></pre></div></div>
+
+<p>解决办法配置如下即可：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>client_max_body_size 20m;
+</code></pre></div></div>
+
+<h3 id="12nginx如何配置负载均衡">(12)Nginx如何配置负载均衡？</h3>
+
+<p>Nginx负载均衡有六种策略，分别是轮询、权重、ip_hash、最少连接、fair、url_hash等)。</p>
+
+<h4 id="1轮询策略">(1)轮询策略</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>upstream  backup-server {
+   server    192.168.1.101:8080; 
+   server    192.168.1.102:8080;
+}
+</code></pre></div></div>
+
+<h4 id="2权重策略">(2)权重策略</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>upstream  backup-server {
+   server    192.168.1.101:8080 weigh=5; 
+   server    192.168.1.102:8080 weigh=6;
+}
+</code></pre></div></div>
+
+<h4 id="3ip_hash策略">(3)ip_hash策略</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>upstream  backup-server {
+   ip_hash;
+   server    192.168.1.101:8080 weigh=5; 
+   server    192.168.1.102:8080 weigh=6;
+}
+</code></pre></div></div>
+
+<h4 id="4最少连接策略">(4)最少连接策略</h4>
+
+<p>?</p>
+
+<p>| 1<br /><br />2<br /><br />3<br /><br />4<br /><br />5 | <code class="language-plaintext highlighter-rouge">upstream  backup-server {</code><br /><br /><code class="language-plaintext highlighter-rouge">   </code><code class="language-plaintext highlighter-rouge">least_conn;</code><br /><br /><code class="language-plaintext highlighter-rouge">   </code><code class="language-plaintext highlighter-rouge">server    192.168.1.101:8080 weigh=5; </code><br /><br /><code class="language-plaintext highlighter-rouge">   </code><code class="language-plaintext highlighter-rouge">server    192.168.1.102:8080 weigh=6;</code><br /><br /><code class="language-plaintext highlighter-rouge">}</code> |
+| — | — |</p>
+
+<h4 id="5fair策略">(5)fair策略</h4>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>upstream  backup-server {
+   server    192.168.1.101:8080; 
+   server    192.168.1.102:8080;
+   fair;
+}
+</code></pre></div></div>
+
+<h4 id="6url_hash策略">(6)url_hash策略</h4>
+
+<p>?</p>
+
+<p>| 1<br /><br />2<br /><br />3<br /><br />4<br /><br />5 | <code class="language-plaintext highlighter-rouge">upstream  backup-server {</code><br /><br /><code class="language-plaintext highlighter-rouge">   </code><code class="language-plaintext highlighter-rouge">hash $request_uri; </code><br /><br /><code class="language-plaintext highlighter-rouge">   </code><code class="language-plaintext highlighter-rouge">server    192.168.1.101:8080; </code><br /><br /><code class="language-plaintext highlighter-rouge">   </code><code class="language-plaintext highlighter-rouge">server    192.168.1.102:8080;</code><br /><br /><code class="language-plaintext highlighter-rouge">}</code> |
+| — | — |</p>
+
+<h2 id="八nginx的安全策略需要从哪些方面考虑">八、Nginx的安全策略需要从哪些方面考虑？</h2>
+
+<h3 id="1隐藏nginx版本信息防止对应的攻击者通过版本漏洞来攻击">1.隐藏Nginx版本信息，防止对应的攻击者通过版本漏洞来攻击</h3>
+
+<p>?</p>
+
+<p>| 1 | <code class="language-plaintext highlighter-rouge">server_tokens off;</code> |
+| — | — |</p>
+
+<h3 id="2限制http请求方式">2.限制HTTP请求方式</h3>
+
+<p>HTTP请求一共有九种，分别为GET、POST、Head、OPTIONS、PUT、PATCH、DELETE、TRACE、CONNECT等。</p>
+
+<p>这里我仅仅只允许GET与POST：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>if ($request_method !~ ^(GET|POST)$ ) {
+    return 404;
+}
+</code></pre></div></div>
+
+<h3 id="3自定义nginx缓存">3.自定义Nginx缓存</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>proxy_buffer_size 4k; #设置代理服务器（nginx）保存用户头信息的缓冲区大小
+proxy_buffers 4 32k; #proxy_buffers缓冲区，网页平均在32k以下的设置
+proxy_busy_buffers_size 64k; #高负荷下缓冲大小（proxy_buffers*2）
+proxy_temp_file_write_size 64k; #设定缓存文件夹大小，大于这个值，将从upstream服务器传
+</code></pre></div></div>
+
+<h3 id="4过滤非法user-agent简称ua">4.过滤非法USER-AGENT(简称UA)</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>if ($http_user_agent ~* "java|python|perl|ruby|curl|bash|echo|uname|base64|decode|md5sum|select|concat|httprequest|httpclient|nmap|scan" ) {
+    return 403;
+}
+</code></pre></div></div>
+
+<h3 id="5过滤不支持url">5.过滤不支持URL</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>location ~* \.(bak|save|sh|sql|mdb|svn|git|old)$ {
+    rewrite ^/(.*)$  $host  permanent;
+}
+</code></pre></div></div>
+
+<h3 id="6强制域名访问必须开启ssl保护">6.强制域名访问(必须开启SSL保护)</h3>
+
+<p>?</p>
+
+<p>| 1<br /><br />2<br /><br />3 | <code class="language-plaintext highlighter-rouge">if</code> <code class="language-plaintext highlighter-rouge">( $host !~* </code><code class="language-plaintext highlighter-rouge">'youcongtech.com'</code> <code class="language-plaintext highlighter-rouge">) {</code><br /><br /><code class="language-plaintext highlighter-rouge">    </code><code class="language-plaintext highlighter-rouge">return</code> <code class="language-plaintext highlighter-rouge">403;</code><br /><br /><code class="language-plaintext highlighter-rouge">}</code> |
+| — | — |</p>
+
+<h3 id="7用户降低权限">7.用户降低权限</h3>
+
+<p>?</p>
+
+<p>| 1 | <code class="language-plaintext highlighter-rouge">user nginx www;</code> |
+| — | — |</p>
+
+<h3 id="8禁止目录浏览">8.禁止目录浏览</h3>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>autoindex off;
+</code></pre></div></div>
+
+<h3 id="9限制文件上传大小">9.限制文件上传大小</h3>
+
+<p>?</p>
+
+<p>| 1 | <code class="language-plaintext highlighter-rouge">client_max_body_size 18m</code> |
+| — | — |</p>
+
+<h3 id="10关注nginx所使用版本的漏洞情况并适时更新">10.关注Nginx所使用版本的漏洞情况，并适时更新</h3>
+
+<p>关于Nginx相关版本信息可访问如下网址获取(Nginx下载地址)：<br />
+<a href="https://nginx.org/en/download.html">https://nginx.org/en/download.html</a></p>
+
+<p>当然了，这仅仅是从Nginx的安全角度出发，光从Nginx出发只能在一定程度上保障Nginx本身的安全，还是得从服务器层面乃至制度层面入手。服务器层面我曾写过一些文章，可供读者朋友参考：<br />
+<a href="https://youcongtech.com/2021/07/16/%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AE%89%E5%85%A8%E7%AD%96%E7%95%A5%E4%B9%8B%E6%80%9D%E8%80%83%E4%B8%8E%E5%AE%9E%E8%B7%B5/">服务器安全策略之思考与实践</a></p>
+
+<h2 id="九nginx架构是怎样的">九、Nginx架构是怎样的？</h2>
+
+<h3 id="1nginx架构设计的核心主要包含哪些方面">1.Nginx架构设计的核心主要包含哪些方面？</h3>
+
+<p><img src="https://img2022.cnblogs.com/blog/1255290/202205/1255290-20220528113949510-1128205525.png" alt="" /></p>
+
+<p>由图可知，架构设计的核心主要体现如下：</p>
+
+<ul>
+  <li>(1)模块化设计。</li>
+  <li>(2)代理设计。</li>
+  <li>(3)事件驱动模型。</li>
+  <li>(4)主进程模型。</li>
+  <li>(5)工作进程模型。</li>
+</ul>
+
+<h3 id="2nginx启动流程是怎样的">2.Nginx启动流程是怎样的？</h3>
+
+<p><img src="https://img2022.cnblogs.com/blog/1255290/202205/1255290-20220528114103649-671943325.png" alt="" /></p>
+
+<h3 id="-1"> </h3>
+
+<h3 id="3nginx源代码对应的目录是什么意思">3.Nginx源代码对应的目录是什么意思？</h3>
+
+<p>Nginx源代码目录为如下：</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>- core (该目录存放core module的代码，也是nginx服务的入口)
+- event (nginx 自身对事件处理逻辑的封装)
+- http (http core module 的代码，nginx作为web/http proxy server运行时的核心模块)
+- mail (mail core module 的代码，nginx作为pop3/imap/smtp proxy server运行时的核心模块)
+- misc (nginx 的一些utils,定义了test和profiler的一些外围模块的逻辑)
+- os (nginx对各个平台抽象逻辑的封装)
+- stream (nginx用来实现四层协议的转发、代理和负载均衡)
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<h2 id="十总结">十、总结</h2>
+
+<p>光凭这一篇文章很难深入到Nginx的各种细节当中，不过此文章着重体现两个方面，第一个方面是Nginx各种配置示例(基本来源于我个人架构生涯中的Nginx实战)，第二个方面总览Nginx架构，明确架构核心、启动流程、源代码目录的含义等(读者朋友可根据自己需要进行查阅相关资料并深入学习实践等)。</p>
+<blockquote>
+  <p>作者:挑战者V<br />
+原文:https://www.cnblogs.com/youcong/p/16320227.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/30/%E6%B7%B1%E5%85%A5%E6%B5%85%E5%87%BANginx%E5%AE%9E%E6%88%98%E4%B8%8E%E6%9E%B6%E6%9E%84.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

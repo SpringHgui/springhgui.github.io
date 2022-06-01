@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>.NET性能优化-推荐使用Collections.Pooled | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content=".NET性能优化-推荐使用Collections.Pooled" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="简介 性能优化就是如何在保证处理相同数量的请求情况下占用更少的资源，而这个资源一般就是CPU或者内存，当然还有操作系统IO句柄、网络流量、磁盘占用等等。但是绝大多数时候，我们就是在降低CPU和内存的占用率。 之前分享的内容都有一些局限性，很难直接改造，今天要和大家分享一个简单的方法，只需要替换几个集合类型，就可以达到提升性能和降低内存占用的效果。 今天要给大家分享一个类库，这个类库叫Collections.Pooled，从名字就可以看出来，它是通过池化内存来达到降低内存占用和GC的目的，后面我们会直接来看看它的性能到底怎么样，另外也会带大家看看源码，为什么它会带来这些性能提升。 Collections.Pooled 项目链接：https://github.com/jtmueller/Collections.Pooled 该库基于System.Collections.Generic中的类，这些类已经被修改，以利用新的System.Span&lt;T&gt;和System.Buffers.ArrayPool&lt;T&gt;类库，达到减少内存分配，提高性能，并允许与现代API的更大的互操作性的目的。 Collections.Pooled支持.NETStandard2.0（.NET Framework 4.6.1+），以及针对.NET Core 2.1+的优化构建。一套广泛的单元测试和基准已经从corefx移植过来。" />
+<meta property="og:description" content="简介 性能优化就是如何在保证处理相同数量的请求情况下占用更少的资源，而这个资源一般就是CPU或者内存，当然还有操作系统IO句柄、网络流量、磁盘占用等等。但是绝大多数时候，我们就是在降低CPU和内存的占用率。 之前分享的内容都有一些局限性，很难直接改造，今天要和大家分享一个简单的方法，只需要替换几个集合类型，就可以达到提升性能和降低内存占用的效果。 今天要给大家分享一个类库，这个类库叫Collections.Pooled，从名字就可以看出来，它是通过池化内存来达到降低内存占用和GC的目的，后面我们会直接来看看它的性能到底怎么样，另外也会带大家看看源码，为什么它会带来这些性能提升。 Collections.Pooled 项目链接：https://github.com/jtmueller/Collections.Pooled 该库基于System.Collections.Generic中的类，这些类已经被修改，以利用新的System.Span&lt;T&gt;和System.Buffers.ArrayPool&lt;T&gt;类库，达到减少内存分配，提高性能，并允许与现代API的更大的互操作性的目的。 Collections.Pooled支持.NETStandard2.0（.NET Framework 4.6.1+），以及针对.NET Core 2.1+的优化构建。一套广泛的单元测试和基准已经从corefx移植过来。" />
+<link rel="canonical" href="/cnblog/2022/05/26/.NET%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E6%8E%A8%E8%8D%90%E4%BD%BF%E7%94%A8Collections.Pooled.html" />
+<meta property="og:url" content="/cnblog/2022/05/26/.NET%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E6%8E%A8%E8%8D%90%E4%BD%BF%E7%94%A8Collections.Pooled.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-26T12:47:30+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content=".NET性能优化-推荐使用Collections.Pooled" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-26T12:47:30+00:00","datePublished":"2022-05-26T12:47:30+00:00","description":"简介 性能优化就是如何在保证处理相同数量的请求情况下占用更少的资源，而这个资源一般就是CPU或者内存，当然还有操作系统IO句柄、网络流量、磁盘占用等等。但是绝大多数时候，我们就是在降低CPU和内存的占用率。 之前分享的内容都有一些局限性，很难直接改造，今天要和大家分享一个简单的方法，只需要替换几个集合类型，就可以达到提升性能和降低内存占用的效果。 今天要给大家分享一个类库，这个类库叫Collections.Pooled，从名字就可以看出来，它是通过池化内存来达到降低内存占用和GC的目的，后面我们会直接来看看它的性能到底怎么样，另外也会带大家看看源码，为什么它会带来这些性能提升。 Collections.Pooled 项目链接：https://github.com/jtmueller/Collections.Pooled 该库基于System.Collections.Generic中的类，这些类已经被修改，以利用新的System.Span&lt;T&gt;和System.Buffers.ArrayPool&lt;T&gt;类库，达到减少内存分配，提高性能，并允许与现代API的更大的互操作性的目的。 Collections.Pooled支持.NETStandard2.0（.NET Framework 4.6.1+），以及针对.NET Core 2.1+的优化构建。一套广泛的单元测试和基准已经从corefx移植过来。","headline":".NET性能优化-推荐使用Collections.Pooled","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/26/.NET%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E6%8E%A8%E8%8D%90%E4%BD%BF%E7%94%A8Collections.Pooled.html"},"url":"/cnblog/2022/05/26/.NET%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E6%8E%A8%E8%8D%90%E4%BD%BF%E7%94%A8Collections.Pooled.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">.NET性能优化-推荐使用Collections.Pooled</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-26T12:47:30+00:00" itemprop="datePublished">May 26, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h2 id="简介">简介</h2>
+
+<p>性能优化就是如何在保证处理相同数量的请求情况下占用更少的资源，而这个资源一般就是CPU或者内存，当然还有操作系统IO句柄、网络流量、磁盘占用等等。但是绝大多数时候，我们就是在降低CPU和内存的占用率。<br />
+ 之前分享的内容都有一些局限性，很难直接改造，今天要和大家分享一个简单的方法，只需要替换几个集合类型，就可以达到提升性能和降低内存占用的效果。<br />
+ 今天要给大家分享一个类库，这个类库叫<code class="language-plaintext highlighter-rouge">Collections.Pooled</code>，从名字就可以看出来，它是通过<strong>池化内存</strong>来达到降低内存占用和GC的目的，后面我们会直接来看看它的性能到底怎么样，另外也会带大家看看源码，为什么它会带来这些性能提升。</p>
+
+<h2 id="collectionspooled">Collections.Pooled</h2>
+
+<p>项目链接：<a href="https://github.com/jtmueller/Collections.Pooled">https://github.com/jtmueller/Collections.Pooled</a><br />
+ 该库基于<code class="language-plaintext highlighter-rouge">System.Collections.Generic</code>中的类，这些类已经被修改，以利用新的<code class="language-plaintext highlighter-rouge">System.Span&lt;T&gt;</code>和<code class="language-plaintext highlighter-rouge">System.Buffers.ArrayPool&lt;T&gt;</code>类库，达到减少内存分配，提高性能，并允许与现代API的更大的互操作性的目的。<br />
+ <code class="language-plaintext highlighter-rouge">Collections.Pooled</code>支持<code class="language-plaintext highlighter-rouge">.NETStandard2.0</code>（.NET Framework 4.6.1+），以及针对.NET Core 2.1+的优化构建。一套广泛的单元测试和基准已经从corefx移植过来。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>测试总数：27501。通过：27501。失败：0。跳过：0。
+测试运行成功。
+测试执行时间：9.9019秒
+</code></pre></div></div>
+
+<h3 id="如何使用">如何使用</h3>
+
+<p>通过Nuget就可以很简单的安装这个类库，<a href="https://www.nuget.org/packages/Collections.Pooled/">NuGet Version</a> 。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Install-Package Collections.Pooled
+dotnet add package Collections.Pooled
+paket add Collections.Pooled
+</code></pre></div></div>
+
+<p>在<code class="language-plaintext highlighter-rouge">Collections.Pooled</code>类库中，它针对我们常使用的集合类型都实现了池化的版本，和.NET原生类型的对比如下所示。</p>
+
+<p>| .NET原生 | Collections.Pooled | 备注 |
+| — | — | — |</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">List&lt;T&gt;</code></td>
+      <td><code class="language-plaintext highlighter-rouge">PooledList&lt;T&gt;</code></td>
+      <td>泛型集合类</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Dictionary&lt;TKey, TValue&gt;</code></td>
+      <td><code class="language-plaintext highlighter-rouge">PooledDictionary&lt;TKey, TValue&gt;</code></td>
+      <td>泛型字典类</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">HashSet&lt;T&gt;</code></td>
+      <td><code class="language-plaintext highlighter-rouge">PooledSet&lt;T&gt;</code></td>
+      <td>泛型哈希集合类</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Stack&lt;T&gt;</code></td>
+      <td><code class="language-plaintext highlighter-rouge">Stack&lt;T&gt;</code></td>
+      <td>泛型栈</td>
+    </tr>
+  </tbody>
+</table>
+
+<table>
+  <tbody>
+    <tr>
+      <td><code class="language-plaintext highlighter-rouge">Queue&lt;T&gt;</code></td>
+      <td><code class="language-plaintext highlighter-rouge">PooledQueue&lt;T&gt;</code></td>
+      <td>泛型队列</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>在使用时，我们只需要将对应的.NET原生版本换成<code class="language-plaintext highlighter-rouge">Collections.Pooled</code>版本就可以了，如下方的代码所示：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>using Collections.Pooled;
+
+// 使用方式是一样的
+var list = new List&lt;int&gt;();
+var pooledList = new PooledList&lt;int&gt;();
+
+var dictionary = new Dictionary&lt;int,int&gt;();
+var pooledDictionary = new PooledDictionary&lt;int,int&gt;();
+
+// 包括PooledSet、PooledQueue、PooledStack的使用方法都是一样的
+
+var pooledList1 = Enumerable.Range(0,100).ToPooledList();
+var pooledDictionary1 = Enumerable.Range(0,100).ToPooledDictionary(i =&gt; i, i =&gt; i);
+</code></pre></div></div>
+
+<p>但是我们需要注意，<code class="language-plaintext highlighter-rouge">Pooled</code>类型实现了<code class="language-plaintext highlighter-rouge">IDispose</code>接口，它通过<code class="language-plaintext highlighter-rouge">Dispose()</code>方法将使用的内存归还到池中，所以我们需要在使用完<code class="language-plaintext highlighter-rouge">Pooled</code>集合对象以后调用它的<code class="language-plaintext highlighter-rouge">Dispose()</code>方法。或者可以直接使用<code class="language-plaintext highlighter-rouge">using var</code>关键字。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>using Collections.Pooled;
+
+// 使用using var 会在pooled对象使用完毕后自动释放
+using var pooledList = new PooledList&lt;int&gt;();
+Console.WriteLine(pooledList.Count);
+
+// 使用using作用域 作用域结束以后就会释放
+using (var pooledDictionary = new PooledDictionary&lt;int, int&gt;())
+{Console.WriteLine(pooledDictionary.Count);
+}
+
+// 手动调用Dispose方法
+var pooledStack = new PooledStack&lt;int&gt;();
+Console.WriteLine(pooledStack.Count);
+pooledList.Dispose();
+</code></pre></div></div>
+
+<p><strong>注意：使用Collections.Pooled内的集合对象最好需要释放掉它，不过不释放也没有关系，GC最终会回收它，只是它不能归还到池中，达不到节省内存的效果了。</strong><br />
+ 由于它会复用内存空间，在将内存空间返回到池中的时候，需要对集合内的元素做处理，它提供了一个叫<code class="language-plaintext highlighter-rouge">ClearMode</code>的枚举供使用，定义如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>namespace Collections.Pooled
+{
+    /// &lt;summary&gt;
+    /// 这个枚举允许控制在内部数组返回到ArrayPool时如何处理数据。
+    /// 数组返回到ArrayPool时如何处理数据。在使用默认选项之外的其他选项之前，请注意了解 
+    /// 在使用默认值Auto之外的任何其他选项之前，请仔细了解每个选项的作用。
+    /// &lt;/summary&gt;
+    public enum ClearMode
+    {
+        /// &lt;summary&gt;
+        /// &lt;para&gt;&lt;code&gt;Auto&lt;/code&gt;根据目标框架有不同的行为&lt;/para&gt;
+        /// &lt;para&gt;.NET Core 2.1: 引用类型和包含引用类型的值类型在内部数组返回池时被清除。 不包含引用类型的值类型在返回池时不会被清除。&lt;/para&gt;
+        /// &lt;para&gt;.NET Standard 2.0: 在返回池之前清除所有用户类型，以防它们包含引用类型。 对于 .NET Standard，Auto 和 Always 具有相同的行为。&lt;/para&gt;
+        /// &lt;/summary&gt;
+        Auto = 0,
+        
+        /// &lt;summary&gt;
+        /// The &lt;para&gt;&lt;code&gt;Always&lt;/code&gt; 设置的效果是在返回池之前总是清除用户类型。
+        /// &lt;/summary&gt;
+        Always = 1,
+        
+        /// &lt;summary&gt;
+        /// &lt;para&gt;&lt;code&gt;Never&lt;/code&gt; 将导致池化集合在将它们返回池之前永远不会清除用户类型。&lt;/para&gt;
+        /// &lt;/summary&gt;
+        Never = 2
+    }
+}
+</code></pre></div></div>
+
+<p><strong>默认情况下，使用默认值Auto即可，如果有特殊的性能要求，知晓风险后可以使用Never。</strong><br />
+ 对于引用类型和包含引用类型的值类型，我们必须在将内存空间归还到池的时候清空数组引用，如果不清除会导致GC无法释放这部分内存空间（因为元素的引用一直被池持有），如果是纯值类型，那么就可以不清空，在<a href="https://www.cnblogs.com/InCerry/p/Dotnet-Opt-Perf-Use-Struct-Instead-Of-Class.html">使用结构体替代类</a>这篇文章中，我描述了引用类型和结构体(值类型)数组的存储区别，纯值类型没有对象头回收也无需GC介入。</p>
+
+<h3 id="性能对比">性能对比</h3>
+
+<p>我没有单独做Benchmark，直接使用的开源项目的跑分结果，<strong>很多项目的内存占用都是0，那是因为使用的池化的内存，没有多余的分配</strong>。</p>
+
+<h4 id="pooledlistt"><code class="language-plaintext highlighter-rouge">PooledList&lt;T&gt;</code></h4>
+
+<p>在Benchmark中循环向集合添加2048个元素，.NET原生的<code class="language-plaintext highlighter-rouge">List&lt;T&gt;</code>需要<strong>110us</strong>(根据实际跑分结果，图中的毫秒应该是笔误)和<strong>263KB</strong>内存，而<code class="language-plaintext highlighter-rouge">PooledList&lt;T&gt;</code>只需要<strong>36us</strong>和<strong>0KB</strong>内存。<br />
+ https://img2022.cnblogs.com/blog/997046/202205/997046-20220525090127412-1847231768.jpg</p>
+
+<h4 id="pooleddictionarytkey-tvalue"><code class="language-plaintext highlighter-rouge">PooledDictionary&lt;TKey, TValue&gt;</code></h4>
+
+<p>在Benchmark中循环向字典添加10_0000个元素，.NET原生的<code class="language-plaintext highlighter-rouge">Dictionary&lt;TKey, TValue&gt;</code>需要<strong>11ms</strong>和<strong>13MB</strong>内存，而<code class="language-plaintext highlighter-rouge">PooledDictionary&lt;TKey, TValue&gt;</code>只需要<strong>7ms</strong>和<strong>0MB</strong>内存。<br />
+ https://img2022.cnblogs.com/blog/997046/202205/997046-20220525090127216-397839818.jpg</p>
+
+<h4 id="pooledsett"><code class="language-plaintext highlighter-rouge">PooledSet&lt;T&gt;</code></h4>
+
+<p>在Benchmark中循环向哈希集合添加10_0000个元素，.NET原生的<code class="language-plaintext highlighter-rouge">HashSet&lt;T&gt;</code>需要<strong>5348ms</strong>和<strong>2MB</strong>，而<code class="language-plaintext highlighter-rouge">PooledSet&lt;T&gt;</code>只需要<strong>4723ms</strong>和<strong>0MB</strong>内存。<br />
+ https://img2022.cnblogs.com/blog/997046/202205/997046-20220525090127028-634054948.jpg</p>
+
+<h4 id="pooledstackt"><code class="language-plaintext highlighter-rouge">PooledStack&lt;T&gt;</code></h4>
+
+<p>在Benchmark中循环向栈添加10_0000个元素，.NET原生的<code class="language-plaintext highlighter-rouge">PooledStack&lt;T&gt;</code>需要<strong>1079ms</strong>和<strong>2MB</strong>，而<code class="language-plaintext highlighter-rouge">PooledStack&lt;T&gt;</code>只需要<strong>633ms</strong>和<strong>0MB</strong>内存。<br />
+ https://img2022.cnblogs.com/blog/997046/202205/997046-20220525090126807-714391982.jpg</p>
+
+<h4 id="pooledqueuet"><code class="language-plaintext highlighter-rouge">PooledQueue&lt;T&gt;</code></h4>
+
+<p>在Benchmark中循环向队列添加10_0000个元素，.NET原生的<code class="language-plaintext highlighter-rouge">PooledQueue&lt;T&gt;</code>需要<strong>681ms</strong>和<strong>1MB</strong>，而<code class="language-plaintext highlighter-rouge">PooledQueue&lt;T&gt;</code>只需要<strong>408ms</strong>和<strong>0MB</strong>内存。<br />
+ https://img2022.cnblogs.com/blog/997046/202205/997046-20220525090126588-352867785.jpg</p>
+
+<h4 id="未手动释放场景">未手动释放场景</h4>
+
+<p>另外在上文中我们提到了<code class="language-plaintext highlighter-rouge">Pooled</code>的集合类型需要释放，但是不释放也没有太大的关系，因为GC会去回收。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>private static readonly string[] List = Enumerable  
+    .Range(0, 10000).Select(c =&gt; c.ToString()).ToArray();  
+// 使用默认的集合类型  
+[Benchmark(Baseline = true)]  
+public int UseList()  
+{  
+    var list = new List&lt;string&gt;(1024);  
+    for (var index = 0; index &lt; List.Length; index++)  
+    {  
+        var item = List[index];  
+        list.Add(item);  
+    }  
+    return list.Count;  
+}  
+// 使用PooledList 并且及时释放  
+[Benchmark]  
+public int UsePooled()  
+{  
+    using var list = new PooledList&lt;string&gt;(1024);  
+    for (var index = 0; index &lt; List.Length; index++)  
+    {  
+        var item = List[index];  
+        list.Add(item);  
+    }  
+    return list.Count;  
+}  
+// 使用PooledList 不释放  
+[Benchmark]  
+public int UsePooledWithOutUsing()  
+{  
+    var list = new PooledList&lt;string&gt;(1024);  
+    for (var index = 0; index &lt; List.Length; index++)  
+    {  
+        var item = List[index];  
+        list.Add(item);  
+    }  
+    return list.Count;  
+}
+</code></pre></div></div>
+
+<p>Benchmark结果如下：<br />
+ https://img2022.cnblogs.com/blog/997046/202205/997046-20220525090126384-1389859314.png<br />
+ 可以从上面的Benchmark结果可以得出结论。</p>
+
+<ul>
+  <li>及时释放<code class="language-plaintext highlighter-rouge">Pooled</code>类型集合几乎不会触发GC和分配内存，从上图中它只分配了56Byte内存。</li>
+  <li>就算不释放<code class="language-plaintext highlighter-rouge">Pooled</code>类型集合，因为它从池中分配内存，在进行<code class="language-plaintext highlighter-rouge">ReSize</code>扩容操作时还是会复用内存，另外跳过了GC分配内存初始化步骤，速度也比较快。</li>
+  <li>最慢的就是使用普通集合类型，每次<code class="language-plaintext highlighter-rouge">ReSize</code>扩容操作都需要申请新的内存空间，GC也要回收之前的内存空间。</li>
+</ul>
+
+<h3 id="原理解析">原理解析</h3>
+
+<p>如果大家看过我之前的博文<a href="https://www.cnblogs.com/InCerry/p/Dotnet-Opt-Perf-You-Should-Set-Capacity-For-Collection.html">你应该为集合类型设置初始大小</a>和<a href="https://www.cnblogs.com/InCerry/p/10325290.html">浅析C# Dictionary实现原理</a>就可以知道，.NET BCL开发人员为了高性能的随机访问，这些基本集合类型的底层数据结构都是<strong>数组</strong>，我们以<code class="language-plaintext highlighter-rouge">List&lt;T&gt;</code>为例。</p>
+
+<ul>
+  <li>创建新的数组来存储添加进来的元素。</li>
+  <li>如果数组空间不够，那么就触发扩容操作，申请2倍的空间大小。</li>
+</ul>
+
+<p>构造函数代码如下，可以看到是直接创建的泛型数组：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public List(int capacity)
+{
+      if (capacity &lt; 0)
+          ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.capacity, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum);
+
+      if (capacity == 0)
+          _items = s_emptyArray;
+      else
+          _items = new T[capacity];
+}
+</code></pre></div></div>
+
+<p>那么如果想要池化内存，只需要把类库中使用<code class="language-plaintext highlighter-rouge">new</code>关键字申请的地方，改为使用池化的申请。这里和大家分享.NET BCL中的一个类型，叫<code class="language-plaintext highlighter-rouge">ArrayPool</code>，它提供了可重复使用的泛型实例的数组资源池，使用它可以降低对GC的压力，在频繁创建和销毁数组的情况下提升性能。<br />
+ 而我们<code class="language-plaintext highlighter-rouge">Pooled</code>类型的底层就是使用<code class="language-plaintext highlighter-rouge">ArrayPool</code>来共享资源池，从它的构造函数中，我们可以看到它默认使用的是<code class="language-plaintext highlighter-rouge">ArrayPool&lt;T&gt;.Shared</code>来分配数组对象，当然你也可以创建自己的<code class="language-plaintext highlighter-rouge">ArrayPool</code>来让它使用。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// 默认使用ArrayPool&lt;T&gt;.Shared池
+public PooledList(int capacity, ClearMode clearMode, bool sizeToCapacity) : this(capacity, clearMode, ArrayPool&lt;T&gt;.Shared, sizeToCapacity) { }  
+
+// 分配数组使用 ArrayPool
+public PooledList(int capacity, ClearMode clearMode, ArrayPool&lt;T&gt; customPool, bool sizeToCapacity)
+{
+    if (capacity &lt; 0)
+        ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.capacity, ExceptionResource.ArgumentOutOfRange_NeedNonNegNum);
+    _pool = customPool ?? ArrayPool&lt;T&gt;.Shared;
+    _clearOnFree = ShouldClear(clearMode);
+    if (capacity == 0)
+    {
+        _items = s_emptyArray;
+    }
+    else
+    {
+        _items = _pool.Rent(capacity);
+    }
+    
+    if (sizeToCapacity)
+    {
+        _size = capacity;
+        if (clearMode != ClearMode.Never)
+        {
+            Array.Clear(_items, 0, _size);
+        }
+    }
+ }
+</code></pre></div></div>
+
+<p>另外在进行容量调整操作（扩容）时，会将旧的数组归还回线程池，新的数组也在池中获取。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> public int Capacity
+{
+    get =&gt; _items.Length;
+    set
+    {
+        if (value &lt; _size)
+        {
+            ThrowHelper.ThrowArgumentOutOfRangeException(ExceptionArgument.value, ExceptionResource.ArgumentOutOfRange_SmallCapacity);
+        }
+
+        if (value != _items.Length)
+        {
+            if (value &gt; 0)
+            {
+                // 从池中分配数组
+                var newItems = _pool.Rent(value);
+                if (_size &gt; 0)
+                {
+                    Array.Copy(_items, newItems, _size);
+                }
+                // 旧数组归还到池中
+                ReturnArray();
+                _items = newItems;
+            }
+            else
+            {
+                ReturnArray();
+                _size = 0;
+            }
+        }
+    }
+}
+private void ReturnArray()  
+{  
+    if (_items.Length == 0)  
+        return;  
+    try  
+    {  
+        // 归还到池中
+        _pool.Return(_items, clearArray: _clearOnFree);  
+    }  
+    catch (ArgumentException)  
+    {  
+        // ArrayPool可能会抛出异常，我们直接吞掉 
+    }  
+    _items = s_emptyArray;  
+}
+</code></pre></div></div>
+
+<p>另外作者使用了Span优化了<code class="language-plaintext highlighter-rouge">Add</code>、<code class="language-plaintext highlighter-rouge">Insert</code>等等API，让它们有更好的随机访问性能；另外还加入了<code class="language-plaintext highlighter-rouge">TryXXX</code>系列API，可以更方便的方式的使用它。比如<code class="language-plaintext highlighter-rouge">List&lt;T&gt;</code>类相比<code class="language-plaintext highlighter-rouge">PooledList&lt;T&gt;</code>就有多达170个修改。<br />
+ https://img2022.cnblogs.com/blog/997046/202205/997046-20220525090125945-1697692444.png</p>
+
+<h2 id="总结">总结</h2>
+
+<p>在我们线上实际的使用过程中，完全可以用<code class="language-plaintext highlighter-rouge">Pooled</code>提供的集合类型替代原生的集合类型，对降低内存占用率和P95延时有非常大的帮助。<br />
+ 另外就算忘记释放了，那性能也不会比使用原生的集合类型差多少。当然最好的习惯就是及时的释放它。</p>
+<blockquote>
+  <p>作者:InCerry
+原文:https://www.cnblogs.com/InCerry/p/Recommand_Use_Collections_Pooled.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/26/.NET%E6%80%A7%E8%83%BD%E4%BC%98%E5%8C%96-%E6%8E%A8%E8%8D%90%E4%BD%BF%E7%94%A8Collections.Pooled.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

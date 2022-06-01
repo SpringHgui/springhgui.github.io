@@ -1,0 +1,2552 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.2.2">Jekyll</generator><link href="/feed.xml" rel="self" type="application/atom+xml" /><link href="/" rel="alternate" type="text/html" /><updated>2022-06-01T11:48:24+00:00</updated><id>/feed.xml</id><title type="html">dotnet之美</title><subtitle>分享dotnet技术.</subtitle><entry><title type="html"></title><link href="/2022/06/01/2022-05-29-SSE%E5%9B%BE%E5%83%8F%E7%AE%97%E6%B3%95%E4%BC%98%E5%8C%96%E7%B3%BB%E5%88%97%E4%B8%89%E5%8D%81%E4%BA%8CZhangGuo%E5%9B%BE%E5%83%8F%E7%BB%86%E5%8C%96%E7%AE%97%E6%B3%95%E7%9A%84C%E8%AF%AD%E8%A8%80%E4%BB%A5%E5%8F%8ASIMD%E6%8C%87%E4%BB%A4%E4%BC%98%E5%8C%96.html" rel="alternate" type="text/html" title="" /><published>2022-06-01T11:48:24+00:00</published><updated>2022-06-01T11:48:24+00:00</updated><id>/2022/06/01/2022-05-29-SSE%E5%9B%BE%E5%83%8F%E7%AE%97%E6%B3%95%E4%BC%98%E5%8C%96%E7%B3%BB%E5%88%97%E4%B8%89%E5%8D%81%E4%BA%8CZhangGuo%E5%9B%BE%E5%83%8F%E7%BB%86%E5%8C%96%E7%AE%97%E6%B3%95%E7%9A%84C%E8%AF%AD%E8%A8%80%E4%BB%A5%E5%8F%8ASIMD%E6%8C%87%E4%BB%A4%E4%BC%98%E5%8C%96</id><content type="html" xml:base="/2022/06/01/2022-05-29-SSE%E5%9B%BE%E5%83%8F%E7%AE%97%E6%B3%95%E4%BC%98%E5%8C%96%E7%B3%BB%E5%88%97%E4%B8%89%E5%8D%81%E4%BA%8CZhangGuo%E5%9B%BE%E5%83%8F%E7%BB%86%E5%8C%96%E7%AE%97%E6%B3%95%E7%9A%84C%E8%AF%AD%E8%A8%80%E4%BB%A5%E5%8F%8ASIMD%E6%8C%87%E4%BB%A4%E4%BC%98%E5%8C%96.html"><![CDATA[<p>二值图像的细化算法也有很多种，比较有名的比如Hilditch细化、Rosenfeld细化、基于索引表的细化、还有Opencv自带的THINNING_ZHANGSUEN、THINNING_GUOHALL喜欢等等。这些都属于迭代的细化方式，当然还有一种是基于二值图像距离变换的细化方法，二值想比较，我个人认为是基于迭代的效果稳定、可靠，但是速度较慢，且速度和图片的内容有关，基于距离变换的版本，优点是速度稳定，但是效果差强人意。本文这里还是选择基于迭代的方式予以实现。</p>
+
+<p>相关的参考文章有：<a href="http://cgm.cs.mcgill.ca/~godfried/teaching/projects97/azar/skeleton.html">http://cgm.cs.mcgill.ca/~godfried/teaching/projects97/azar/skeleton.html</a>     Hilditch细化</p>
+
+<p><a href="http://www.cnblogs.com/xiaotie/archive/2010/08/12/1797760.html">http://www.cnblogs.com/xiaotie/archive/2010/08/12/1797760.html</a>    对Hilditch细化的改进版</p>
+
+<p><a href="http://cgm.cs.mcgill.ca/~godfried/teaching/projects97/azar/skeleton.html%20">http://cgm.cs.mcgill.ca/~godfried/teaching/projects97/azar/skeleton.html</a>  Rosenfeld细化</p>
+
+<p><a href="https://github.com/opencv/opencv_contrib/blob/4.x/modules/ximgproc/src/thinning.cpp">https://github.com/opencv/opencv_contrib/blob/4.x/modules/ximgproc/src/thinning.cpp</a>　　　　Opencv的Zhang\guo细化</p>
+
+<p>我们尝试的看下了Hilditch细化以及改进版本的Hilditch细化算法，发现其在某一个行的计算过程中，有着严重的前后依赖，非常不利于SIMD指令的并行化，这里我们优化了Opencv的两个算子。</p>
+
+<p><strong>一、原始方案</strong></p>
+
+<p>在上述的Opencv代码的链接中，以Zhang细化算法为例，其核心代码如下所示：</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  if(thinningType == THINNING_ZHANGSUEN){
+        for (int i = 1; i &lt; img.rows-1; i++)
+        {
+            for (int j = 1; j &lt; img.cols-1; j++)
+            {
+                uchar p2 = img.at&lt;uchar&gt;(i-1, j);
+                uchar p3 = img.at&lt;uchar&gt;(i-1, j+1);
+                uchar p4 = img.at&lt;uchar&gt;(i, j+1);
+                uchar p5 = img.at&lt;uchar&gt;(i+1, j+1);
+                uchar p6 = img.at&lt;uchar&gt;(i+1, j);
+                uchar p7 = img.at&lt;uchar&gt;(i+1, j-1);
+                uchar p8 = img.at&lt;uchar&gt;(i, j-1);
+                uchar p9 = img.at&lt;uchar&gt;(i-1, j-1);
+
+                int A  = (p2 == 0 &amp;&amp; p3 == 1) + (p3 == 0 &amp;&amp; p4 == 1) +
+                         (p4 == 0 &amp;&amp; p5 == 1) + (p5 == 0 &amp;&amp; p6 == 1) +
+                         (p6 == 0 &amp;&amp; p7 == 1) + (p7 == 0 &amp;&amp; p8 == 1) +
+                         (p8 == 0 &amp;&amp; p9 == 1) + (p9 == 0 &amp;&amp; p2 == 1);
+                int B  = p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9;
+                int m1 = iter == 0 ? (p2 * p4 * p6) : (p2 * p4 * p8);
+                int m2 = iter == 0 ? (p4 * p6 * p8) : (p2 * p6 * p8);
+
+                if (A == 1 &amp;&amp; (B &gt;= 2 &amp;&amp; B &lt;= 6) &amp;&amp; m1 == 0 &amp;&amp; m2 == 0)
+                    marker.at&lt;uchar&gt;(i,j) = 1;
+            }
+        }
+    }
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>非常之简洁啊，简洁的没有朋友，也没有效率的。 这样的代码其实只适合于新手学习算法的原理。无法用于实际的项目的。</p>
+
+<p>可以明显的看出，A\B\m1\m2的判断并不要放在一起，而是可以分开，分开的话在很多的情况下后续的计算就可以不用做了，要知道，这是一个迭代的算法，而且通常要迭代几百次，因此，每一个迭代里能少一次计算量，整体下来的时间是非常可观的。</p>
+
+<p><strong>二、稍微改进版本</strong></p>
+
+<p>我们稍微做一个脱离Opencv版本的代码版本：</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int IM_Thinning_Zhangsuen_PureC(unsigned char *Src, unsigned char *Dest, int Width, int Height, int Stride)
+{
+    int Channel = Stride / Width;
+    if ((Src == NULL) || (Dest == NULL))                return IM_STATUS_NULLREFRENCE;
+    if ((Width &lt;= 0) || (Height &lt;= 0))                    return IM_STATUS_INVALIDPARAMETER;
+    if (Channel != 1)                                    return IM_STATUS_INVALIDPARAMETER;
+    int Status = IM_STATUS_OK;
+    const int MaxIter = 2000;
+
+    unsigned char *Clone = (unsigned char *)calloc((Height + 2) * (Width + 2), sizeof(unsigned char));
+    unsigned short *IndexX = (unsigned short *)malloc(Width * Height / 4 * sizeof(unsigned short));
+    unsigned short *IndexY = (unsigned short *)malloc(Width * Height / 4 * sizeof(unsigned short));
+    if ((Clone == NULL) || (IndexX == NULL) || (IndexY == NULL))
+    {
+        Status = IM_STATUS_OUTOFMEMORY;
+        goto FreeMemory;
+    }
+
+    for (int Y = 0; Y &lt; Height; Y++)
+    {
+        unsigned char *LinePS = Src + Y * Stride;
+        unsigned char *LinePD = Clone + (Y + 1) * (Width + 2) + 1;
+        for (int X = 0; X &lt; Width; X++)
+        {
+            LinePD[X] = LinePS[X] &amp; 1;        //    全部量化为0和1两个数值
+        }
+    }
+    int Iter = 0;
+    while (true)
+    {
+        int Amount = 0;
+        for (int Y = 0; Y &lt; Height; Y++)
+        {
+            unsigned char *LinePF = Clone + Y * (Width + 2) + 1;
+            unsigned char *LinePS = Clone + (Y + 1) * (Width + 2) + 1;
+            unsigned char *LinePT = Clone + (Y + 2) * (Width + 2) + 1;
+            for (int X = 0; X &lt; Width; X++)
+            {
+                int P1 = LinePS[X];
+                if (P1 == 0)    continue;            
+                // P9 P2 P3
+                // P8 P1 P4
+                // P7 P6 P5
+                //
+                //int P9 = LinePF[X - 1];
+                //int P2 = LinePF[X];
+                //int P3 = LinePF[X + 1];
+                //int P8 = LinePS[X - 1];
+                //int P4 = LinePS[X + 1];
+                //int P7 = LinePT[X - 1];                    
+                //int P6 = LinePT[X];
+                //int P5 = LinePT[X + 1];
+                //int Sum = P2 + P3 + P4 + P5 + P6 + P7 + P8 + P9;
+                //if ((Sum &lt; 2) || (Sum &gt; 6)) continue;                            
+
+                int P2 = LinePF[X];
+                int P8 = LinePS[X - 1];
+                int P4 = LinePS[X + 1];            
+                int P6 = LinePT[X];
+                int Sum = P2 + P8 + P4 + P6;
+                if (Sum == 4) continue;                             
+                int P3 = LinePF[X + 1];
+                int P9 = LinePF[X - 1];
+                int P5 = LinePT[X + 1];
+                int P7 = LinePT[X - 1];                    
+                Sum += P3 + P5 + P7 + P9;
+                if (Sum &lt; 2) continue;                             
+
+                int Count = 0;
+                
+                if ((P2 == 0) &amp;&amp; (P3 == 1))        Count++;
+                if ((P3 == 0) &amp;&amp; (P4 == 1))        Count++;
+                if ((P4 == 0) &amp;&amp; (P5 == 1))        Count++;
+                if ((P5 == 0) &amp;&amp; (P6 == 1))        Count++;
+                if ((P6 == 0) &amp;&amp; (P7 == 1))        Count++;
+                if ((P7 == 0) &amp;&amp; (P8 == 1))        Count++;
+                if ((P8 == 0) &amp;&amp; (P9 == 1))        Count++;
+                if ((P9 == 0) &amp;&amp; (P2 == 1))        Count++;
+
+                if ((Count == 1) &amp;&amp; ((P2 &amp; P4 &amp; P6) == 0) &amp;&amp; ((P4 &amp; P6 &amp; P8) == 0))
+                {
+                    IndexX[Amount] = X;
+                    IndexY[Amount] = Y;
+                    Amount++;
+                }
+            }
+        }
+
+        if (Amount == 0) break;
+        for (int Y = 0; Y &lt; Amount; Y++)
+        {
+            Clone[(IndexY[Y] + 1) * (Width + 2) + IndexX[Y] + 1] = 0;
+        }
+   
+        Amount = 0;
+        for (int Y = 0; Y &lt; Height; Y++)
+        {
+        　　//　　后续的第二次循环，仅仅是几个变量判断不一样，自行添加
+        }
+        if (Amount == 0)    break;
+        for (int Y = 0; Y &lt; Amount; Y++)
+        {
+            Clone[(IndexY[Y] + 1) * (Width + 2) + IndexX[Y] + 1] = 0;
+        }
+        Iter++;
+        if (Iter &gt;= MaxIter)    break;
+    }
+    for (int Y = 0; Y &lt; Height; Y++)
+    {
+        unsigned char *LinePD = Dest + Y * Stride;
+        unsigned char *LinePS = Clone + (Y + 1) * (Width + 2) + 1;
+
+        for (int X = 0; X &lt; Width; X++)
+        {
+            LinePD[X] = LinePS[X] == 1 ? 255 : 0;
+        }
+    }
+FreeMemory:
+    if (Clone != NULL)         free(Clone);
+    if (IndexX != NULL)        free(IndexX);
+    if (IndexY != NULL)        free(IndexY);
+    return Status;
+}
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>几个方面的改进和改动：</p>
+
+<p>1、使用了一个扩展边界的图像（高度和宽度在四周各扩散一个像素，类似于哨兵边界），用于减少每次取3*3领域时的边界判断。这个虽然占用了内存，但是可以很大的提高速度。</p>
+
+<p>2、把A1\B\M的判断分开写，这样可以让有些循环提前退出，提高速度。</p>
+
+<p>3、没有使用Vector，直接使用数组保存哪些需要改变值的位置（因为计算量小，对速度基本没有影响）。</p>
+
+<p>4、对B的判断分了2步走，可以稍微提高下速度。</p>
+
+<p>我们选择下面这个测试图：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/349293/202205/349293-20220527123524911-1588556297.png" alt="" />  <img src="https://img2022.cnblogs.com/blog/349293/202205/349293-20220527123549208-1554195698.png" alt="" /></p>
+
+<p>一副1024*1024大小的测试图，在我本机上上述测试代码的平均耗时大约是180ms，这个速度谈不上快。</p>
+
+<p><strong>三、再次改进版本</strong></p>
+
+<p>在我们进行SIMD优化前，我们还尝试了从算法层面上的另外一种优化。</p>
+
+<p>我们知道，在细化的算法中，本身已经是背景的像素是不要参与计算的，也就是上述代码中if (P1 == 0) continue; 的含义，那么如果没在迭代前，就算好了哪些部位不要计算，是不是迭代后就可以直接计算那些需要计算部分呢，这样就可以少了很多判断，虽然只是一个判断，但是在全图里如果有50%是背景，那就意味着要进行W*H/2判断的，再加上这个是在迭代里进行判断，计算量也是相当可观的。</p>
+
+<p>这个事先计算好哪些是前景的工作，针对二值图像，其实就是类似于传统的RLE行程编码，我们计算出每行前景的起点终点，等等。这个算法大家自行去研究。</p>
+
+<p>如果在每次迭代前都进行这个RLE行程编码，那也会带来新的问题，因为行程编码也是全图处理，也是一个需要时间的工作，那这样后续带来的速度优化反而会被行程编码给抵消甚至导致减速。但是，如果只进行迭代前的一次编码，随着迭代的进行，更多的像素被判定为背景，之前计算的行程编码里已经有很多是不需要计算的了， 为了解决这个矛盾，一个建议的处理方法就是，每个若干次迭代，更新下行程编码的结果，比如20次或者50次，这样的话，即不会因为行程编码的耗时影响整体速度，又在一定程度上逐次的减少了计算量。</p>
+
+<p>相关代码如下所示：</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>int IM_Thinning_Zhangsuen_PureC_Opt(unsigned char *Src, unsigned char *Dest, int Width, int Height, int Stride)
+{
+    int Channel = Stride / Width;
+    if ((Src == NULL) || (Dest == NULL))                return IM_STATUS_NULLREFRENCE;
+    if ((Width &lt;= 0) || (Height &lt;= 0))                    return IM_STATUS_INVALIDPARAMETER;
+    if (Channel != 1)                                     return IM_STATUS_INVALIDPARAMETER;
+    int Status = IM_STATUS_OK;
+    const int MaxIter = 2000;
+
+    unsigned char *Clone = (unsigned char *)calloc((Height + 2) * (Width + 2), sizeof(unsigned char));
+    unsigned short *IndexX = (unsigned short *)malloc(Width * Height / 4 * sizeof(unsigned short));
+    unsigned short *IndexY = (unsigned short *)malloc(Width * Height / 4 * sizeof(unsigned short));
+    RLE_Line *RL_H = (RLE_Line *)malloc((Height + 2) * sizeof(RLE_Line));
+
+    if ((Clone == NULL) || (IndexX == NULL) || (IndexY == NULL) || (RL_H == NULL))
+    {
+        Status = IM_STATUS_OUTOFMEMORY;
+        goto FreeMemory;
+    }
+
+    for (int Y = 0; Y &lt; Height; Y++)
+    {
+        unsigned char *LinePS = Src + Y * Stride;
+        unsigned char *LinePD = Clone + (Y + 1) * (Width + 2) + 1;
+        for (int X = 0; X &lt; Width; X++)
+        {
+            LinePD[X] = LinePS[X] &amp; 1;
+        }
+    }
+    Status = IM_GetMaskRLE_Hori(Clone, Width + 2, Height + 2, Width + 2, RL_H);
+    if (Status != IM_STATUS_OK)    goto FreeMemory;
+    int Iter = 0;
+    while (true)
+    {
+        if (Iter % 50 == 0)    //    每迭代50次更细一下
+        {
+            for (int Z = 0; Z &lt; Height + 2; Z++)
+            {
+                if ((RL_H[Z].Amount != 0) &amp;&amp; (RL_H[Z].SE != NULL))    free(RL_H[Z].SE);
+            }
+            Status = IM_GetMaskRLE_Hori(Clone, Width + 2, Height + 2, Width + 2, RL_H);
+        }
+        int Amount = 0;
+        for (int Y = 0; Y &lt; Height; Y++)
+        {
+            unsigned char *LinePF = Clone + Y * (Width + 2) + 1;
+            unsigned char *LinePS = Clone + (Y + 1) * (Width + 2) + 1;
+            unsigned char *LinePT = Clone + (Y + 2) * (Width + 2) + 1;
+            for (int K = 0; K &lt; RL_H[Y + 1].Amount; K++)
+            {
+                for (int X = RL_H[Y + 1].SE[K].Start - 1 ; X &lt;= RL_H[Y + 1].SE[K].End - 1; X++)
+                {
+                    int P1 = LinePS[X];
+                    if (P1 == 0)    continue;
+                    // P9 P2 P3
+                    // P8 P1 P4
+                    // P7 P6 P5                          // 条件3：至少有两个是前景点
+
+                    int P2 = LinePF[X];
+                    int P8 = LinePS[X - 1];
+                    int P4 = LinePS[X + 1];
+                    int P6 = LinePT[X];
+                    int Sum = P2 + P8 + P4 + P6;
+                    if (Sum == 4) continue;                             // 条件2： P1,P3,P5,P7不全部为前景点
+                    int P3 = LinePF[X + 1];
+                    int P9 = LinePF[X - 1];
+                    int P5 = LinePT[X + 1];
+                    int P7 = LinePT[X - 1];                    // 以方便计算8连通联结数。
+                    Sum += P3 + P5 + P7 + P9;
+                    if (Sum &lt; 2) continue;                              // 条件3：至少有两个是前景点
+
+                    int Count = 0;
+
+                    if ((P2 == 0) &amp;&amp; (P3 == 1))        Count++;
+                    if ((P3 == 0) &amp;&amp; (P4 == 1))        Count++;
+                    if ((P4 == 0) &amp;&amp; (P5 == 1))        Count++;
+                    if ((P5 == 0) &amp;&amp; (P6 == 1))        Count++;
+                    if ((P6 == 0) &amp;&amp; (P7 == 1))        Count++;
+                    if ((P7 == 0) &amp;&amp; (P8 == 1))        Count++;
+                    if ((P8 == 0) &amp;&amp; (P9 == 1))        Count++;
+                    if ((P9 == 0) &amp;&amp; (P2 == 1))        Count++;
+
+                    if ((Count == 1) &amp;&amp; ((P2 &amp; P4 &amp; P6) == 0) &amp;&amp; ((P4 &amp; P6 &amp; P8) == 0))
+                    {
+                        IndexX[Amount] = X;
+                        IndexY[Amount] = Y;
+                        Amount++;
+                    }
+                }
+            }
+        }
+        if (Amount == 0) break;
+        for (int Y = 0; Y &lt; Amount; Y++)
+        {
+            Clone[(IndexY[Y] + 1) * (Width + 2) + IndexX[Y] + 1] = 0;
+        }
+        Amount = 0;
+        for (int Y = 0; Y &lt; Height; Y++)
+        {
+           　//　后续的第二次循环，自行添加
+        }
+        if (Amount == 0) break;
+        for (int Y = 0; Y &lt; Amount; Y++)
+        {
+            Clone[(IndexY[Y] + 1) * (Width + 2) + IndexX[Y] + 1] = 0;
+        }
+        Iter++;
+        if (Iter &gt;= MaxIter)    break;
+    }
+    for (int Y = 0; Y &lt; Height; Y++)
+    {
+        unsigned char *LinePD = Dest + Y * Stride;
+        unsigned char *LinePS = Clone + (Y + 1) * (Width + 2) + 1;
+
+        for (int X = 0; X &lt; Width; X++)
+        {
+            LinePD[X] = LinePS[X] == 1 ? 255 : 0;
+        }
+    }
+FreeMemory:
+    if (Clone != NULL)        free(Clone);
+    if (IndexX != NULL)        free(IndexX);
+    if (IndexY != NULL)        free(IndexY);
+    if (RL_H != NULL)
+    {
+        for (int Z = 0; Z &lt; Height + 2; Z++)
+        {
+            if ((RL_H[Z].Amount != 0) &amp;&amp; (RL_H[Z].SE != NULL))    free(RL_H[Z].SE);
+        }
+        free(RL_H);
+    }
+    return Status;
+}
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>同样的图像，速度可以提高到55ms,有将近3倍额速度提高。</p>
+
+<p>不过这里的提速比例不是很固定的，对于不同的类型的图像结果不禁相同，对于那些有大块连续的二值图，提速就越明显，而对于毫无规律的随机图，可能就不是很明显了。</p>
+
+<p><strong>四、SSE改进版本</strong></p>
+
+<p>上述改进版本还可以通过SIMD指令进一步优化，类似于我在Sobel优化里使用的方法，我们一次性加载16个字节以及他周边的8个位置连续的16个字节，但是核心的技巧在于如何实现那些分支预测，特别是continue。</p>
+
+<p>因为一次性加载了16个像素，在利用了行程编码后，案例说这16个字节都是需要进行处理的目标，但是由于前述不是每次迭代都要更新行程编码的缘故，总会有部分是无效像素，也有可能是全部的无效像素，因此，我们处理的代码中就可能同时存在前景和背景，但是对于背景我们是不需要处理的，而前景像素也有可能在中间条件判断时退出循环，但是对于SIMD质量来说，他无法局部退出，要么大家一起计算，要么大家一起退出，因此，我们必须将须有的计算都完成，而不能提前退出，但是有一点特殊的就是，如果所有的像素都已经满足了某个提提前退出的条件，那也是可以退出的。</p>
+
+<p>因为我们知道，在每次迭代时，对于前景中哪些大块的范围，其中间的区域都是不满足要改变的条件的，也就是说在上面的 if (Sum == 4) continue;     if (Sum &lt; 2) continue;  就满足了退出条件，因此利用SIMD一次性就可以做16次判断和计算。这样也可以提高速度。</p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    __m128i P1 = _mm_loadu_si128((__m128i *)(LinePS + X));
+    __m128i FlagA = _mm_cmpeq_epi8(P1, _mm_setzero_si128());            //    全部为0，退出
+    if (_mm_movemask_epi8(FlagA) == 65535)    continue;
+
+    __m128i Flag = _mm_andnot_si128(FlagA, _mm_set1_epi8(255));            //    记录下那些是不为0的
+
+    __m128i P2 = _mm_loadu_si128((__m128i *)(LinePF + X + 0));
+    __m128i P8 = _mm_loadu_si128((__m128i *)(LinePS + X - 1));
+    __m128i P4 = _mm_loadu_si128((__m128i *)(LinePS + X + 1));
+    __m128i P6 = _mm_loadu_si128((__m128i *)(LinePT + X + 0));
+
+    __m128i Sum = _mm_add_epi8(_mm_add_epi8(P2, P4), _mm_add_epi8(P6, P8));
+    __m128i FlagB = _mm_cmpeq_epi8(Sum, _mm_set1_epi8(4));
+    if (_mm_movemask_epi8(FlagB) == 65535)    continue;                    //    全部都等于4，退出
+    Flag = _mm_andnot_si128(FlagB, Flag);                                //    记录下那些不为0，且Sum不等于4的
+
+    __m128i P9 = _mm_loadu_si128((__m128i *)(LinePF + X - 1));
+    __m128i P3 = _mm_loadu_si128((__m128i *)(LinePF + X + 1));
+    __m128i P7 = _mm_loadu_si128((__m128i *)(LinePT + X - 1));
+    __m128i P5 = _mm_loadu_si128((__m128i *)(LinePT + X + 1));
+
+    Sum = _mm_add_epi8(Sum, _mm_add_epi8(_mm_add_epi8(P9, P3), _mm_add_epi8(P7, P5)));
+    __m128i FlagC = _mm_cmplt_epi8(Sum, _mm_set1_epi8(2));
+    if (_mm_movemask_epi8(FlagC) == 65535)    continue;                    //    全部都小于2，退出
+    Flag = _mm_andnot_si128(FlagC, Flag);                                //    记录下那些不为0，且Sum不等于4的，后续的Sum小于2的
+
+    __m128i Count = _mm_setzero_si128();
+
+    Count = _mm_sub_epi8(Count, _mm_and_si128(_mm_cmpeq_epi8(P2, Zero), _mm_cmpeq_epi8(P3, One)));
+    Count = _mm_sub_epi8(Count, _mm_and_si128(_mm_cmpeq_epi8(P3, Zero), _mm_cmpeq_epi8(P4, One)));
+    Count = _mm_sub_epi8(Count, _mm_and_si128(_mm_cmpeq_epi8(P4, Zero), _mm_cmpeq_epi8(P5, One)));
+    Count = _mm_sub_epi8(Count, _mm_and_si128(_mm_cmpeq_epi8(P5, Zero), _mm_cmpeq_epi8(P6, One)));
+    Count = _mm_sub_epi8(Count, _mm_and_si128(_mm_cmpeq_epi8(P6, Zero), _mm_cmpeq_epi8(P7, One)));
+    Count = _mm_sub_epi8(Count, _mm_and_si128(_mm_cmpeq_epi8(P7, Zero), _mm_cmpeq_epi8(P8, One)));
+    Count = _mm_sub_epi8(Count, _mm_and_si128(_mm_cmpeq_epi8(P8, Zero), _mm_cmpeq_epi8(P9, One)));
+    Count = _mm_sub_epi8(Count, _mm_and_si128(_mm_cmpeq_epi8(P9, Zero), _mm_cmpeq_epi8(P2, One)));
+
+    __m128i P246 = _mm_and_si128(_mm_and_si128(P2, P4), P6);
+    __m128i P468 = _mm_and_si128(_mm_and_si128(P4, P6), P8);
+
+    __m128i FlagD = _mm_and_si128(_mm_cmpeq_epi8(Count, One), _mm_and_si128(_mm_cmpeq_epi8(P246, Zero), _mm_cmpeq_epi8(P468, Zero)));
+    if (_mm_movemask_epi8(FlagD) == 0)    continue;
+
+    Flag = _mm_and_si128(FlagD, Flag);
+
+    //    用Flag.m128i_u8或者写入到一个临时数组里速度没啥区别
+    if (_mm_extract_epi8(Flag, 0) == 255)
+    {
+        IndexX[Amount] = X + 0;
+        IndexY[Amount] = Y;
+        Amount++;
+    }
+
+    if (_mm_extract_epi8(Flag, 1) == 255)
+    {
+        IndexX[Amount] = X + 1;
+        IndexY[Amount] = Y;
+        Amount++;
+    }　　
+
+      /////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p>上面的细节有几个地方值的学习。</p>
+
+<p>第一、_mm_movemask_epi8的使用，这个我在很多场合下都提过，可用于批量判断一个SIMD寄存器里的状态。本例只用他做判断是否SSE寄存器都符合某一个指标。</p>
+
+<p>第二、Flag 变量的作用，Flag用于来记录下满足所有条件的像素，这样才能知道经过多个判断后最终还剩下那些像素需要真正的处理。其中_mm_andnot_si128也是一个灵活的应用。</p>
+
+<p>第三、if ((P2 == 0) &amp;&amp; (P3 == 1)) Count++;   这样的语句如果直接翻译到SSE代码，是比较麻烦的（可以使用_mm_blendv_si128），我这里巧妙的使用了u8和i8数据类型的特点，u8的255就对应了i8的-1，0还是对应0，然后加法就可以变为减法了。</p>
+
+<p>第四、填写IndeX和IndexY的过程确实是无法用SIMD指令实现的，这里只能去拆解SIMD变量，这个有几个方法，一个就是用想本例中直接使用_mm_extract_epi8，另外一种方式可以是使用SIMD变量的m128i_u8成员，但是这个有可能对性能有所影响。</p>
+
+<p>使用SIMD优化后，上述相同的图片大概耗时在28ms左右，速度有进一步的提高。</p>
+
+<p><strong>五、其他说明</strong></p>
+
+<p>虽然较原始版本速度有较大的提高，但是和商业软件相比，还是有很大的差距，人家halcon这个图用时5ms，直接悲剧。</p>
+
+<p>至少目前从公开的资料中还没有看到halcon所用的算法的为什么这么快，待有缘了在研究这个算法吧。</p>
+
+<p>另外，halcon的计算结果和opencv的GulHALL的结果比较类似，但是那个算法要比Zhang还要慢。</p>
+
+<p>当然，CV自带的这两个算法是可以并行的，当然这里的必行是指迭代内部的并行，而不是迭代之间的并行，但是由于每次迭代的计算量相对于来说比较小，这种并行对CPU级别的线程来说是不太划算的，但是GPU级别的还是很友好的。不过HALONC这个算法可没有用GPU哦。</p>
+
+<p>测试Demo: <a href="https://files.cnblogs.com/files/Imageshop/Thinning.rar?t=1653635093">Zhang 以及  Guo 图像细化</a></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/349293/202205/349293-20220527150400405-1943762701.png" alt="" /></p>
+
+<p><strong>如果想时刻关注本人的最新文章，也可关注公众号或者添加本人微信：  laviewpbt</strong></p>
+
+<p><img src="https://img2020.cnblogs.com/blog/349293/202104/349293-20210407161055729-1331889910.jpg" alt="" /></p>
+<blockquote>
+  <p>作者:Imageshop<br />
+原文:https://www.cnblogs.com/Imageshop/p/16317205.html</p>
+</blockquote>]]></content><author><name></name></author></entry><entry><title type="html">并发编程基础底层原理学习（三）</title><link href="/cnblog/2022/06/01/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86%E5%AD%A6%E4%B9%A0%E4%B8%89.html" rel="alternate" type="text/html" title="并发编程基础底层原理学习（三）" /><published>2022-06-01T11:45:55+00:00</published><updated>2022-06-01T11:45:55+00:00</updated><id>/cnblog/2022/06/01/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86%E5%AD%A6%E4%B9%A0%E4%B8%89</id><content type="html" xml:base="/cnblog/2022/06/01/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B%E5%9F%BA%E7%A1%80%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86%E5%AD%A6%E4%B9%A0%E4%B8%89.html"><![CDATA[<h5 id="线程通信与线程同步">线程通信与线程同步</h5>
+
+<p>​	在并发编程中需要解决两个关键问题：1.线程之间如何通信 2.线程之间如何同步。线程通信是指线程之间以何种机制来交换消息。线程之间通信机制有两种：<strong>共享内存和消息传递</strong>。在共享内存的并发模型里，线程之间共享程序的公共状态，通过写-读内存中的公共状态进行通信。而在消息传递的并发模型里，线程之间没有公共状态，线程之间必须通过发送消息进行通信。</p>
+
+<p>​	线程同步是指程序中用于控制不同线程间操作发生的相对顺序的机制。在共享内存并发模型里，程序员必须显式指定某个方法或某段嗲吗需要在线程之间互斥执行。而在消息传递的并发模型里，由于消息的发送必须在消息的接收之前，因此同步是隐式进行的。</p>
+
+<h5 id="java内存模型堆和栈">Java内存模型–堆和栈</h5>
+
+<p>​	JVM内部使用的Java内存模型将内存划分为栈和堆，如下图所示。</p>
+
+<p><img src="https://gxu-yws.oss-cn-shanghai.aliyuncs.com/images/image-20220530232736296.png" alt="image-20220530232736296" /></p>
+
+<p>Java 虚拟机中运行的每个线程都有自己的线程栈。线程栈包含有关线程调用了哪些方法以到达当前执行点的信息。在Java中所有实例域，静态域和数组元素都存储在堆内存中，堆内存在线程之间共享。局部变量，方法定义参数和异常处理器参数不会在线程之间共享，它们不会出现线程安全问题。线程堆栈还包含正在执行的每个方法的所有局部变量（调用堆栈上的所有方法）。一个线程只能访问它自己的线程堆栈。一个线程创建的局部变量对于创建它的线程之外的所有其他线程都是不可见的。即使两个线程正在执行完全相同的代码，这两个线程仍将在各自的线程堆栈中创建该代码的局部变量。因此，每个线程都有自己的每个局部变量版本。所有原始类型的局部变量（boolean、byte、short、char、int、long、float、double）都完全存储在线程堆栈中，因此对其他线程不可见。</p>
+
+<h5 id="java内存模型抽象结构">Java内存模型抽象结构</h5>
+
+<p>​	Java线程之间的通信由Java内存模型（简称JMM）控制，JMM决定了一个线程对共享变量的写入何时对另一个线程可见。JMM定义了线程和主内存之间的抽象关系：线程之间的共享变量存储在<strong>主内存</strong>中，每个线程都有一个私有的<strong>本地内存</strong>，本地内存中存储了该线程以读/写共享变量的副本。本地内存是JMM的一个抽象概念，并不真实存在。</p>
+
+<p><img src="https://gxu-yws.oss-cn-shanghai.aliyuncs.com/images/image-20220531000921481.png" alt="image-20220531000921481" /></p>
+
+<p>从上图来看，线程 A 与线程 B 之间如要通信的话，必须要经历下面 2 个步骤：</p>
+
+<ul>
+  <li>首先，线程 A 把本地内存 A 中更新过的共享变量刷新到主内存中去。</li>
+  <li>然后，线程 B 到主内存中去读取线程 A 之前已更新过的共享变量。</li>
+</ul>
+
+<p><img src="https://gxu-yws.oss-cn-shanghai.aliyuncs.com/images/image-20220531170722349.png" alt="image-20220531170722349" /></p>
+
+<p>如上图所示，本地内存 A 和 B 有主内存中共享变量 x 的副本。假设初始时，这三个内存中的 x 值都为 0。线程 A 在执行时，把更新后的 x 值（假设值为 1）临时存放在自己的本地内存 A 中。当线程 A 和线程 B 需要通信时，线程 A 首先会把自己本地内存中修改后的 x 值刷新到主内存中，此时主内存中的 x 值变为了 1。随后，线程 B 到主内存中去读取线程 A 更新后的 x 值，此时线程 B 的本地内存的 x 值也变为了 1。</p>
+
+<p>从整体来看，这两个步骤实质上是线程 A 在向线程 B 发送消息，而且这个通信过程必须要经过主内存。JMM 通过控制主内存与每个线程的本地内存之间的交互，来为 java 程序员提供内存可见性保证。</p>
+<blockquote>
+  <p>作者:Sierra、<br />
+原文:https://www.cnblogs.com/crstly/p/16331247.html</p>
+</blockquote>]]></content><author><name></name></author><category term="cnblog" /><summary type="html"><![CDATA[线程通信与线程同步 ​ 在并发编程中需要解决两个关键问题：1.线程之间如何通信 2.线程之间如何同步。线程通信是指线程之间以何种机制来交换消息。线程之间通信机制有两种：共享内存和消息传递。在共享内存的并发模型里，线程之间共享程序的公共状态，通过写-读内存中的公共状态进行通信。而在消息传递的并发模型里，线程之间没有公共状态，线程之间必须通过发送消息进行通信。 ​ 线程同步是指程序中用于控制不同线程间操作发生的相对顺序的机制。在共享内存并发模型里，程序员必须显式指定某个方法或某段嗲吗需要在线程之间互斥执行。而在消息传递的并发模型里，由于消息的发送必须在消息的接收之前，因此同步是隐式进行的。 Java内存模型–堆和栈 ​ JVM内部使用的Java内存模型将内存划分为栈和堆，如下图所示。 Java 虚拟机中运行的每个线程都有自己的线程栈。线程栈包含有关线程调用了哪些方法以到达当前执行点的信息。在Java中所有实例域，静态域和数组元素都存储在堆内存中，堆内存在线程之间共享。局部变量，方法定义参数和异常处理器参数不会在线程之间共享，它们不会出现线程安全问题。线程堆栈还包含正在执行的每个方法的所有局部变量（调用堆栈上的所有方法）。一个线程只能访问它自己的线程堆栈。一个线程创建的局部变量对于创建它的线程之外的所有其他线程都是不可见的。即使两个线程正在执行完全相同的代码，这两个线程仍将在各自的线程堆栈中创建该代码的局部变量。因此，每个线程都有自己的每个局部变量版本。所有原始类型的局部变量（boolean、byte、short、char、int、long、float、double）都完全存储在线程堆栈中，因此对其他线程不可见。 Java内存模型抽象结构 ​ Java线程之间的通信由Java内存模型（简称JMM）控制，JMM决定了一个线程对共享变量的写入何时对另一个线程可见。JMM定义了线程和主内存之间的抽象关系：线程之间的共享变量存储在主内存中，每个线程都有一个私有的本地内存，本地内存中存储了该线程以读/写共享变量的副本。本地内存是JMM的一个抽象概念，并不真实存在。 从上图来看，线程 A 与线程 B 之间如要通信的话，必须要经历下面 2 个步骤： 首先，线程 A 把本地内存 A 中更新过的共享变量刷新到主内存中去。 然后，线程 B 到主内存中去读取线程 A 之前已更新过的共享变量。]]></summary></entry><entry><title type="html">聊聊 C# 中的多态底层 (虚方法调用) 是怎么玩的</title><link href="/cnblog/2022/06/01/%E8%81%8A%E8%81%8AC%E4%B8%AD%E7%9A%84%E5%A4%9A%E6%80%81%E5%BA%95%E5%B1%82%E8%99%9A%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8%E6%98%AF%E6%80%8E%E4%B9%88%E7%8E%A9%E7%9A%84.html" rel="alternate" type="text/html" title="聊聊 C# 中的多态底层 (虚方法调用) 是怎么玩的" /><published>2022-06-01T11:45:54+00:00</published><updated>2022-06-01T11:45:54+00:00</updated><id>/cnblog/2022/06/01/%E8%81%8A%E8%81%8AC%E4%B8%AD%E7%9A%84%E5%A4%9A%E6%80%81%E5%BA%95%E5%B1%82%E8%99%9A%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8%E6%98%AF%E6%80%8E%E4%B9%88%E7%8E%A9%E7%9A%84</id><content type="html" xml:base="/cnblog/2022/06/01/%E8%81%8A%E8%81%8AC%E4%B8%AD%E7%9A%84%E5%A4%9A%E6%80%81%E5%BA%95%E5%B1%82%E8%99%9A%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8%E6%98%AF%E6%80%8E%E4%B9%88%E7%8E%A9%E7%9A%84.html"><![CDATA[<p>最近在看 <code class="language-plaintext highlighter-rouge">C++</code> 的虚方法调用实现原理，大概就是说在 class 的首位置存放着一个指向 <code class="language-plaintext highlighter-rouge">vtable array</code> 指针数组 的指针，而 <code class="language-plaintext highlighter-rouge">vtable array</code> 中的每一个指针元素指向的就是各自的 <code class="language-plaintext highlighter-rouge">虚方法</code>，实现方式很有意思，哈哈，现在我很好奇 C# 中如何实现的。</p>
+
+<h2 id="一-c-中的多态玩法">一： C# 中的多态玩法</h2>
+
+<h3 id="1-一个简单的-c-例子">1. 一个简单的 C# 例子</h3>
+
+<p>为了方便说明，我就定义一个 Person 类和一个 Chinese 类，详细代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>    internal class Program
+    {
+        static void Main(string[] args)
+        {
+            Person person = new Chinese();
+
+            person.SayHello();
+
+            Console.ReadLine();
+        }
+    }
+
+    public class Person
+    {
+        public virtual void SayHello()
+        {
+            Console.WriteLine("sayhello");
+        }
+    }
+
+    public class Chinese: Person
+    {
+        public override void SayHello()
+        {
+            Console.WriteLine("chinese");
+        }
+    }
+}
+</code></pre></div></div>
+
+<h3 id="2-汇编代码分析">2. 汇编代码分析</h3>
+
+<p>接下来用 windbg 在 <code class="language-plaintext highlighter-rouge">person.SayHello()</code> 处下一个断点，观察一下它的反汇编代码：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>D:\net6\ConsoleApplication2\ConsoleApp1\Program.cs @ 9:
+05cf21b3 b93c5dce05      mov     ecx,5CE5D3Ch (MT: ConsoleApp1.Chinese)
+05cf21b8 e8030f89fa      call    005830c0 (JitHelp: CORINFO_HELP_NEWSFAST)
+05cf21bd 8945f4          mov     dword ptr [ebp-0Ch],eax
+05cf21c0 8b4df4          mov     ecx,dword ptr [ebp-0Ch]
+05cf21c3 e820fbffff      call    05cf1ce8 (ConsoleApp1.Chinese..ctor(), mdToken: 0600000A)
+05cf21c8 8b4df4          mov     ecx,dword ptr [ebp-0Ch]
+05cf21cb 894df8          mov     dword ptr [ebp-8],ecx
+
+D:\net6\ConsoleApplication2\ConsoleApp1\Program.cs @ 11:
+&gt;&gt;&gt; 05cf21ce 8b4df8          mov     ecx,dword ptr [ebp-8]
+05cf21d1 8b45f8          mov     eax,dword ptr [ebp-8]
+05cf21d4 8b00            mov     eax,dword ptr [eax]
+05cf21d6 8b4028          mov     eax,dword ptr [eax+28h]
+05cf21d9 ff5010          call    dword ptr [eax+10h]
+05cf21dc 90              nop
+</code></pre></div></div>
+
+<p>从汇编代码看，逻辑非常清晰，大体步骤如下：</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">eax,dword ptr [ebp-8]</code></li>
+</ol>
+
+<p>从栈上(ebp-8)处获取 person 在堆上的首地址，如果不相信的话，可以用 <code class="language-plaintext highlighter-rouge">!do 027ea88c</code> 试试看。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:000&gt; dp ebp-8 L1
+0057f300  027ea88c
+
+0:000&gt; !do 027ea88c
+Name:        ConsoleApp1.Chinese
+MethodTable: 05ce5d3c
+EEClass:     05cd3380
+Size:        12(0xc) bytes
+File:        D:\net6\ConsoleApplication2\ConsoleApp1\bin\x86\Debug\net6.0\ConsoleApp1.dll
+Fields:
+None
+</code></pre></div></div>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">eax,dword ptr [eax]</code></li>
+</ol>
+
+<p>如果大家了解 <code class="language-plaintext highlighter-rouge">实例</code> 在堆上的内存布局的话，应该知道，这个首地址存放的就是 <code class="language-plaintext highlighter-rouge">methodtable</code> 指针,我们可以用 <code class="language-plaintext highlighter-rouge">!dumpmt 05ce5d3c</code> 来验证下。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:000&gt; dp 027ea88c L1
+027ea88c  05ce5d3c
+
+0:000&gt; !dumpmt 05ce5d3c
+EEClass:         05cd3380
+Module:          05addb14
+Name:            ConsoleApp1.Chinese
+mdToken:         02000007
+File:            D:\net6\ConsoleApplication2\ConsoleApp1\bin\x86\Debug\net6.0\ConsoleApp1.dll
+BaseSize:        0xc
+ComponentSize:   0x0
+DynamicStatics:  false
+ContainsPointers false
+Slots in VTable: 6
+Number of IFaces in IFaceMap: 0
+</code></pre></div></div>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">eax,dword ptr [eax+28h]</code></li>
+</ol>
+
+<p>那这句话是什么意思呢？如果你了解 CoreCLR 的话，你应该知道 methedtable 是由一个 <code class="language-plaintext highlighter-rouge">class MethodTable</code> 类来承载的，所以它取了 methodtable 偏移 <code class="language-plaintext highlighter-rouge">0x28</code>  位置的一个字段，那这个偏移字段是什么呢？ 我们先用 <code class="language-plaintext highlighter-rouge">dt</code> 把 methodtable 结构给导出来。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:000&gt; dt 05ce5d3c MethodTable
+coreclr!MethodTable
+   =7ad96bc8 s_pMethodDataCache : 0x00639ec8 MethodDataCache
+   =7ad96bc4 s_fUseParentMethodData : 0n1
+   =7ad96bcc s_fUseMethodDataCache : 0n1
+   +0x000 m_dwFlags        : 0xc
+   +0x004 m_BaseSize       : 0x74088
+   +0x008 m_wFlags2        : 5
+   +0x00a m_wToken         : 0
+   +0x00c m_wNumVirtuals   : 0x5ccc
+   +0x00e m_wNumInterfaces : 0x5ce
+   +0x010 m_pParentMethodTable : IndirectPointer&lt;MethodTable *&gt;
+   +0x014 m_pLoaderModule  : PlainPointer&lt;Module *&gt;
+   +0x018 m_pWriteableData : PlainPointer&lt;MethodTableWriteableData *&gt;
+   +0x01c m_pEEClass       : PlainPointer&lt;EEClass *&gt;
+   +0x01c m_pCanonMT       : PlainPointer&lt;unsigned long&gt;
+   +0x020 m_pPerInstInfo   : PlainPointer&lt;PlainPointer&lt;Dictionary *&gt; *&gt;
+   +0x020 m_ElementTypeHnd : 0
+   +0x020 m_pMultipurposeSlot1 : 0
+   +0x024 m_pInterfaceMap  : PlainPointer&lt;InterfaceInfo_t *&gt;
+   +0x024 m_pMultipurposeSlot2 : 0x5ce5d68
+   =7ad04c78 c_DispatchMapSlotOffsets : [0]  " $ (System.Private.CoreLib.dll"
+   =7ad04c70 c_NonVirtualSlotsOffsets : [0]  " $ ($((, $ (System.Private.CoreLib.dll"
+   =7ad04c60 c_ModuleOverrideOffsets : [0]  " $ ($((,$((,(,,0 $ ($((, $ (System.Private.CoreLib.dll"
+   =7ad12838 c_OptionalMembersStartOffsets : [0]  "(((((((,(((,(,,0(((,(,,0(,,0,004"
+</code></pre></div></div>
+
+<p>从 methodtable 的布局图来看, <code class="language-plaintext highlighter-rouge">eax+28h</code> 是 <code class="language-plaintext highlighter-rouge">m_pMultipurposeSlot2</code> 结构的第二个字段了，因为第一个字段是 <code class="language-plaintext highlighter-rouge">虚方法表指针</code>，如果要验证的话，也很简单，用 <code class="language-plaintext highlighter-rouge">!dumpmt -md 05ce5d3c</code> 把所有的方法给导出来，然后结合 <code class="language-plaintext highlighter-rouge">dp 05ce5d3c</code> 看下 0x5ce5d68 之后是不是许多的方法。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:000&gt; !dumpmt -md 05ce5d3c
+EEClass:         05cd3380
+Module:          05addb14
+Name:            ConsoleApp1.Chinese
+mdToken:         02000007
+File:            D:\net6\ConsoleApplication2\ConsoleApp1\bin\x86\Debug\net6.0\ConsoleApp1.dll
+BaseSize:        0xc
+ComponentSize:   0x0
+DynamicStatics:  false
+ContainsPointers false
+Slots in VTable: 6
+Number of IFaces in IFaceMap: 0
+--------------------------------------
+MethodDesc Table
+   Entry MethodDe    JIT Name
+02610028 02605568   NONE System.Object.Finalize()
+02610030 02605574   NONE System.Object.ToString()
+02610038 02605580   NONE System.Object.Equals(System.Object)
+02610050 026055ac   NONE System.Object.GetHashCode()
+05CF1CE0 05ce5d24   NONE ConsoleApp1.Chinese.SayHello()
+05CF1CE8 05ce5d30    JIT ConsoleApp1.Chinese..ctor()
+0:000&gt; dp 05ce5d3c L10
+05ce5d3c  00000200 0000000c 00074088 00000005
+05ce5d4c  05ce5ccc 05addb14 05ce5d7c 05cd3380
+05ce5d5c  05cf1ce8 00000000 05ce5d68 02610028
+05ce5d6c  02610030 02610038 02610050 05cf1ce0
+</code></pre></div></div>
+
+<p>仔细看输出，上面的 <code class="language-plaintext highlighter-rouge">05ce5d68</code> 后面的 <code class="language-plaintext highlighter-rouge">02610028</code> 就是 <code class="language-plaintext highlighter-rouge">System.Object.Finalize()</code> 方法，<code class="language-plaintext highlighter-rouge">02610030</code> 对应着 <code class="language-plaintext highlighter-rouge">System.Object.ToString()</code> 方法。</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">call    dword ptr [eax+10h]</code></li>
+</ol>
+
+<p>有了前面的基础，这句话就好理解了，它是从 <code class="language-plaintext highlighter-rouge">m_pMultipurposeSlot2</code> 结构中找 <code class="language-plaintext highlighter-rouge">SayHello</code> 所在的单元指针位置，然后做 call 调用。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:000&gt; !U 05cf1ce0
+Unmanaged code
+05cf1ce0 e88f9dde74      call    coreclr!PrecodeFixupThunk (7aadba74)
+05cf1ce5 5e              pop     esi
+05cf1ce6 0001            add     byte ptr [ecx],al
+05cf1ce8 e913050000      jmp     05cf2200
+05cf1ced 5f              pop     edi
+05cf1cee 0300            add     eax,dword ptr [eax]
+05cf1cf0 245d            and     al,5Dh
+05cf1cf2 ce              into
+05cf1cf3 0500000000      add     eax,0
+05cf1cf8 0000            add     byte ptr [eax],al
+</code></pre></div></div>
+
+<p>从汇编看，它还是一段 <code class="language-plaintext highlighter-rouge">桩代码</code>，言外之意就是该方法没有被 JIT 编译，如果编译完了，这里的 <code class="language-plaintext highlighter-rouge">05CF1CE0 05ce5d24   NONE ConsoleApp1.Chinese.SayHello()</code>  的 Entry (05CF1CE0) 也会被同步修改，验证一下很简单，我们继续 go 代码让其编译完成，然后再 dumpmt 。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:008&gt; !dumpmt -md 05ce5d3c
+EEClass:         05cd3380
+Module:          05addb14
+Name:            ConsoleApp1.Chinese
+mdToken:         02000007
+File:            D:\net6\ConsoleApplication2\ConsoleApp1\bin\x86\Debug\net6.0\ConsoleApp1.dll
+BaseSize:        0xc
+ComponentSize:   0x0
+DynamicStatics:  false
+ContainsPointers false
+Slots in VTable: 6
+Number of IFaces in IFaceMap: 0
+--------------------------------------
+MethodDesc Table
+   Entry MethodDe    JIT Name
+02610028 02605568   NONE System.Object.Finalize()
+02610030 02605574   NONE System.Object.ToString()
+02610038 02605580   NONE System.Object.Equals(System.Object)
+02610050 026055ac   NONE System.Object.GetHashCode()
+05CF2270 05ce5d24    JIT ConsoleApp1.Chinese.SayHello()
+05CF1CE8 05ce5d30    JIT ConsoleApp1.Chinese..ctor()
+
+0:008&gt; dp 05ce5d3c L10
+05ce5d3c  00000200 0000000c 00074088 00000005
+05ce5d4c  05ce5ccc 05addb14 05ce5d7c 05cd3380
+05ce5d5c  05cf1ce8 00000000 05ce5d68 02610028
+05ce5d6c  02610030 02610038 02610050 05cf2270
+</code></pre></div></div>
+
+<p>此时可以看到它由 <code class="language-plaintext highlighter-rouge">05cf1ce0</code> 变成了 <code class="language-plaintext highlighter-rouge">05cf2270</code>， 这个就是 JIT 编译后的方法代码，我们用 !U 反编译下。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>0:008&gt; !U 05cf2270
+Normal JIT generated code
+ConsoleApp1.Chinese.SayHello()
+ilAddr is 05E720D5 pImport is 008F6E88
+Begin 05CF2270, size 27
+
+D:\net6\ConsoleApplication2\ConsoleApp1\Program.cs @ 28:
+&gt;&gt;&gt; 05cf2270 55              push    ebp
+05cf2271 8bec            mov     ebp,esp
+05cf2273 50              push    eax
+05cf2274 894dfc          mov     dword ptr [ebp-4],ecx
+05cf2277 833d74dcad0500  cmp     dword ptr ds:[5ADDC74h],0
+05cf227e 7405            je      05cf2285
+05cf2280 e8cb2bf174      call    coreclr!JIT_DbgIsJustMyCode (7ac04e50)
+05cf2285 90              nop
+
+D:\net6\ConsoleApplication2\ConsoleApp1\Program.cs @ 29:
+05cf2286 8b0d74207e04    mov     ecx,dword ptr ds:[47E2074h] ("chinese")
+05cf228c e8dffbffff      call    05cf1e70
+05cf2291 90              nop
+
+D:\net6\ConsoleApplication2\ConsoleApp1\Program.cs @ 30:
+05cf2292 90              nop
+05cf2293 8be5            mov     esp,ebp
+05cf2295 5d              pop     ebp
+05cf2296 c3              ret
+</code></pre></div></div>
+
+<p>终于这就是多态下的 <code class="language-plaintext highlighter-rouge">ConsoleApp1.Chinese.SayHello</code> 方法啦。</p>
+
+<h3 id="3-总结">3. 总结</h3>
+
+<p>本质上来说，CoreCLR 也是 C++ 写的，所以也逃不过用 <code class="language-plaintext highlighter-rouge">虚表</code> 来实现多态的玩法， 不过玩法也稍微复杂了一些，希望本篇对大家有帮助。</p>
+<blockquote>
+  <p>作者:一线码农<br />
+原文:https://www.cnblogs.com/huangxincheng/p/16333775.html</p>
+</blockquote>]]></content><author><name></name></author><category term="cnblog" /><summary type="html"><![CDATA[最近在看 C++ 的虚方法调用实现原理，大概就是说在 class 的首位置存放着一个指向 vtable array 指针数组 的指针，而 vtable array 中的每一个指针元素指向的就是各自的 虚方法，实现方式很有意思，哈哈，现在我很好奇 C# 中如何实现的。 一： C# 中的多态玩法 1. 一个简单的 C# 例子 为了方便说明，我就定义一个 Person 类和一个 Chinese 类，详细代码如下：]]></summary></entry><entry><title type="html">docker服务部署、迁移与备份、dockerfile、私有仓库</title><link href="/cnblog/2022/06/01/docker%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2%E8%BF%81%E7%A7%BB%E4%B8%8E%E5%A4%87%E4%BB%BDdockerfile%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93.html" rel="alternate" type="text/html" title="docker服务部署、迁移与备份、dockerfile、私有仓库" /><published>2022-06-01T11:45:52+00:00</published><updated>2022-06-01T11:45:52+00:00</updated><id>/cnblog/2022/06/01/docker%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2%E8%BF%81%E7%A7%BB%E4%B8%8E%E5%A4%87%E4%BB%BDdockerfile%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93</id><content type="html" xml:base="/cnblog/2022/06/01/docker%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2%E8%BF%81%E7%A7%BB%E4%B8%8E%E5%A4%87%E4%BB%BDdockerfile%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93.html"><![CDATA[<h1 id="今日内容概要">今日内容概要</h1>
+
+<ul>
+  <li>服务部署</li>
+  <li>迁移与备份</li>
+  <li>dockerfile</li>
+  <li>私有仓库</li>
+</ul>
+
+<h1 id="内容详细">内容详细</h1>
+
+<h2 id="1服务部署">1、服务部署</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 装 mysql  redis ---》源码编译安装--》启
+动
+# 有了docker后，容器操作系统+软件---》拉取一个redis镜像---》运行起来---》容器里就有 redis服务了---》做好端口映射---》就相当于在宿主机上装了个虚拟机，虚拟机里装了个redis
+
+# redis的部署-如果本地没有这个镜像---》运行镜像---》会先拉取--》然后在运行docker pull redis
+    -容器中的redis运行时候，有配置文件，用我写的配置文件，-v 映射 （宿主机写个配置文件，让容器中的redis用）
+    -redis运行产生数据--》放在容器中--》容器删除数据就没了---》数据映射到宿主机--&gt;以后删了容器，数据还在---》只要再启动起一个容器---》做好目录映射，数据自然都在了
+
+### 这个，数据目录没有映射出来，配置文件使用容器默认的---》但是这种不用
+docker run -di --name=myredis -p 6379:6379 redis
+
+##### 操作流程
+# 第一步：启动容器，名字叫 redis_6379，配置文件自己写，数据目录映射出来，两个目录映射：配置，数据目录，运行容器的时候，执行 redis-server /etc/redis/redis.conf 配置文件
+docker run -id -p 6379:6379 --name redis_6379 -v /root/s20/redis.conf:/etc/redis/redis.conf -v /root/s20/data:/data redis redis-server /etc/redis/redis.conf
+ 
+docker logs 容器名字  # 查看容器日志
+
+# 第二步：远程连接redis-存入数据bgsave
+
+# 第三步：删除容器docker rm id号
+
+# 第四：再启动reddis
+docker run -id -p 6379:6379 --name redis_6379 -v /root/s20/redis.conf:/etc/redis/redis.conf -v /root/s20/data:/data redis redis-server /etc/redis/redis.conf
+
+######### mysql 部署
+docker pull mysql:5.7
+    
+# -e 是环境变量---》容器运行时传入，看文档才知道有哪些参数
+# 使用了默认配置，把数据目录映射出来
+# root用户默认不允许远程登陆
+docker run -di --name=mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7
+        
+# 进去授权 允许远程登陆
+grant all privileges on *.* to 'root'@'%' identified by 'Lqz12345?';
+
+# 配置文件用宿主机的，数据目录映射出来到宿主机
+# mysql的配置文件 自行创建配置文件 my.cnf
+[mysqld]
+user=mysql
+character-set-server=utf8
+default_authentication_plugin=mysql_native_password
+secure_file_priv=/var/lib/mysql
+expire_logs_days=7
+sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+max_connections=1000
+
+# 运行容器
+docker run  -di -v /root/s20/mysql/data/:/var/lib/mysql -v /root/s20/mysql/conf.d:/etc/mysql/conf.d -v /root/s20/mysql/my.cnf:/etc/mysql/my.cnf -p 3306:3306 --name mysql5.7 -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7
+          
+# nginx部署
+docker pull nginx
+docker run -di --name=mynginx -p 80:80 nginx
+</code></pre></div></div>
+
+<h2 id="2迁移与备份">2、迁移与备份</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># python容器--》装了django   容器反打包成镜像
+
+# 把容器做成镜像
+docker commit 容器名字 镜像名字
+docker commit django django2.2.2
+
+# 镜像打包成压缩包
+docker save -o django2.2.2.tar django2.2.2
+
+# cp给别人---》释放成镜像---》运行起容器
+docker load -i django2.2.2.tar
+</code></pre></div></div>
+
+<h2 id="3dockerfile-应用">3、dockerfile 应用</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 把容器打包成镜像---》压成压缩文件--》复制给别人---》压缩包很大--》速度慢
+
+# 特别轻量级的方式，可以构建出镜像来，把一个特别小的文件复制给别人，别人一运行就有了镜像
+
+# 它就是一个固定的 Dockerfile  文件，里面写了一些命令
+# 通过 docker build -t='django2.0' . 把这个文件构建成镜像
+
+### dockerfile的命令
+FROM image_name:tag 	# 定义了使用哪个基础镜像启动构建流程
+MAINTAINER user_name 	# 声明镜像的创建者
+ENV key value 	# 设置环境变量 (可以写多条)
+RUN command 	# 是Dockerfile的核心部分(可以写多条)
+ADD source_dir/file dest_dir/file 	# 将宿主机的文件复制到容器内，如果是一个压缩文件，将会在复制后自动解压
+source_dir/file dest_dir/file 	# 和ADD相似，但是如果有压缩文件并不能解压
+WORKDIR path_dir 	# 设置工作目录
+
+# Dockerfile演示
+FROM python:3.8.13
+MAINTAINER lqz
+ENV pwd 123
+RUN pip install django==2.2.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install requests -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN mkdir lqz
+ADD ./redis.conf /home/redis.conf
+WORKDIR /home   # 工作路径是哪
+
+docker build -t='django2.2.2' .  # 创建镜像
+</code></pre></div></div>
+
+<h2 id="4私有仓库">4、私有仓库</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># docker pull 都是从hub.docker.com 拉的
+
+# 我们公司自己做的镜像，在上面没有---（我可以传上去，不安全）
+
+# 自己搭建私有仓库
+https://www.cnblogs.com/liuqingzheng/p/16315254.html &gt; 作者:Deity_JGX   &gt; 原文:https://www.cnblogs.com/jgx0/p/16328261.html  
+</code></pre></div></div>]]></content><author><name></name></author><category term="cnblog" /><summary type="html"><![CDATA[今日内容概要 服务部署 迁移与备份 dockerfile 私有仓库]]></summary></entry><entry><title type="html">3个注解，优雅的实现微服务鉴权</title><link href="/cnblog/2022/06/01/3%E4%B8%AA%E6%B3%A8%E8%A7%A3%E4%BC%98%E9%9B%85%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%BE%AE%E6%9C%8D%E5%8A%A1%E9%89%B4%E6%9D%83.html" rel="alternate" type="text/html" title="3个注解，优雅的实现微服务鉴权" /><published>2022-06-01T11:45:50+00:00</published><updated>2022-06-01T11:45:50+00:00</updated><id>/cnblog/2022/06/01/3%E4%B8%AA%E6%B3%A8%E8%A7%A3%E4%BC%98%E9%9B%85%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%BE%AE%E6%9C%8D%E5%8A%A1%E9%89%B4%E6%9D%83</id><content type="html" xml:base="/cnblog/2022/06/01/3%E4%B8%AA%E6%B3%A8%E8%A7%A3%E4%BC%98%E9%9B%85%E7%9A%84%E5%AE%9E%E7%8E%B0%E5%BE%AE%E6%9C%8D%E5%8A%A1%E9%89%B4%E6%9D%83.html"><![CDATA[<p>这是<a href="https://www.java-family.cn/#/spring-cloud/README">《Spring Cloud 进阶》</a><strong>第39篇</strong>文章，前面的文章中介绍了网关集成Spring Security实现网关层面的统一的认证鉴权。</p>
+
+<p>有不清楚的可以看之前的文章：<a href="https://www.java-family.cn/#/OAuth2.0/07-Spring-Cloud-Gateway%E9%9B%86%E6%88%90OAuth2.0">实战干货！Spring Cloud Gateway 整合 OAuth2.0 实现分布式统一认证授权！</a></p>
+
+<p>最近订阅了<a href="https://www.java-family.cn/#/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98">《Spring Cloud Alibaba 实战》</a>视频专栏的读者经常问陈某两个问题，如下：</p>
+
+<ol>
+  <li>鉴权放在各个微服务中如何做？</li>
+  <li>feign的调用如何做到的鉴权？</li>
+</ol>
+
+<p>今天针对以上两个问题深入聊聊如何通过三个注解解决。</p>
+
+<h2 id="实现思路">实现思路</h2>
+
+<p>前面的几篇文章陈某都是将鉴权和认证统一的放在了网关层面，架构如下：</p>
+
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/261fa221c941479cb04b9598bbfdd5a7~tplv-k3u1fbpfcp-zoom-1.image" alt="" /></p>
+
+<p>微服务中的鉴权还有另外一种思路：<strong>将鉴权交给下游的各个微服务，网关层面只做路由转发</strong>。</p>
+
+<p>这种思路其实实现起来也是很简单，下面针对网关层面鉴权的代码改造一下即可完成：<a href="https://www.java-family.cn/#/OAuth2.0/07-Spring-Cloud-Gateway%E9%9B%86%E6%88%90OAuth2.0">实战干货！Spring Cloud Gateway 整合 OAuth2.0 实现分布式统一认证授权！</a></p>
+
+<h3 id="1-干掉鉴权管理器">1. 干掉鉴权管理器</h3>
+
+<p>在网关统一鉴权实际是依赖的鉴权管理器<strong>ReactiveAuthorizationManager</strong>，所有的请求都需要经过鉴权管理器的去对登录用户的权限进行鉴权。</p>
+
+<p>这个鉴权管理器在网关鉴权的文章中也有介绍，在陈某的<a href="https://www.java-family.cn/#/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98">《Spring Cloud Alibaba 实战》</a>中配置拦截也很简单，如下：</p>
+
+<p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/b7d15b9aead648719af9f3da698d1007~tplv-k3u1fbpfcp-zoom-1.image" alt="" /></p>
+
+<p>除了配置的白名单，其他的请求一律都要被网关的鉴权管理器拦截鉴权，只有鉴权通过才能放行路由转发给下游服务。</p>
+
+<p>看到这里思路是不是很清楚了，想要将鉴权交给下游服务，只需要在网关层面直接放行，不走鉴权管理器，代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>http....//白名单直接放行
+ 	.pathMatchers(ArrayUtil.toArray(whiteUrls.getUrls(), String.class)).permitAll()//其他的任何请求直接放行
+ 	.anyExchange().permitAll() .....
+</code></pre></div></div>
+
+<h3 id="2-定义三个注解">2. 定义三个注解</h3>
+
+<p>经过第①步，鉴权已经下放给下游服务了，那么下游服务如何进行拦截鉴权呢？</p>
+
+<p>其实Spring Security 提供了3个注解用于控制权限，如下：</p>
+
+<ol>
+  <li><code class="language-plaintext highlighter-rouge">@Secured</code></li>
+  <li><code class="language-plaintext highlighter-rouge">@PreAuthorize</code></li>
+  <li><code class="language-plaintext highlighter-rouge">@PostAuthorize</code></li>
+</ol>
+
+<p>关于这三个注解就不再详细介绍了，有兴趣的可以去查阅官方文档。</p>
+
+<p>陈某这里并不打算使用的内置的三个注解实现，而是自定义了三个注解，如下：</p>
+
+<p><strong>1.@RequiresLogin</strong></p>
+
+<p>见名知意，只有用户登录才能放行，代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+ * @url: www.java-family.cn
+ * @description 登录认证的注解，标注在controller方法上，一定要是登录才能的访问的接口
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface RequiresLogin {
+}
+</code></pre></div></div>
+
+<p><strong>2.@RequiresPermissions</strong></p>
+
+<p>见名知意，只有拥有指定权限才能放行，代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+ * @url: www.java-family.cn
+ * @description 标注在controller方法上，确保拥有指定权限才能访问该接口
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface RequiresPermissions {
+    /**
+     * 需要校验的权限码
+     */
+    String[] value() default {};
+
+    /**
+     * 验证模式：AND | OR，默认AND
+     */
+    Logical logical() default Logical.AND;
+}
+</code></pre></div></div>
+
+<p><strong>3.@RequiresRoles</strong></p>
+
+<p>见名知意，只有拥有指定角色才能放行，代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+ * @url: www.java-family.cn
+ * @description 标注在controller方法上，确保拥有指定的角色才能访问该接口
+ */
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD, ElementType.TYPE})
+public @interface RequiresRoles {
+    /**
+     * 需要校验的角色标识，默认超管和管理员
+     */
+    String[] value() default {OAuthConstant.ROLE_ROOT_CODE,OAuthConstant.ROLE_ADMIN_CODE};
+
+    /**
+     * 验证逻辑：AND | OR，默认AND
+     */
+    Logical logical() default Logical.AND;
+}
+</code></pre></div></div>
+
+<p>以上三个注解的含义想必都很好理解，这里就不再解释了….</p>
+
+<h3 id="3-注解切面定义">3. 注解切面定义</h3>
+
+<p>注解有了，那么如何去拦截呢？这里陈某定义了一个切面进行拦截，关键代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+ * @url: www.java-family.cn
+ * @description @RequiresLogin，@RequiresPermissions，@RequiresRoles 注解的切面
+ */
+@Aspect
+@Component
+public class PreAuthorizeAspect {
+    /**
+     * 构建
+     */
+    public PreAuthorizeAspect() {
+    }
+
+    /**
+     * 定义AOP签名 (切入所有使用鉴权注解的方法)
+     */
+    public static final String POINTCUT_SIGN = " @annotation(com.mugu.blog.common.annotation.RequiresLogin) || "
+            + "@annotation(com.mugu.blog.common.annotation.RequiresPermissions) || "
+            + "@annotation(com.mugu.blog.common.annotation.RequiresRoles)";
+
+    /**
+     * 声明AOP签名
+     */
+    @Pointcut(POINTCUT_SIGN)
+    public void pointcut() {
+    }
+
+    /**
+     * 环绕切入
+     *
+     * @param joinPoint 切面对象
+     * @return 底层方法执行后的返回值
+     * @throws Throwable 底层方法抛出的异常
+     */
+    @Around("pointcut()")
+    public Object around(ProceedingJoinPoint joinPoint) throws Throwable {
+        // 注解鉴权
+        MethodSignature signature = (MethodSignature) joinPoint.getSignature();
+        checkMethodAnnotation(signature.getMethod());
+        try {
+            // 执行原有逻辑
+            Object obj = joinPoint.proceed();
+            return obj;
+        } catch (Throwable e) {
+            throw e;
+        }
+    }
+
+    /**
+     * 对一个Method对象进行注解检查
+     */
+    public void checkMethodAnnotation(Method method) {
+        // 校验 @RequiresLogin 注解
+        RequiresLogin requiresLogin = method.getAnnotation(RequiresLogin.class);
+        if (requiresLogin != null) {
+            doCheckLogin();
+        }
+
+        // 校验 @RequiresRoles 注解
+        RequiresRoles requiresRoles = method.getAnnotation(RequiresRoles.class);
+        if (requiresRoles != null) {
+            doCheckRole(requiresRoles);
+        }
+
+        // 校验 @RequiresPermissions 注解
+        RequiresPermissions requiresPermissions = method.getAnnotation(RequiresPermissions.class);
+        if (requiresPermissions != null) {
+            doCheckPermissions(requiresPermissions);
+        }
+    }
+
+    /**
+     * 校验有无登录
+     */
+    private void doCheckLogin() {
+        LoginVal loginVal = SecurityContextHolder.get();
+        if (Objects.isNull(loginVal))
+            throw new ServiceException(ResultCode.INVALID_TOKEN.getCode(), ResultCode.INVALID_TOKEN.getMsg());
+    }
+
+    /**
+     * 校验有无对应的角色
+     */
+    private void doCheckRole(RequiresRoles requiresRoles){
+        String[] roles = requiresRoles.value();
+        LoginVal loginVal = OauthUtils.getCurrentUser();
+
+        //该登录用户对应的角色
+        String[] authorities = loginVal.getAuthorities();
+        boolean match=false;
+
+        //and 逻辑
+        if (requiresRoles.logical()==Logical.AND){
+            match = Arrays.stream(authorities).filter(StrUtil::isNotBlank).allMatch(item -&gt; CollectionUtil.contains(Arrays.asList(roles), item));
+        }else{  //OR 逻辑
+            match = Arrays.stream(authorities).filter(StrUtil::isNotBlank).anyMatch(item -&gt; CollectionUtil.contains(Arrays.asList(roles), item));
+        }
+
+        if (!match)
+            throw new ServiceException(ResultCode.NO_PERMISSION.getCode(), ResultCode.NO_PERMISSION.getMsg());
+    }
+
+    /**
+     * TODO 自己实现，由于并未集成前端的菜单权限，根据业务需求自己实现
+     */
+    private void doCheckPermissions(RequiresPermissions requiresPermissions){
+
+    }
+}
+</code></pre></div></div>
+
+<p>其实这中间的逻辑非常简单，就是解析的Token中的权限、角色然后和注解中的指定的进行比对。</p>
+
+<blockquote>
+  <p><code class="language-plaintext highlighter-rouge">@RequiresPermissions</code>这个注解的逻辑陈某并未实现，自己根据业务模仿着完成，算是一道思考题了….</p>
+</blockquote>
+
+<h3 id="4-注解使用">4. 注解使用</h3>
+
+<p>比如<a href="https://www.java-family.cn/#/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98">《Spring Cloud Alibaba 实战》</a>项目中有一个添加文章的接口，只有超管和管理员的角色才能添加，那么可以使用<code class="language-plaintext highlighter-rouge">@RequiresRoles</code>注解进行标注，如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RequiresRoles
+@AvoidRepeatableCommit
+@ApiOperation("添加文章")
+@PostMapping("/add")
+public ResultMsg&lt;Void&gt; add(@RequestBody @Valid ArticleAddReq req){.......
+}
+</code></pre></div></div>
+
+<p>效果这里就不演示了，实际的效果：非超管和管理员角色用户登录访问，将会直接被拦截，返回<strong>无权限</strong>。</p>
+
+<p><strong>注意</strong>：这里仅仅解决了下游服务鉴权的问题，那么feign调用是否也适用？</p>
+
+<p>当然适用，这里使用的是切面方式，feign内部其实使用的是http方式调用，对于接口来说一样适用。</p>
+
+<p>比如<a href="https://www.java-family.cn/#/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98/Spring-Cloud-Alibaba%E5%AE%9E%E6%88%98">《Spring Cloud Alibaba 实战》</a>项目中获取文章列表的接口，其中会通过feign的方式调用评论服务中的接口获取文章评论总数，这里一旦加上了<code class="language-plaintext highlighter-rouge">@RequiresRoles</code>，那么调用将会失败，代码如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@RequiresRoles
+@ApiOperation(value = "批量获取文章总数")
+@PostMapping(value = "/list/total")
+public ResultMsg&lt;List&lt;TotalVo&gt;&gt; listTotal(@RequestBody @Valid List&lt;CommentListReq&gt; param){
+....
+}
+</code></pre></div></div>
+
+<h2 id="总结">总结</h2>
+
+<p>本文主要介绍了微服务中如何将鉴权下放到微服务中，也是为了解决读者的疑惑，实际生产中除非业务需要，陈某还是建议将鉴权统一放到网关中。</p>
+<blockquote>
+  <p>作者:bucaichenmou<br />
+原文:https://www.cnblogs.com/cbvlog/p/16330469.html</p>
+</blockquote>]]></content><author><name></name></author><category term="cnblog" /><summary type="html"><![CDATA[这是《Spring Cloud 进阶》第39篇文章，前面的文章中介绍了网关集成Spring Security实现网关层面的统一的认证鉴权。 有不清楚的可以看之前的文章：实战干货！Spring Cloud Gateway 整合 OAuth2.0 实现分布式统一认证授权！ 最近订阅了《Spring Cloud Alibaba 实战》视频专栏的读者经常问陈某两个问题，如下： 鉴权放在各个微服务中如何做？ feign的调用如何做到的鉴权？]]></summary></entry><entry><title type="html">Docker安装Mycat和Mysql进行水平分库分表实战【图文教学】</title><link href="/cnblog/2022/06/01/Docker%E5%AE%89%E8%A3%85Mycat%E5%92%8CMysql%E8%BF%9B%E8%A1%8C%E6%B0%B4%E5%B9%B3%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E5%AE%9E%E6%88%98%E5%9B%BE%E6%96%87%E6%95%99%E5%AD%A6.html" rel="alternate" type="text/html" title="Docker安装Mycat和Mysql进行水平分库分表实战【图文教学】" /><published>2022-06-01T11:45:48+00:00</published><updated>2022-06-01T11:45:48+00:00</updated><id>/cnblog/2022/06/01/Docker%E5%AE%89%E8%A3%85Mycat%E5%92%8CMysql%E8%BF%9B%E8%A1%8C%E6%B0%B4%E5%B9%B3%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E5%AE%9E%E6%88%98%E5%9B%BE%E6%96%87%E6%95%99%E5%AD%A6</id><content type="html" xml:base="/cnblog/2022/06/01/Docker%E5%AE%89%E8%A3%85Mycat%E5%92%8CMysql%E8%BF%9B%E8%A1%8C%E6%B0%B4%E5%B9%B3%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8%E5%AE%9E%E6%88%98%E5%9B%BE%E6%96%87%E6%95%99%E5%AD%A6.html"><![CDATA[<h2 id="一前言">一、前言</h2>
+
+<p>小编最近公司有个新的需求，数据量比较大，要涉及到分库分表。大概了解了一些主流的中间件，使用和网上资料比较多的是<code class="language-plaintext highlighter-rouge">Mycat</code>和<code class="language-plaintext highlighter-rouge">sharding-jdbc</code>，小编比较倾向于<code class="language-plaintext highlighter-rouge">Mycat</code>。原因很简单就是参考的资料比较多，教学比较多，小编经过一天的尝试，终于完成了！这篇主要是实战，一些知识点请自行百度，小编也是没有了解太多，最主要的目的是看一下效果！网上全使用Docker还是不多，而且很迷糊，小编进行补充，让大家少走弯路！！</p>
+
+<p>本次简单的进行分库分表测试，测试分片规则是<code class="language-plaintext highlighter-rouge">mod-long</code>，简单的根据id取余分组，实际业务肯定不符合，大家根据业务进行具体规则！！小编的场景是<code class="language-plaintext highlighter-rouge">水平的拆分</code>哈，如果不符合你的可以看看使用Docker安装，然后再修改分片策略即可！<br />
+ 小编大部分的命令都是来自于两位大佬的，后面给出链接，大家可以去看一下哈！不过他们省略了一些，我给补充上，能够顺畅的走下去流程！！</p>
+
+<h2 id="二安装docker网络">二、安装docker网络</h2>
+
+<p>因为我们的Mycat和Mysql都是使用docker安装的，容器和容器之间是相互隔离的，这时候需要用到docker网络帮助我们进行两个容器之间的通信！</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> docker network create -d bridge --ip-range=192.168.1.0/24 --gateway=192.168.1.1
+ --subnet=192.168.1.0/24 bridge2
+</code></pre></div></div>
+
+<p>这是用的大佬的创建命令，可以去原文看看：<a href="https://blog.csdn.net/qq_41542638/article/details/103847692">原文地址</a></p>
+
+<p>我们把Mycat和Mysql都是创建出来在进行统一的测试。</p>
+
+<h2 id="三安装mycat">三、安装Mycat</h2>
+
+<p><strong>1. 创建新目录并解压Mycat</strong></p>
+
+<p>创建一个存放压缩包的命令</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mkdir /usr/local/docker
+</code></pre></div></div>
+
+<p>准备好压缩包<br />
+ 链接：<a href="https://pan.baidu.com/s/1MGmArgUz-pB9Cgyl2QFCIw">百度云地址</a><br />
+ 提取码：2n1u</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>tar -zxvf mycat.tar.gz
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/0141570b049f4f2f979bd4a85fb8cc72.png" alt="在这里插入图片描述" /></p>
+
+<p><strong>2. 复制到docker挂载创建目录</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>cp -r /usr/local/docker/mycat/conf/ /usr/local/mycat/conf/
+cp -r /usr/local/docker/mycat/logs/ /usr/local/mycat/logs/
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/28421728e7fb4f86b23a08ae9bb4c498.png" alt="在这里插入图片描述" /></p>
+
+<p><strong>3. 赋予最高权限</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>chmod 777 /usr/local/mycat/logs
+
+chmod 777 /usr/local/mycat/conf
+</code></pre></div></div>
+
+<p><strong>4. 创建dockerfile文件</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>touch Dockerfile
+vi Dockerfile
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/bef77a73228847e9a98b565b64924301.png" alt="在这里插入图片描述" /></p>
+
+<p><strong>5. Dockerfile内容</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>FROM openjdk:8
+ADD mycat.tar.gz /usr/local/
+VOLUME /usr/local/mycat/conf
+ENV MYCAT_HOME=/usr/local/mycat
+EXPOSE 8066 9066
+CMD ["/usr/local/mycat/bin/mycat", "console","&amp;"]
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/506ef903aaaf45d2a0a0e192f7f8b2c5.png" alt="在这里插入图片描述" /><br />
+ <img src="https://img-blog.csdnimg.cn/cda20ae2d11e4c7fb230461019aee47c.png" alt="在这里插入图片描述" /><br />
+ <strong>6. 构建Mycat镜像</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker build -t mycat .
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/7a677dc9819a438eaaaa75d8e17ea68f.png" alt="在这里插入图片描述" /><br />
+ <strong>7. 运行Mycat镜像</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run --name mycat -p 8066:8066 -p 9066:9066 -v /usr/local/mycat/conf/:/usr/local/mycat/conf -v /usr/local/mycat/logs:/usr/local/mycat/logs -d --network=bridge2 --ip=192.168.1.8  mycat
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/075ec1ae81aa4a2ab714625e438ef650.png" alt="在这里插入图片描述" /></p>
+
+<h2 id="四创建mysql容器">四、创建Mysql容器</h2>
+
+<p><strong>1.  创建容器内在本地的挂载文件夹</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>mkdir -p /usr/local/mysql/data /usr/local/mysql/logs /usr/local/mysql/conf
+# 给予权限省略了哈
+</code></pre></div></div>
+
+<p><strong>2. 初始化mysql的配置文件*.cnf</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>touch /usr/local/mysql/conf/my.cnf
+</code></pre></div></div>
+
+<p><strong>3. 启动镜像</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker run -p 3306:3306 --name mysql -v /usr/local/mysql/conf:/etc/mysql/conf.d -v /usr/local/mysql/logs:/var/log/mysql -v /usr/local/mysql/data:/var/lib/mysql -e MYSQL_ROOT_PASSWORD=root -d --network=bridge2 --ip=192.168.1.9 mysql:5.7
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/f51ceff1a13d4d11983b03e4e3d353dd.png" alt="在这里插入图片描述" /></p>
+
+<p><strong>4. 本地测试连接</strong></p>
+
+<p><img src="https://img-blog.csdnimg.cn/49117459ee024c469c99143c30161d8c.png" alt="在这里插入图片描述" /><br />
+ <strong>5. 新建三个数据库及其表</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 新建三个库
+CREATE DATABASE IF NOT EXISTS db1 DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE IF NOT EXISTS db2 DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
+CREATE DATABASE IF NOT EXISTS db3 DEFAULT CHARSET utf8 COLLATE utf8_general_ci;
+
+# 每个库下面新建一个表
+drop table test_table;
+CREATE TABLE `test_table` (
+  `id` int(6) NOT NULL,
+  `name` varchar(500) DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/cd5dbe12742540f1a404de4c8cde6e5b.png" alt="在这里插入图片描述" /></p>
+
+<h2 id="五mycat和mysql互ping">五、Mycat和Mysql互ping</h2>
+
+<p><strong>1. 进入Mycat容器内部</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>docker exec -it 256 /bin/bash
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/48464dbe228142238a96589410f0dec4.png" alt="在这里插入图片描述" /></p>
+
+<p><strong>2. 更新apt-get</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apt-get update
+</code></pre></div></div>
+
+<p><strong>3. 下载Ping命令</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>apt-get install iputils-ping
+</code></pre></div></div>
+
+<p>输入y即可<br />
+ <img src="https://img-blog.csdnimg.cn/c346ddb9d8f049d38316a179e80f239a.png" alt="在这里插入图片描述" /></p>
+
+<p><strong>4. 互ping成功</strong></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>ping 192.168.1.8
+</code></pre></div></div>
+
+<p><img src="https://img-blog.csdnimg.cn/bb8feb33a54f410dbbfdef90857d1489.png" alt="在这里插入图片描述" /><br />
+ <strong>5. 退出容器，以后台形式运行</strong></p>
+
+<p><code class="language-plaintext highlighter-rouge">Ctrl + P + Q</code></p>
+
+<h2 id="六修改mycat配置文件">六、修改Mycat配置文件</h2>
+
+<p><strong>1. 重要配置</strong></p>
+<blockquote>
+  <p>作者:小王写博客<br />
+原文:https://www.cnblogs.com/wang1221/p/16329408.html</p>
+</blockquote>]]></content><author><name></name></author><category term="cnblog" /><summary type="html"><![CDATA[一、前言 小编最近公司有个新的需求，数据量比较大，要涉及到分库分表。大概了解了一些主流的中间件，使用和网上资料比较多的是Mycat和sharding-jdbc，小编比较倾向于Mycat。原因很简单就是参考的资料比较多，教学比较多，小编经过一天的尝试，终于完成了！这篇主要是实战，一些知识点请自行百度，小编也是没有了解太多，最主要的目的是看一下效果！网上全使用Docker还是不多，而且很迷糊，小编进行补充，让大家少走弯路！！ 本次简单的进行分库分表测试，测试分片规则是mod-long，简单的根据id取余分组，实际业务肯定不符合，大家根据业务进行具体规则！！小编的场景是水平的拆分哈，如果不符合你的可以看看使用Docker安装，然后再修改分片策略即可！ 小编大部分的命令都是来自于两位大佬的，后面给出链接，大家可以去看一下哈！不过他们省略了一些，我给补充上，能够顺畅的走下去流程！！ 二、安装docker网络 因为我们的Mycat和Mysql都是使用docker安装的，容器和容器之间是相互隔离的，这时候需要用到docker网络帮助我们进行两个容器之间的通信！]]></summary></entry><entry><title type="html">零成本搭建个人博客之图床和cdn加速</title><link href="/cnblog/2022/06/01/%E9%9B%B6%E6%88%90%E6%9C%AC%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2%E4%B9%8B%E5%9B%BE%E5%BA%8A%E5%92%8Ccdn%E5%8A%A0%E9%80%9F.html" rel="alternate" type="text/html" title="零成本搭建个人博客之图床和cdn加速" /><published>2022-06-01T11:45:46+00:00</published><updated>2022-06-01T11:45:46+00:00</updated><id>/cnblog/2022/06/01/%E9%9B%B6%E6%88%90%E6%9C%AC%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2%E4%B9%8B%E5%9B%BE%E5%BA%8A%E5%92%8Ccdn%E5%8A%A0%E9%80%9F</id><content type="html" xml:base="/cnblog/2022/06/01/%E9%9B%B6%E6%88%90%E6%9C%AC%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2%E4%B9%8B%E5%9B%BE%E5%BA%8A%E5%92%8Ccdn%E5%8A%A0%E9%80%9F.html"><![CDATA[<blockquote>
+  <p>本文属于<a href="https://allworldg.xyz/tags/%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2/">零成本搭建个人博客指南</a>系列</p>
+</blockquote>
+
+<h2 id="为什么要使用图床">为什么要使用图床</h2>
+
+<ol>
+  <li>博客文章中的图片资源文件一般采用本地相对/绝对路径引用，或者使用图床通过外链进行引用展示。本地引用的弊端我认为在于：
+    <ol>
+      <li>图片和博客放在同一个代码托管仓库，会导致页面加载和构建速度随着图片数量和体积变大导致缓慢。</li>
+      <li>本地写作图片路径和静态页面生成后的图片路径实际上是不一样的。例如我在编写时引用的是<code class="language-plaintext highlighter-rouge">/static/images/1.png</code>，静态构建后，该图片实际路径变成了<code class="language-plaintext highlighter-rouge">/images/1.png</code>，如果手动修改，那么本地预览效果则大打折扣。（每个博客框架有一些解决方案，不太通用就不提了）。</li>
+      <li>不易于分享：当分享本地文章时，由于图片是基于本地的，所以无法分享。</li>
+    </ol>
+  </li>
+  <li>使用图床优点：
+    <ol>
+      <li>方便分享以及文章移动：文章引用的是外链，所以可以随意移动文章路径以及分享文章。</li>
+      <li>不影响构建速度：图片不在本地，不占用空间。</li>
+      <li>书写方便：使用<a href="https://obsidian.md/">Obsidian</a>、<a href="https://code.visualstudio.com/">vscode+插件</a>或者<a href="https://typora.io/">typora</a>能自动添加图片以及生成图片链接的编辑软件，结合<a href="https://picgo.github.io/PicGo-Doc/en/guide/">Picgo</a>——自动上传图片的软件，可以十分快捷的插入图床图片。再也不用一张张手动上传图片。</li>
+    </ol>
+  </li>
+  <li>图床缺点：各类厂商图床可能存在的问题包括但不限于：存储空间和流量免费付费问题。稳定性、安全性。我会在下文图床选择中根据不同厂商情况简单提及，有需求的用户可以顺着思路去了解。</li>
+</ol>
+
+<h2 id="图床选择">图床选择</h2>
+
+<ol>
+  <li>国内大厂的对象存储服务：腾讯云阿里云七牛云都有自己的对象存储服务。用户可以创建自己的存储桶，上传文件后自动生成外链访问。
+    <ol>
+      <li>优点：存储费十分便宜，0.01元/GB左右。当作图床基本无需担忧费用。</li>
+      <li>缺点（风险）：流量费用很高，这里流量指的是用户通过外链访问或者下载资源时会生成流量。以腾讯云为例，0.5元/GB流量费用，如果是个人当博客图床小范围使用还好。当访问量上升，或者外链被他人分享使用，就有可能导致费用暴涨，更不用提如果被恶意下载刷流量。目前个人已知的存储桶只能设置上限预警，在欠费几小时后被动关闭。（七牛云各种免费额度很高，不过需要备案域名）</li>
+      <li>解决：使用cdn加速来大幅度减少流量费，同时cdn设置上限阈值。隐藏文件原链接，设置防盗链等方法。这样已经能很大程度降低天价账单的可能性，同时正常使用也不容易碰到恶意攻击的情况。</li>
+    </ol>
+  </li>
+  <li>使用现成图床：例如SMMS图床服务。优点是有免费额度，也有付费选项，无需担心上述费用过高问题。缺点：需自行选择稳定图床厂商，因为有跑路风险。</li>
+  <li>白嫖(不推荐) ：使用<a href="https://github.com/">github</a>、gitee、甚至是csdn、新浪微博等。优点：完全免费，可以把图片上传到任意能上传的位置。缺点：首先个人是不推荐，例如github、gitee被当作图床有可能遭到封禁。同时一旦白嫖网站加入了防盗链规则，那么博客图片直接全部报废，例子有gitee和微博。</li>
+  <li>使用国外大厂的对象存储服务：本质上和国内对象存储服务类似，只不过有些优惠力度很大。例如<a href="https://www.backblaze.com/">backblaze</a>，又称B2(我个人推荐同时也是本篇博客图床最终使用的对象)。好处有：
+    <ol>
+      <li>它的免费计划包括：存储桶前10GB免费、每天1GB下载流量、2500次B、C下载请求次数。并且它的存储费用在几个大厂对比是最便宜的。<img src="https://img.allworldg.xyz/2022/05/f770decba46d0ea9b7d89f2eb6813214.png" alt="" /></li>
+      <li>存储桶无需担心天价流量费：结合<a href="www.cloudflare.com">cloudflare</a>免费的cdn加速，以及cloudflare回流到backblaze的流量免费（回流：当请求到cdn结点发现该资源不存在或者需要更新，cdn会去backblaze获取最新文件），对于白嫖党来说应该算很香了。同时我咨询客服恶意下载问题，客服回应当超过自己设置的上限，会暂停下载，直到用户支付了正常的上限金额后正常开放（免费则是等待第二天免费额度恢复即可）。最后一点我还没有亲自测试过。</li>
+      <li>缺点：免费版cf在国内没有结点，可能加速变成减速，不过cf还是较稳定。后期如果想加入付费计划，可能需要准备一张全币种信用卡。</li>
+    </ol>
+  </li>
+</ol>
+
+<h2 id="图床搭建">图床搭建</h2>
+
+<ol>
+  <li>
+    <p>首先进入<a href="www.backblaze.com">backblaze</a>, 创建一个账号，点击右上角 My Account，然后创建一个桶。<img src="https://img.allworldg.xyz/2022/06/cbd7aa878464e4fd6ee552f7ff12f931.png" alt="" /> <img src="https://img.allworldg.xyz/2022/06/a022d961da1e8bcc8300e1d0571863d5.png" alt="" /></p>
+
+    <p>设置public可以用外链访问（如果设置Private，结合cdn使用访问授权只有七天，需要不断更新）。</p>
+  </li>
+  <li>
+    <p>点击upload尝试上传一张图片，然后在桶文件列表里查看。</p>
+
+    <p><img src="https://img.allworldg.xyz/2022/06/c1a895be1a8de0a1a9a3a44a1e07de4d.png" alt="" /></p>
+
+    <p>通过url即可访问。</p>
+  </li>
+  <li>
+    <p>设置缓存。打开Bucket Settings。输入参数<code class="language-plaintext highlighter-rouge">{"cache-control":"max-age=172800"}</code> ，意味着下文设置的cdn读取一次资源后，会缓存并且隔172800s后才过期重新读取。如果在cdn中设置了资源缓存时长，这个bucket时长相当于无效，但还是当作一个备用方案使用。</p>
+
+    <p><img src="https://img.allworldg.xyz/2022/06/5eb13e1c30ca4a4b02211178b9dc1bf0.png" alt="" /></p>
+
+    <p>需要注意，时间设置过长，相同路径的资源如果发生修改，会在缓存时间到期后才能更新，过短则回源次数变多，自行考虑即可（我当作图床，理论上大一点没事）。</p>
+  </li>
+</ol>
+
+<h2 id="cdn加速">cdn加速</h2>
+
+<p>在图床选择时说过，存储桶流量费很贵，所以我们要通过cdn缓存内容，减少流量费。我这里选择的是Cloudflare，自带https支持，免费流量，免费次数，回流B2免费。</p>
+
+<ol>
+  <li>进入CF指定域名的控制台</li>
+  <li>
+    <p>点击DNS，添加CNAME(Target 是 B2存储桶的Friendly 域名)</p>
+
+    <p><img src="https://img.allworldg.xyz/2022/06/2db7073202f70e4eb0d9893612a79325.png" alt="" /></p>
+  </li>
+  <li>
+    <p>我们也可以自行设置相关资源的缓存规则。</p>
+
+    <p><img src="https://img.allworldg.xyz/2022/06/29b266e62325508f065c2e538ef3894b.png" alt="" /></p>
+  </li>
+  <li>
+    <p>为了不暴露源桶域名，我们需要对域名进行重写。网上教程有很多使用Workers，如今CF推出了Transform Rules，更快更方便。进入URL Rwrite。</p>
+
+    <p><img src="https://img.allworldg.xyz/2022/06/d2cb2e5eb46c9ba1d74c0d66e02fdaa3.png" alt="" /></p>
+
+    <p>然后输入即可。<code class="language-plaintext highlighter-rouge">concat("/file/桶名",http.request.uri.path)</code>，意思是在域名后添加括号里的两个参数。<br />
+ <img src="https://img.allworldg.xyz/2022/06/0c516e201faed9f75e5b5ef71e4ff6da.png" alt="" /></p>
+  </li>
+  <li>可以打开桶内图片，然后试着修改前面的域名，访问成功即可。</li>
+</ol>
+
+<h2 id="图床结合picgo使用">图床结合PicGo使用</h2>
+
+<p>我不想每次上传图片都得打开网站，所以使用PicGo上传图片。</p>
+
+<ol>
+  <li>傻瓜式下载安装<a href="https://picgo.github.io/PicGo-Doc/">PicGo</a>。</li>
+  <li>因为B2支持S3，所以PicGo通过插件列表安装S3插件。</li>
+  <li>B2生成App Key，点击左侧链接，然后点击 Add a New Application Key 。</li>
+</ol>
+
+<p><img src="https://img.allworldg.xyz/2022/06/15548cf6ea38a2c68700c6bcda27a9e2.png" alt="" /> <img src="https://img.allworldg.xyz/2022/06/8d54bdebf258e484051c789f16761122.png" alt="" />注意Allow listing一定要选中，Duration不填代表永久有效。</p>
+<ol>
+  <li>生成的key只会出现一次，可以自行保存，也可以重新创建。</li>
+  <li>点击PicGo软件左侧图床设置，选中Amazon S3（装了插件才有），将对应key信息填入即可。配置完毕即可自行上传。如遇报错大概率是某行信息复制粘贴时多了空格，或者是EndPoint忘填，自行检查。</li>
+</ol>
+
+<p><img src="https://img.allworldg.xyz/2022/06/6e2c962ae44d38c7b40ba82b03e21e22.png" alt="" /></p>
+
+<p>至此，博客站点的基础功能已经实现完毕，剩下的可以根据自己需求随意DIY了。</p>
+<blockquote>
+  <p>作者:allworldg<br />
+原文:https://www.cnblogs.com/allworldg/p/guide-to-setup-blog-with-zero-cost-3.html</p>
+</blockquote>]]></content><author><name></name></author><category term="cnblog" /><summary type="html"><![CDATA[本文属于零成本搭建个人博客指南系列]]></summary></entry><entry><title type="html">面试官：Netty心跳检测机制是什么，怎么自定义检测间隔时间？</title><link href="/cnblog/2022/06/01/%E9%9D%A2%E8%AF%95%E5%AE%98Netty%E5%BF%83%E8%B7%B3%E6%A3%80%E6%B5%8B%E6%9C%BA%E5%88%B6%E6%98%AF%E4%BB%80%E4%B9%88%E6%80%8E%E4%B9%88%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A3%80%E6%B5%8B%E9%97%B4%E9%9A%94%E6%97%B6%E9%97%B4.html" rel="alternate" type="text/html" title="面试官：Netty心跳检测机制是什么，怎么自定义检测间隔时间？" /><published>2022-06-01T11:45:44+00:00</published><updated>2022-06-01T11:45:44+00:00</updated><id>/cnblog/2022/06/01/%E9%9D%A2%E8%AF%95%E5%AE%98Netty%E5%BF%83%E8%B7%B3%E6%A3%80%E6%B5%8B%E6%9C%BA%E5%88%B6%E6%98%AF%E4%BB%80%E4%B9%88%E6%80%8E%E4%B9%88%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A3%80%E6%B5%8B%E9%97%B4%E9%9A%94%E6%97%B6%E9%97%B4</id><content type="html" xml:base="/cnblog/2022/06/01/%E9%9D%A2%E8%AF%95%E5%AE%98Netty%E5%BF%83%E8%B7%B3%E6%A3%80%E6%B5%8B%E6%9C%BA%E5%88%B6%E6%98%AF%E4%BB%80%E4%B9%88%E6%80%8E%E4%B9%88%E8%87%AA%E5%AE%9A%E4%B9%89%E6%A3%80%E6%B5%8B%E9%97%B4%E9%9A%94%E6%97%B6%E9%97%B4.html"><![CDATA[<blockquote>
+  <p>哈喽！大家好，我是小奇，一位热爱分享的程序员<br />
+ 小奇打算以轻松幽默的对话方式来分享一些技术，如果你觉得通过小奇的文章学到了东西，那就给小奇一个赞吧<br />
+ 文章持续更新</p>
+</blockquote>
+
+<h1 id="一前言">一、前言</h1>
+
+<blockquote>
+  <p>书接上回，昨天在地里干了一天的活，累坏我了，今天是个周末，我得去镇上买点好吃的然后宅家歇上一天，打打游戏，看看电视剧，嘛钱不钱的，乐呵乐呵得了。。。</p>
+</blockquote>
+
+<blockquote>
+  <p>首当其冲必须买点熟食，回去再喝上二两小酒，美滋滋。</p>
+</blockquote>
+
+<p><img src="https://img-blog.csdnimg.cn/de77ca455613462d9a3880fe8a6c18c5.png#pic_center" alt="在这里插入图片描述" /></p>
+
+<blockquote>
+  <p>今天正好碰上镇上赶集，人真多呀，小奇最喜欢凑热闹了，挤一波。</p>
+</blockquote>
+
+<p><img src="https://img-blog.csdnimg.cn/7602fbe8969b4642b689d8bb4a2319aa.png#pic_center" alt="在这里插入图片描述" /></p>
+
+<blockquote>
+  <p>周末宅家水果必须得整点，不然光吃零食上火，砂糖橘必须炫上，多买点跟老板砍砍价。</p>
+</blockquote>
+
+<p><img src="https://img-blog.csdnimg.cn/8b1c0350c2c94d53bb40750b2b1fbf5c.png#pic_center" alt="在这里插入图片描述" /></p>
+
+<blockquote>
+  <p>我：老板这砂糖橘怎么卖啊！</p>
+</blockquote>
+
+<blockquote>
+  <p>老板：六块钱一斤。</p>
+</blockquote>
+
+<blockquote>
+  <p>我：我要多要点能便宜点不。</p>
+</blockquote>
+
+<blockquote>
+  <p>老板：你要多少嘞！</p>
+</blockquote>
+
+<blockquote>
+  <p>我：三斤！！！</p>
+</blockquote>
+
+<blockquote>
+  <p>老板：那你就给20块钱吧。</p>
+</blockquote>
+
+<blockquote>
+  <p>我：？？？我没听错吧，六块钱一斤，三斤20怎么还贵了呢。</p>
+</blockquote>
+
+<blockquote>
+  <p>老板：哎呀你反应过来了啊，看你蔫了吧唧的以为你转不过弯呢。</p>
+</blockquote>
+
+<blockquote>
+  <p>我：靠，我好歹也是经历过九年义务教育的好吧，三斤15块钱好吧，给我装起来。</p>
+</blockquote>
+
+<blockquote>
+  <p>买完了骑上我的小三轮肥家。</p>
+</blockquote>
+
+<p><img src="https://img-blog.csdnimg.cn/0d193f5269ce415c8bd5953145de33a4.png#pic_center" alt="在这里插入图片描述" /></p>
+
+<blockquote>
+  <p>就在我漂移在乡间小路上的时候，我的手机突然响了。。。</p>
+</blockquote>
+
+<blockquote>
+  <p><strong>我：“喂您好”。</strong></p>
+</blockquote>
+
+<blockquote>
+  <p><strong>对面：“您好，请问是小奇吗”。</strong></p>
+</blockquote>
+
+<blockquote>
+  <p><strong>我：“是我，你是？”。</strong></p>
+</blockquote>
+
+<blockquote>
+  <p><strong>对面：“我是XXX公司的，我看到hr推给我你的简历，我感觉还不错，你什么时候方便来现场面试一下”。</strong></p>
+</blockquote>
+
+<blockquote>
+  <p><strong>我：“现在不方便现场面试了”。</strong></p>
+</blockquote>
+
+<blockquote>
+  <p><strong>对面：“好吧，那你现在方便吗？我们现在线上面试一下吧”。</strong></p>
+</blockquote>
+
+<blockquote>
+  <p><strong>我：“好的”。</strong></p>
+</blockquote>
+
+<h1 id="二面试">二、面试</h1>
+
+<blockquote>
+  <p><strong>面试官：我看你简历上写的精通Netty，那你能说一下Netty怎么保证能够长时间连接呢？</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>我：通过心跳检测机制来判断Netty是否正常连接。</p>
+</blockquote>
+
+<blockquote>
+  <p><strong>面试官：什么是心跳检测机制呢？</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>我：比如医生怎么知道你的心脏是否正常运作呢，肯定是心脏在以一定的频率跳动，医生通过监听器监听到了跳动就知道你的心脏是好的。</p>
+</blockquote>
+
+<blockquote>
+  <p>所以在Netty中也是一样的，客户端和服务端怎么知道对方是否还在正常运行呢，就是对方定期向自己发送一条消息，这样的话我就知道对方还在正常运行，后续有活要干的话我就可以直接发给对方让对方处理。</p>
+</blockquote>
+
+<blockquote>
+  <p>相反如果服务端长时间没有给客户端发送心跳，那么客户端可以认为服务端死亡，后面再有读写请求就不会发送给相应的服务端了。</p>
+</blockquote>
+
+<blockquote>
+  <p><strong>面试官：如果我想自定义心跳检测的时间间隔怎么实现？</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>我：可以实现IdleStateHandler()方法</p>
+</blockquote>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public IdleStateHandler(int readerIdleTimeSeconds, int writerIdleTimeSeconds, int allIdleTimeSeconds) {
+  this((long)readerIdleTimeSeconds, (long)writerIdleTimeSeconds, (long)allIdleTimeSeconds, TimeUnit.SECONDS);
+ }
+</code></pre></div></div>
+
+<blockquote>
+  <p><strong>面试官：这里的三个参数是什么意思，间隔的时间单位是多少？</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>方法里有三个参数，默认时间都是秒</p>
+</blockquote>
+
+<blockquote>
+  <p>readerIdleTimeSeconds：读超时，当在指定的时间间隔内没有读取到数据就会超时。</p>
+</blockquote>
+
+<blockquote>
+  <p>writerIdleTimeSeconds：写超时，当在指定的时间间隔内没有写入成功就会超时。</p>
+</blockquote>
+
+<blockquote>
+  <p>allIdleTimeSeconds：读/.写超时，当在指定的时间间隔内没有读或写操作的时候，就会超时。</p>
+</blockquote>
+
+<blockquote>
+  <p><strong>面试官：“小伙子不错呀，什么时候能回北京入职呢”</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>我：“额。。。等等吧，现在还有好多家公司等着谈薪资呢，我得挑一家合适的。”</p>
+</blockquote>
+
+<blockquote>
+  <p><strong>面试官：“你要多少我都给你，来我这吧”</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>我：“额。。。那就月薪100个W吧”。</p>
+</blockquote>
+
+<blockquote>
+  <p><strong>面试官：“喂，你说什么我听不见，信号不好。。。”</strong></p>
+</blockquote>
+
+<blockquote>
+  <p>我：“喂喂喂”（嘟嘟嘟嘟嘟嘟嘟嘟。。。）。</p>
+</blockquote>
+
+<h1 id="三总结">三、总结</h1>
+
+<blockquote>
+  <p>这里的相关内容还没有整理完毕，文章后面持续更新，建议收藏。</p>
+</blockquote>
+
+<blockquote>
+  <p>文章中涉及到的命令大家一定要像我一样每个都敲几遍，只有在敲的过程中才能发现自己对命令是否真正的掌握了。</p>
+</blockquote>
+
+<blockquote>
+  <p>如果觉得我的文章还不错的话就点个赞吧
+作者:旷世奇才927<br />
+原文:https://www.cnblogs.com/xiaoqiJava/p/16329097.html</p>
+</blockquote>]]></content><author><name></name></author><category term="cnblog" /><summary type="html"><![CDATA[哈喽！大家好，我是小奇，一位热爱分享的程序员 小奇打算以轻松幽默的对话方式来分享一些技术，如果你觉得通过小奇的文章学到了东西，那就给小奇一个赞吧 文章持续更新]]></summary></entry><entry><title type="html">Excel导表工具(开源)</title><link href="/cnblog/2022/06/01/Excel%E5%AF%BC%E8%A1%A8%E5%B7%A5%E5%85%B7%E5%BC%80%E6%BA%90.html" rel="alternate" type="text/html" title="Excel导表工具(开源)" /><published>2022-06-01T11:45:42+00:00</published><updated>2022-06-01T11:45:42+00:00</updated><id>/cnblog/2022/06/01/Excel%E5%AF%BC%E8%A1%A8%E5%B7%A5%E5%85%B7%E5%BC%80%E6%BA%90</id><content type="html" xml:base="/cnblog/2022/06/01/Excel%E5%AF%BC%E8%A1%A8%E5%B7%A5%E5%85%B7%E5%BC%80%E6%BA%90.html"><![CDATA[<h2 id="功能">功能</h2>
+
+<p>https://camo.githubusercontent.com/c37d2f366bf5470e234f597e0f0e97ab69c23ccc24c4d98da82485f5ef826ec2/68747470733a2f2f67697465652e636f6d2f736d616c6c2d706572696c6c612f7069632d676f2f7261772f6d61737465722f696d6167652d32303232303533313134343835333433302e706e67</p>
+
+<ul>
+  <li>支持int、float、bool、string基础类型</li>
+  <li>支持数组</li>
+  <li>支持kv</li>
+  <li>支持枚举</li>
+  <li>支持unity类型vector3,vector2,color</li>
+  <li>自动生成csharp类</li>
+  <li>单个excel中多个sheet，依次导出</li>
+</ul>
+
+<h2 id="使用">使用</h2>
+
+<ol>
+  <li>设置config.txt文件，按需求配置；</li>
+</ol>
+
+<p>#为注释行必须；结尾</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>#excel存放路径;
+excelPath:./Excel/;
+#数据保存路径;
+dataPath:./DataTable/;
+#c#类保存路径;
+classPath:./CSharp/;
+#输出类型;
+exportType:Json;
+isExportServer:False
+</code></pre></div></div>
+
+<ol>
+  <li>双击运行DataTable.exe，等待执行完毕；</li>
+</ol>
+
+<h2 id="配表">配表</h2>
+
+<ul>
+  <li>第一行注释</li>
+  <li>第二行字段类型</li>
+  <li>第三行变量名（属性名）</li>
+  <li>第一列留空</li>
+  <li>数组：类型+[] e.g: int[]</li>
+  <li>
+    <p>kv使用</p>
+
+    <p>类型：dic&lt;string,int&gt;</p>
+
+    <p>变量名：变量名+:+key值</p>
+
+    <p>e.g:</p>
+
+    <p>| dic&lt;string,float&gt; | dic&lt;string,float&gt; | dic&lt;string,float&gt; |
+  | — | — | — |</p>
+
+    <table>
+      <tbody>
+        <tr>
+          <td>Attribute:atk</td>
+          <td>Attribute:def</td>
+          <td>Attribute:spd</td>
+        </tr>
+      </tbody>
+    </table>
+  </li>
+  <li>枚举：自动生成的枚举类型从1开始，Enum类型为：Enum+变量名字段；</li>
+</ul>
+
+<h2 id="json序列化">Json序列化</h2>
+
+<p>使用json库需要对Vector3等Unity字段魔改；</p>
+
+<p>Litjson库魔改：将自定义类型注册进json库；</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>namespace LitJson.Extensions
+{
+    public static class JsonExtensions
+    {
+
+        public static void WriteProperty(this JsonWriter w, string name, long value)
+        {
+            w.WritePropertyName(name);
+            w.Write(value);
+        }
+
+        public static void WriteProperty(this JsonWriter w, string name, string value)
+        {
+            w.WritePropertyName(name);
+            w.Write(value);
+        }
+
+        public static void WriteProperty(this JsonWriter w, string name, bool value)
+        {
+            w.WritePropertyName(name);
+            w.Write(value);
+        }
+
+        public static void WriteProperty(this JsonWriter w, string name, double value)
+        {
+            w.WritePropertyName(name);
+            w.Write(value);
+        }
+
+    }
+}
+</code></pre></div></div>
+
+<hr />
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code> using UnityEngine;
+ using System;
+ using System.Collections;
+ 
+ using LitJson.Extensions;
+
+ namespace LitJson
+ {
+
+#if UNITY_EDITOR
+     [UnityEditor.InitializeOnLoad]
+#endif
+     /// &lt;summary&gt;
+     /// Unity内建类型拓展
+     /// &lt;/summary&gt;
+     public static class UnityTypeBindings
+     {
+
+         static bool registerd;
+
+         static UnityTypeBindings()
+         {
+             Register();
+         }
+
+         public static void Register()
+         {
+
+             if (registerd) return;
+             registerd = true;
+
+             // 注册Type类型的Exporter
+             JsonMapper.RegisterExporter&lt;Type&gt;((v, w) =&gt; { w.Write(v.FullName); });
+
+             JsonMapper.RegisterImporter&lt;string, Type&gt;((s) =&gt; { return Type.GetType(s); });
+
+             // 注册Vector2类型的Exporter
+             Action&lt;Vector2, JsonWriter&gt; writeVector2 = (v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("x", v.x);
+                 w.WriteProperty("y", v.y);
+                 w.WriteObjectEnd();
+             };
+
+             JsonMapper.RegisterExporter&lt;Vector2&gt;((v, w) =&gt; { writeVector2(v, w); });
+
+             // 注册Vector3类型的Exporter
+             Action&lt;Vector3, JsonWriter&gt; writeVector3 = (v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("x", v.x);
+                 w.WriteProperty("y", v.y);
+                 w.WriteProperty("z", v.z);
+                 w.WriteObjectEnd();
+             };
+
+             JsonMapper.RegisterExporter&lt;Vector3&gt;((v, w) =&gt; { writeVector3(v, w); });
+
+             // 注册Vector4类型的Exporter
+             JsonMapper.RegisterExporter&lt;Vector4&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("x", v.x);
+                 w.WriteProperty("y", v.y);
+                 w.WriteProperty("z", v.z);
+                 w.WriteProperty("w", v.w);
+                 w.WriteObjectEnd();
+             });
+
+             // 注册Quaternion类型的Exporter
+             JsonMapper.RegisterExporter&lt;Quaternion&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("x", v.x);
+                 w.WriteProperty("y", v.y);
+                 w.WriteProperty("z", v.z);
+                 w.WriteProperty("w", v.w);
+                 w.WriteObjectEnd();
+             });
+
+             // 注册Color类型的Exporter
+             JsonMapper.RegisterExporter&lt;Color&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("r", v.r);
+                 w.WriteProperty("g", v.g);
+                 w.WriteProperty("b", v.b);
+                 w.WriteProperty("a", v.a);
+                 w.WriteObjectEnd();
+             });
+
+             // 注册Color32类型的Exporter
+             JsonMapper.RegisterExporter&lt;Color32&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("r", v.r);
+                 w.WriteProperty("g", v.g);
+                 w.WriteProperty("b", v.b);
+                 w.WriteProperty("a", v.a);
+                 w.WriteObjectEnd();
+             });
+
+             // 注册Bounds类型的Exporter
+             JsonMapper.RegisterExporter&lt;Bounds&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+
+                 w.WritePropertyName("center");
+                 writeVector3(v.center, w);
+
+                 w.WritePropertyName("size");
+                 writeVector3(v.size, w);
+
+                 w.WriteObjectEnd();
+             });
+
+             // 注册Rect类型的Exporter
+             JsonMapper.RegisterExporter&lt;Rect&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("x", v.x);
+                 w.WriteProperty("y", v.y);
+                 w.WriteProperty("width", v.width);
+                 w.WriteProperty("height", v.height);
+                 w.WriteObjectEnd();
+             });
+
+             // 注册RectOffset类型的Exporter
+             JsonMapper.RegisterExporter&lt;RectOffset&gt;((v, w) =&gt;
+             {
+                 w.WriteObjectStart();
+                 w.WriteProperty("top", v.top);
+                 w.WriteProperty("left", v.left);
+                 w.WriteProperty("bottom", v.bottom);
+                 w.WriteProperty("right", v.right);
+                 w.WriteObjectEnd();
+             });
+
+         }
+
+     }
+ }
+</code></pre></div></div>
+
+<p>后续计划加入protobuf和bytes导出；</p>
+
+<p>计划可导出.go文件；</p>
+
+<p>相比其他导表工具，优势就是简单使用，不用看长长的文档；</p>
+
+<p>有bug或修改建议欢迎交流；</p>
+
+<p>开源地址：<a href="https://github.com/Rebort1012/DataTable.git">https://github.com/Rebort1012/DataTable.git</a></p>
+
+<p>个人博客：<a href="http://perilla.work/">perilla.work</a></p>
+<blockquote>
+  <p>作者:小紫苏<br />
+原文:https://www.cnblogs.com/littleperilla/p/16330928.html</p>
+</blockquote>]]></content><author><name></name></author><category term="cnblog" /><summary type="html"><![CDATA[功能 https://camo.githubusercontent.com/c37d2f366bf5470e234f597e0f0e97ab69c23ccc24c4d98da82485f5ef826ec2/68747470733a2f2f67697465652e636f6d2f736d616c6c2d706572696c6c612f7069632d676f2f7261772f6d61737465722f696d6167652d32303232303533313134343835333433302e706e67 支持int、float、bool、string基础类型 支持数组 支持kv 支持枚举 支持unity类型vector3,vector2,color 自动生成csharp类 单个excel中多个sheet，依次导出]]></summary></entry><entry><title type="html">vue3 迫不得已我硬着头皮查看了keepalive的源代码，解决了线上的问题</title><link href="/cnblog/2022/06/01/vue3%E8%BF%AB%E4%B8%8D%E5%BE%97%E5%B7%B2%E6%88%91%E7%A1%AC%E7%9D%80%E5%A4%B4%E7%9A%AE%E6%9F%A5%E7%9C%8B%E4%BA%86keepalive%E7%9A%84%E6%BA%90%E4%BB%A3%E7%A0%81%E8%A7%A3%E5%86%B3%E4%BA%86%E7%BA%BF%E4%B8%8A%E7%9A%84%E9%97%AE%E9%A2%98.html" rel="alternate" type="text/html" title="vue3 迫不得已我硬着头皮查看了keepalive的源代码，解决了线上的问题" /><published>2022-06-01T11:45:40+00:00</published><updated>2022-06-01T11:45:40+00:00</updated><id>/cnblog/2022/06/01/vue3%E8%BF%AB%E4%B8%8D%E5%BE%97%E5%B7%B2%E6%88%91%E7%A1%AC%E7%9D%80%E5%A4%B4%E7%9A%AE%E6%9F%A5%E7%9C%8B%E4%BA%86keepalive%E7%9A%84%E6%BA%90%E4%BB%A3%E7%A0%81%E8%A7%A3%E5%86%B3%E4%BA%86%E7%BA%BF%E4%B8%8A%E7%9A%84%E9%97%AE%E9%A2%98</id><content type="html" xml:base="/cnblog/2022/06/01/vue3%E8%BF%AB%E4%B8%8D%E5%BE%97%E5%B7%B2%E6%88%91%E7%A1%AC%E7%9D%80%E5%A4%B4%E7%9A%AE%E6%9F%A5%E7%9C%8B%E4%BA%86keepalive%E7%9A%84%E6%BA%90%E4%BB%A3%E7%A0%81%E8%A7%A3%E5%86%B3%E4%BA%86%E7%BA%BF%E4%B8%8A%E7%9A%84%E9%97%AE%E9%A2%98.html"><![CDATA[<ul>
+  <li>1、通过本文可以了解到vue3 keepalive功能</li>
+  <li>2、通过本文可以了解到vue3 keepalive使用场景</li>
+  <li>3、通过本文可以学习到vue3 keepalive真实的使用过程</li>
+  <li>4、通过本文可以学习vue3 keepalive源码调试</li>
+  <li>5、通过本文可以学习到vue3 keepalive源码的精简分析</li>
+</ul>
+
+<h2 id="1keepalive功能">1、keepalive功能</h2>
+
+<ul>
+  <li>keepalive是vue3中的一个全局组件</li>
+  <li>keepalive 本身不会渲染出来，也不会出现在dom节点当中，但是它会被渲染为vnode,通过vnode可以跟踪到keepalive中的cache和keys，当然也是在开发环境才可以，build打包以后没有暴露到vnode中（这个还要再确认一下）</li>
+  <li>keepalive 最重要的功能就是缓存组件</li>
+  <li>keepalive 通过LRU缓存淘汰策略来更新组件缓存，可以更有效的利用内存，防止内存溢出,源代码中的最大缓存数max为10，也就是10个组件之后，就开始淘汰最先被缓存的组件了</li>
+</ul>
+
+<h2 id="2keepalive使用场景">2、keepalive使用场景</h2>
+
+<ul>
+  <li>这里先假设一个场景： A页面是首页====&gt; C 详情页</li>
+</ul>
+
+<p>由C详情页到到B页面的时候，要返回到B的缓存页面，包括页面的基础数据和列表的滚动条位置信息</p>
+
+<p>如果由B页面返回到A页面，则需要将B的缓存页清空</p>
+<ul>
+  <li>上述另外一个场景：进入页面直接缓存，然后就结束了，这个比较简单本文就不讨论了</li>
+</ul>
+
+<h2 id="3在项目中的使用过程">3、在项目中的使用过程</h2>
+
+<p><img src="https://p9-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/2de9fcf26acd44c9b0a388dbba44cfb2~tplv-k3u1fbpfcp-watermark.image?" alt="vue3 keepalive (1).png" /></p>
+
+<ul>
+  <li>
+    <p>keepalive组件总共有三个参数</p>
+
+    <ul>
+      <li>include：可传字符串、正则表达式、数组，名称匹配成功的组件会被缓存</li>
+      <li>exclude：可传字符串、正则表达式、数组，名称匹配成功的组件不会被缓存</li>
+      <li>max：可传数字，限制缓存组件的最大数量,默认为10</li>
+    </ul>
+  </li>
+  <li>
+    <p>首先在App.vue根代码中添加引入keepalive组件，通过这里可以发现，我这里缓存的相当于整个页面，当然你也可以进行更细粒度的控制页面当中的某个区域组件</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      &lt;template&gt;
+          &lt;router-view v-slot="{ Component }"&gt;
+              &lt;keep-alive :include="keepAliveCache"&gt;
+                  &lt;component :is="Component" :key="$route.name" /&gt;
+              &lt;/keep-alive&gt;
+          &lt;/router-view&gt;
+      &lt;/template&gt;
+      &lt;script lang="ts" setup&gt;
+      import { computed } from "vue";
+      import { useKeepAliverStore } from "@/store";
+      const useStore = useKeepAliverStore();
+      const keepAliveCache = computed(() =&gt; {
+          return useStore.caches;
+      });
+    
+      &lt;/script&gt;
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>通过App.vue可以发现，通过pinia（也就是vue2中使用的vuex）保存要缓存的页面组件， 来处理include缓存，和保存页面组件中的滚动条信息数据</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      import { defineStore } from "pinia";
+    
+      export const useKeepAliverStore = defineStore("useKeepAliverStore", {
+          state: () =&gt; ({
+              caches: [] as any,
+              scrollList: new Map(),  // 缓存页面组件如果又滚动条的高度
+          }),
+    
+          actions: {
+              add(name: string) {
+                  this.caches.push(name);
+              },
+              remove(name: string) {
+                  console.log(this.caches, 'this.caches')
+                  this.caches = this.caches.filter((item: any) =&gt; item !== name);
+                  console.log(this.caches, 'this.caches')
+              },
+              clear() {
+                  this.caches = []
+              }
+          }
+      });
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>组件路由刚刚切换时，通过beforeRouteEnter将组件写入include, 此时组件生命周期还没开始。如果都已经开始执行组件生命周期了，再写入就意义了。所以这个钩子函数就不能写在setup中，要单独提出来写。当然你也可以换成路由的其他钩子函数处理beforeEach，但这里面使用的话，好像使用不了pinia，这个还需要进一步研究一下。</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      import { useRoute, useRouter, onBeforeRouteLeave } from "vue-router";
+      import { useKeepAliverStore } from "@/store";
+      const useStore = useKeepAliverStore()
+      export default {
+          name:"record-month",
+          beforeRouteEnter(to, from, next) {
+              next(vm =&gt; {
+                  if(from.name === 'Home' &amp;&amp; to.name === 'record-month') {
+                  useStore.add(to.name)
+                  }
+              });
+          }
+      }
+      &lt;/script&gt;
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>组件路由离开时判断，是否要移出缓存，这个钩子就直接写在setup中就可以了。</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      onBeforeRouteLeave((to, from) =&gt; {
+          console.log(to.name, "onBeforeRouteLeave");
+          if (to.name === "new-detection-detail") {
+              console.log(to, from, "进入详情页面不做处理");
+          } else {
+              useStore.remove(from.name)
+              console.log(to, from, "删除组件缓存");
+          }
+      });
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>在keepalive两个钩子函数中进行处理scroll位置的缓存,onActivated中获取缓存中的位置， onDeactivated记录位置到缓存</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      onActivated(() =&gt; {
+          if(useStore.scrollList.get(routeName)) {
+              const top = useStore.scrollList.get(routeName)
+              refList.value.setScrollTop(Number(top))
+          }
+      });
+    
+      onDeactivated(() =&gt; {
+          const top = refList.value.getScrollTop()
+          useStore.scrollList.set(routeName, top)
+      });
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>这里定义一个方法，设置scrollTop使用了原生javascript的api</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      const setScrollTop = (value: any) =&gt; {
+          const dom = document.querySelector('.van-pull-refresh')
+          dom!.scrollTop = value
+      }
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>同时高度怎么获取要先注册scroll事件,然后通过getScrollTop 获取当前滚动条的位置进行保存即可</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      onMounted(() =&gt; {
+          scrollDom.value = document.querySelector('.van-pull-refresh') as HTMLElement
+          const throttledFun = useThrottleFn(() =&gt; {
+              console.log(scrollDom.value?.scrollTop, 'addEventListener')
+              state.scrollTop = scrollDom.value!.scrollTop
+          }, 500)
+          if(scrollDom.value) {
+              scrollDom.value.addEventListener('scroll',throttledFun)
+          }
+      })
+    
+      const getScrollTop = () =&gt; {
+          console.log('scrollDom.vaue', scrollDom.value?.scrollTop)
+          return state.scrollTop
+      }
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>上面注册scroll事件中使用了一个useThrottleFn,这个类库是@vueuse/core中提供的，其中封装了很多工具都非常不错，用兴趣的可以研究研究</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      https://vueuse.org/shared/usethrottlefn/#usethrottlefn
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>此时也可以查看找到实例的vnode查找到keepalive,是在keepalive紧挨着的子组件里</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      const instance = getCurrentInstance()
+      console.log(instance.vnode.parent) // 这里便是keepalive组件vnode
+    
+      // 如果是在开发环境中可以查看到cache对象
+      instance.vnode.parent.__v_cache
+    
+      // vue源码中，在dev环境对cache进行暴露，生产环境是看不到的
+      if (__DEV__ || __FEATURE_PROD_DEVTOOLS__) {
+          ;(instance as any).__v_cache = cache
+      }
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<h2 id="4vue3-keepalive源码调试">4、vue3 keepalive源码调试</h2>
+
+<ul>
+  <li>
+    <p>1、克隆代码</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      git clone git@github.com:vuejs/core.git
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>2、安装依赖</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      pnpm i
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>3、如果不能使用pnpm,可以先通过npm安装一下</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      npm i pnpm -g
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>4、安装完成以后，找到根目录package.json文件中的scripts</p>
+
+    <ul>
+      <li>
+        <p>参考https://juejin.cn/post/6991653445161713671</p>
+
+        <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  // 在dev命令后添加 --source-map是从已转换的代码，映射到原始的源文件
+  "dev": "node scripts/dev.js  --sourcemap"
+</code></pre></div>        </div>
+      </li>
+    </ul>
+  </li>
+  <li>
+    <p>5、执行pnpm run dev则会build vue源码</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      pnpm run dev
+    
+      //则会出现以下，代表成功了（2022年5月27日），后期vue源代码作者可能会更新，相应的提示可能发生变更，请注意一下
+      &gt; @3.2.36 dev H:\github\sourceCode\core
+      &gt; node scripts/dev.js  --sourcemap
+    
+      watching: packages\vue\dist\vue.global.js
+    
+      //到..\..\core\packages\vue\dist便可以看到编译成功，以及可以查看到examples样例demo页面
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>6、然后在 ….\core\packages\vue\examples\composition中添加一个aehyok.html文件，将如下代码进行拷贝，然后通过chrome浏览器打开，F12，找到源代码的Tab页面，通过快捷键Ctrl+ P 输入KeepAlive便可以找到这个组件，然后通过左侧行标右键就可以添加断点，进行调试，也可以通过右侧的【调用堆栈】进行快速跳转代码进行调试。</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      &lt;script src="../../dist/vue.global.js"&gt;&lt;/script&gt;
+    
+      &lt;script type="text/x-template" id="template-1"&gt;
+          &lt;div&gt;template-1&lt;/div&gt;
+          &lt;div&gt;template-1&lt;/div&gt;
+      &lt;/script&gt;
+    
+      &lt;script type="text/x-template" id="template-2"&gt;
+          &lt;div&gt;template-2&lt;/div&gt;
+          &lt;div&gt;template-2&lt;/div&gt;
+      &lt;/script&gt;
+      &lt;script&gt;
+      const { reactive, computed } = Vue
+    
+      const Demo1 = {
+          name: 'Demo1',
+          template: '#template-1',
+          setup(props) {
+          }
+      }
+    
+      const Demo2 = {
+          name: 'Demo2',
+          template: '#template-2',
+          setup(props) {
+          }
+      }
+      &lt;/script&gt;
+    
+      &lt;!-- App template (in DOM) --&gt;
+      &lt;div id="demo"&gt;
+          &lt;div&gt;Hello World&lt;/div&gt;
+          &lt;div&gt;Hello World&lt;/div&gt;
+          &lt;div&gt;Hello World&lt;/div&gt;
+          &lt;button @click="changeClick(1)"&gt;组件一&lt;/button&gt;
+          &lt;button @click="changeClick(2)"&gt;组件二&lt;/button&gt;
+          &lt;keep-alive :include="includeCache"&gt;
+              &lt;component :is="componentCache" :key="componentName" v-if="componentName" /&gt;
+          &lt;/keep-alive&gt;
+      &lt;/div&gt;
+      &lt;!-- App script --&gt;
+      &lt;script&gt;
+      Vue.createApp({
+      components: {
+          Demo1,
+          Demo2
+      },
+      data: () =&gt; ({
+          includeCache: [],
+          componentCache: '',
+          componentName: '',
+      }),
+      methods:{
+          changeClick(type) {
+              if(type === 1) {
+                  if(!this.includeCache.includes('Demo1')) {
+                      this.includeCache.push('Demo1')
+                  }
+                  console.log(this.includeCache, '000')
+                  this.componentCache = Demo1
+                  this.componentName = 'Demo1'
+              }
+              if(type === 2) {
+                  if(!this.includeCache.includes('Demo2')) {
+                      this.includeCache.push('Demo2')
+                  }
+                  console.log(this.includeCache, '2222')
+                  this.componentName = 'Demo2'
+                  this.componentCache = Demo2
+              }
+          }
+      }
+    
+      }).mount('#demo')
+      &lt;/script&gt;
+</code></pre></div>    </div>
+  </li>
+  <li>
+    <p>7、调试源码发现 keepalive中的render函数（或者说时setup中的return 函数）在子组件切换时就会去执行，变更逻辑缓存</p>
+
+    <ul>
+      <li>第一次进入页面初始化keepalive组件会执行一次，</li>
+      <li>然后点击组件一，再次执行render函数</li>
+      <li>然后点击组件二，会再次执行render函数</li>
+    </ul>
+  </li>
+  <li>
+    <p>8、调试截图说明</p>
+
+    <p><img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/20c4acde464c4ccebabba06b8376c780~tplv-k3u1fbpfcp-watermark.image?" alt="Snipaste_2022-05-30_11-30-46.jpg" /></p>
+  </li>
+  <li>
+    <p>9、调试操作，小视频观看<br />
+ <img src="https://p3-juejin.byteimg.com/tos-cn-i-k3u1fbpfcp/e0492fa1aedb4b4883a904121a376e98~tplv-k3u1fbpfcp-watermark.image?" alt="1.gif" /></p>
+  </li>
+</ul>
+
+<h2 id="5vue3-keealive源码粗浅分析">5、vue3 keealive源码粗浅分析</h2>
+
+<ul>
+  <li>
+    <p>通过查看vue3 KeepAlive.ts源码,源码路径：<a href="https://github.com/vuejs/core/blob/main/packages/runtime-core/src/components/KeepAlive.ts">https://github.com/vuejs/core/blob/main/packages/runtime-core/src/components/KeepAlive.ts</a></p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      // 在setup初始化中，先获取keepalive实例
+      // getCurrentInstance() 可以获取当前组件的实例
+      const instance = getCurrentInstance()!
+      // KeepAlive communicates with the instantiated renderer via the
+      // ctx where the renderer passes in its internals,
+      // and the KeepAlive instance exposes activate/deactivate implementations.
+      // The whole point of this is to avoid importing KeepAlive directly in the
+      // renderer to facilitate tree-shaking.
+      const sharedContext = instance.ctx as KeepAliveContext
+    
+      // if the internal renderer is not registered, it indicates that this is server-side rendering,
+      // for KeepAlive, we just need to render its children
+    
+      /// SSR 判断，暂时可以忽略掉即可。
+      if (__SSR__ &amp;&amp; !sharedContext.renderer) {
+          return () =&gt; {
+              const children = slots.default &amp;&amp; slots.default()
+              return children &amp;&amp; children.length === 1 ? children[0] : children
+          }
+      }
+    
+      // 通过Map存储缓存vnode,
+      // 通过Set存储缓存的key(在外面设置的key，或者vnode的type)
+      const cache: Cache = new Map()
+      const keys: Keys = new Set()
+      let current: VNode | null = null
+    
+      if (__DEV__ || __FEATURE_PROD_DEVTOOLS__) {
+      ;(instance as any).__v_cache = cache
+      }
+    
+      const parentSuspense = instance.suspense
+    
+      const {
+      renderer: {
+          p: patch,
+          m: move,
+          um: _unmount,
+          o: { createElement }
+      }
+      } = sharedContext
+    
+      // 创建了隐藏容器
+      const storageContainer = createElement('div')
+    
+      // 在实例上注册两个钩子函数 activate，  deactivate
+    
+      sharedContext.activate = (vnode, container, anchor, isSVG, optimized) =&gt; {
+          const instance = vnode.component!
+          move(vnode, container, anchor, MoveType.ENTER, parentSuspense)
+          // in case props have changed
+          patch(
+              instance.vnode,
+              vnode,
+              container,
+              anchor,
+              instance,
+              parentSuspense,
+              isSVG,
+              vnode.slotScopeIds,
+              optimized
+          )
+          queuePostRenderEffect(() =&gt; {
+              instance.isDeactivated = false
+              if (instance.a) {
+              invokeArrayFns(instance.a)
+              }
+              const vnodeHook = vnode.props &amp;&amp; vnode.props.onVnodeMounted
+              if (vnodeHook) {
+              invokeVNodeHook(vnodeHook, instance.parent, vnode)
+              }
+          }, parentSuspense)
+    
+          if (__DEV__ || __FEATURE_PROD_DEVTOOLS__) {
+              // Update components tree
+              devtoolsComponentAdded(instance)
+          }
+      }
+    
+      sharedContext.deactivate = (vnode: VNode) =&gt; {
+          const instance = vnode.component!
+          move(vnode, storageContainer, null, MoveType.LEAVE, parentSuspense)
+          queuePostRenderEffect(() =&gt; {
+              if (instance.da) {
+              invokeArrayFns(instance.da)
+              }
+              const vnodeHook = vnode.props &amp;&amp; vnode.props.onVnodeUnmounted
+              if (vnodeHook) {
+              invokeVNodeHook(vnodeHook, instance.parent, vnode)
+              }
+              instance.isDeactivated = true
+          }, parentSuspense)
+    
+          if (__DEV__ || __FEATURE_PROD_DEVTOOLS__) {
+              // Update components tree
+              devtoolsComponentAdded(instance)
+          }
+      }
+
+      // 组件卸载
+      function unmount(vnode: VNode) {
+          // reset the shapeFlag so it can be properly unmounted
+          resetShapeFlag(vnode)
+          _unmount(vnode, instance, parentSuspense, true)
+      }
+    
+      // 定义 include和exclude变化时，对缓存进行动态处理
+      function pruneCache(filter?: (name: string) =&gt; boolean) {
+          cache.forEach((vnode, key) =&gt; {
+              const name = getComponentName(vnode.type as ConcreteComponent)
+              if (name &amp;&amp; (!filter || !filter(name))) {
+              pruneCacheEntry(key)
+              }
+          })
+      }
+    
+      function pruneCacheEntry(key: CacheKey) {
+          const cached = cache.get(key) as VNode
+          if (!current || cached.type !== current.type) {
+              unmount(cached)
+          } else if (current) {
+              // current active instance should no longer be kept-alive.
+              // we can't unmount it now but it might be later, so reset its flag now.
+              resetShapeFlag(current)
+          }
+          cache.delete(key)
+          keys.delete(key)
+      }
+
+      // 可以发现通过include 可以配置被显示的组件，
+      // 当然也可以设置exclude来配置不被显示的组件,
+      // 组件切换时随时控制缓存
+      watch(
+      () =&gt; [props.include, props.exclude],
+      ([include, exclude]) =&gt; {
+          include &amp;&amp; pruneCache(name =&gt; matches(include, name))
+          exclude &amp;&amp; pruneCache(name =&gt; !matches(exclude, name))
+      },
+      // prune post-render after `current` has been updated
+      { flush: 'post', deep: true }
+      )
+    
+      // 定义当前组件Key
+      // cache sub tree after render
+          let pendingCacheKey: CacheKey | null = null
+    
+          // 这是一个重要的方法，设置缓存
+          const cacheSubtree = () =&gt; {
+          // fix #1621, the pendingCacheKey could be 0
+          if (pendingCacheKey != null) {
+              cache.set(pendingCacheKey, getInnerChild(instance.subTree))
+          }
+          }
+          onMounted(cacheSubtree)
+          onUpdated(cacheSubtree)
+    
+          // 组件卸载的时候，对缓存列表进行循环判断处理
+          onBeforeUnmount(() =&gt; {
+              cache.forEach(cached =&gt; {
+                  const { subTree, suspense } = instance
+                  const vnode = getInnerChild(subTree)
+                  if (cached.type === vnode.type) {
+                  // current instance will be unmounted as part of keep-alive's unmount
+                  resetShapeFlag(vnode)
+                  // but invoke its deactivated hook here
+                  const da = vnode.component!.da
+                  da &amp;&amp; queuePostRenderEffect(da, suspense)
+                  return
+                  }
+                  unmount(cached)
+              })
+          })
+    
+      // 同时在keepAlive组件setup生命周期中，return () =&gt; {} 渲染的时候，对组件进行判断逻辑处理，同样对include和exclude判断渲染。
+        
+      // 判断keepalive组件中的子组件，如果大于1个的话，直接警告处理了
+      // 另外如果渲染的不是虚拟dom（vNode）,则直接返回渲染即可。
+    
+      return () =&gt; {
+          // eslint-disable-next-line no-debugger
+          console.log(props.include, 'watch-include')
+          pendingCacheKey = null
+    
+          if (!slots.default) {
+              return null
+          }
+    
+          const children = slots.default()
+          const rawVNode = children[0]
+          if (children.length &gt; 1) {
+              if (__DEV__) {
+              warn(`KeepAlive should contain exactly one component child.`)
+              }
+              current = null
+              return children
+          } else if (
+              !isVNode(rawVNode) ||
+              (!(rawVNode.shapeFlag &amp; ShapeFlags.STATEFUL_COMPONENT) &amp;&amp;
+              !(rawVNode.shapeFlag &amp; ShapeFlags.SUSPENSE))
+          ) {
+              current = null
+              return rawVNode
+          }
+    
+          // 接下来处理时Vnode虚拟dom的情况，先获取vnode
+          let vnode = getInnerChild(rawVNode)
+          // 节点类型
+          const comp = vnode.type as ConcreteComponent
+    
+          // for async components, name check should be based in its loaded
+          // inner component if available
+          // 获取组件名称
+          const name = getComponentName(
+              isAsyncWrapper(vnode)
+              ? (vnode.type as ComponentOptions).__asyncResolved || {}
+              : comp
+          )
+    
+          //这个算是最熟悉的通过props传递进行的参数，进行解构
+          const { include, exclude, max } = props
+    
+          // include判断 组件名称如果没有设置， 或者组件名称不在include中，
+          // exclude判断 组件名称有了，或者匹配了
+          // 对以上两种情况都不进行缓存处理，直接返回当前vnode虚拟dom即可。
+          if (
+              (include &amp;&amp; (!name || !matches(include, name))) ||
+              (exclude &amp;&amp; name &amp;&amp; matches(exclude, name))
+          ) {
+              current = vnode
+              return rawVNode
+          }
+    
+          // 接下来开始处理有缓存或者要缓存的了
+    
+          // 先获取一下vnode的key设置，然后看看cache缓存中是否存在
+          const key = vnode.key == null ? comp : vnode.key
+          const cachedVNode = cache.get(key)
+    
+          // 这一段可以忽略了，好像时ssContent相关，暂时不管了，没看明白？？
+          // clone vnode if it's reused because we are going to mutate it
+          if (vnode.el) {
+              vnode = cloneVNode(vnode)
+              if (rawVNode.shapeFlag &amp; ShapeFlags.SUSPENSE) {
+              rawVNode.ssContent = vnode
+              }
+          }
+    
+          // 上面判断了，如果没有设置key，则使用vNode的type作为key值
+          pendingCacheKey = key
+    
+          //判断上面缓存中是否存在vNode
+    
+          // if 存在的话，就将缓存中的vnode复制给当前的vnode
+          // 同时还判断了组件是否为过渡组件 transition，如果是的话 需要注册过渡组件的钩子
+          // 同时先删除key，然后再重新添加key
+    
+          // else 不存在的话，就添加到缓存即可
+          // 并且要判断一下max最大缓存的数量是否超过了，超过了，则通过淘汰LPR算法，删除最旧的一个缓存
+          // 最后又判断了一下是否为Suspense。也是vue3新增的高阶组件。
+          if (cachedVNode) {
+              // copy over mounted state
+              vnode.el = cachedVNode.el
+              vnode.component = cachedVNode.component
+              if (vnode.transition) {
+              // recursively update transition hooks on subTree
+              setTransitionHooks(vnode, vnode.transition!)
+              }
+              // avoid vnode being mounted as fresh
+              vnode.shapeFlag |= ShapeFlags.COMPONENT_KEPT_ALIVE
+              // make this key the freshest
+              keys.delete(key)
+              keys.add(key)
+          } else {
+              keys.add(key)
+              // prune oldest entry
+              if (max &amp;&amp; keys.size &gt; parseInt(max as string, 10)) {
+              pruneCacheEntry(keys.values().next().value)
+              }
+          }
+          // avoid vnode being unmounted
+          vnode.shapeFlag |= ShapeFlags.COMPONENT_SHOULD_KEEP_ALIVE
+    
+          current = vnode
+          return isSuspense(rawVNode.type) ? rawVNode : vnode
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<h2 id="6总结">6、总结</h2>
+
+<p>通过这次查看vue3 keepalive源码发现，其实也没那么难，当然这次查看源代码也只是粗略查看，并没有看的那么细，主要还是先解决问题。动动手调试一下，有时候真的就是不逼一下自己都不知道自己有多么的优秀。原来我也能稍微看看源代码了。以后有空可以多看看vue3源代码，学习一下vue3的精髓。了解vue3更为细节的一些知识点。</p>
+
+<p><a href="https://github.com/aehyok/vue-qiankun">https://github.com/aehyok/vue-qiankun</a><br />
+ 本文涉及到的代码后续会整理到该代码仓库中</p>
+
+<p><a href="https://github.com/aehyok/2022">https://github.com/aehyok/2022</a><br />
+ 最后自己每天工作中的笔记记录仓库，主要以文章链接和问题处理方案为主。</p>
+<blockquote>
+  <p>作者:aehyok<br />
+原文:https://www.cnblogs.com/aehyok/p/16328765.html</p>
+</blockquote>]]></content><author><name></name></author><category term="cnblog" /><summary type="html"><![CDATA[1、通过本文可以了解到vue3 keepalive功能 2、通过本文可以了解到vue3 keepalive使用场景 3、通过本文可以学习到vue3 keepalive真实的使用过程 4、通过本文可以学习vue3 keepalive源码调试 5、通过本文可以学习到vue3 keepalive源码的精简分析]]></summary></entry></feed>

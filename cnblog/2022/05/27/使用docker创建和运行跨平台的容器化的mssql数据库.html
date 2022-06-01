@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>使用docker创建和运行跨平台的容器化的mssql数据库 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="使用docker创建和运行跨平台的容器化的mssql数据库" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="我们一般启用sql server数据库要么选择安装SQL Server实例和管理工具（SSMS），要么用vs自带的数据库。如今net跨平台成为趋势，今天给大家介绍另一种我最近在玩的方式，即使用docker创建并启用sql数据库。 本章介绍了在window10专业版下如何利用docker创建mssql数据库，包括以下主题： 安装并验证docker 利用docker创建mssql实例 使用vs2022连接sql" />
+<meta property="og:description" content="我们一般启用sql server数据库要么选择安装SQL Server实例和管理工具（SSMS），要么用vs自带的数据库。如今net跨平台成为趋势，今天给大家介绍另一种我最近在玩的方式，即使用docker创建并启用sql数据库。 本章介绍了在window10专业版下如何利用docker创建mssql数据库，包括以下主题： 安装并验证docker 利用docker创建mssql实例 使用vs2022连接sql" />
+<link rel="canonical" href="/cnblog/2022/05/27/%E4%BD%BF%E7%94%A8docker%E5%88%9B%E5%BB%BA%E5%92%8C%E8%BF%90%E8%A1%8C%E8%B7%A8%E5%B9%B3%E5%8F%B0%E7%9A%84%E5%AE%B9%E5%99%A8%E5%8C%96%E7%9A%84mssql%E6%95%B0%E6%8D%AE%E5%BA%93.html" />
+<meta property="og:url" content="/cnblog/2022/05/27/%E4%BD%BF%E7%94%A8docker%E5%88%9B%E5%BB%BA%E5%92%8C%E8%BF%90%E8%A1%8C%E8%B7%A8%E5%B9%B3%E5%8F%B0%E7%9A%84%E5%AE%B9%E5%99%A8%E5%8C%96%E7%9A%84mssql%E6%95%B0%E6%8D%AE%E5%BA%93.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-27T08:36:15+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="使用docker创建和运行跨平台的容器化的mssql数据库" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-27T08:36:15+00:00","datePublished":"2022-05-27T08:36:15+00:00","description":"我们一般启用sql server数据库要么选择安装SQL Server实例和管理工具（SSMS），要么用vs自带的数据库。如今net跨平台成为趋势，今天给大家介绍另一种我最近在玩的方式，即使用docker创建并启用sql数据库。 本章介绍了在window10专业版下如何利用docker创建mssql数据库，包括以下主题： 安装并验证docker 利用docker创建mssql实例 使用vs2022连接sql","headline":"使用docker创建和运行跨平台的容器化的mssql数据库","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/27/%E4%BD%BF%E7%94%A8docker%E5%88%9B%E5%BB%BA%E5%92%8C%E8%BF%90%E8%A1%8C%E8%B7%A8%E5%B9%B3%E5%8F%B0%E7%9A%84%E5%AE%B9%E5%99%A8%E5%8C%96%E7%9A%84mssql%E6%95%B0%E6%8D%AE%E5%BA%93.html"},"url":"/cnblog/2022/05/27/%E4%BD%BF%E7%94%A8docker%E5%88%9B%E5%BB%BA%E5%92%8C%E8%BF%90%E8%A1%8C%E8%B7%A8%E5%B9%B3%E5%8F%B0%E7%9A%84%E5%AE%B9%E5%99%A8%E5%8C%96%E7%9A%84mssql%E6%95%B0%E6%8D%AE%E5%BA%93.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">使用docker创建和运行跨平台的容器化的mssql数据库</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-27T08:36:15+00:00" itemprop="datePublished">May 27, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>我们一般启用sql server数据库要么选择安装SQL Server实例和管理工具（SSMS），要么用vs自带的数据库。如今net跨平台成为趋势，今天给大家介绍另一种我最近在玩的方式，即使用docker创建并启用sql数据库。</p>
+
+<p>本章介绍了在window10专业版下如何利用docker创建mssql数据库，包括以下主题：</p>
+
+<ul>
+  <li>安装并验证docker</li>
+  <li>利用docker创建mssql实例</li>
+  <li>使用vs2022连接sql</li>
+</ul>
+
+<p>首先我们看下sql自带的数据库管理工具，打开vs2022-视图-SQL Server对象资源管理器，在SQL Server实例中第一个选项就是vs自带的数据库。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525102914351-154916042.png" alt="" /></p>
+
+<p>在接下来的内容中我们来试着添加一个<strong>基于docker的数据库容器镜像</strong>。</p>
+
+<h3 id="1开启虚拟化服务">1.开启虚拟化服务</h3>
+
+<p>在安装docker之前，需要确保虚拟化服务是开启状态。右键win图标，选择应用和功能（或者打开控制面板），点击程序和功能-启用或关闭windows功能，勾选Hyper-V，点击确定开启功能。（如果是win10家庭版的话，是看不到Hyper-V选项的，比较麻烦，需要修改注册表，但网上有教程，可以搜索并按照教程做）</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525105140436-1308426411.png" alt="" /></p>
+
+<h3 id="2安装docker-desktop">2.安装Docker desktop</h3>
+
+<p>在docker官网根据需要选择下载安装程序，我们选择windows版本。安装完成以后docker会自动启动，任务栏会有一个鲸鱼图标，表明docker正在运行。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525110004417-1926951468.png" alt="" /></p>
+
+<p>我们可以通过命令行验证一下docker的安装情况，输入docker –version可以看到版本信息</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525110244883-1313043013.png" alt="" /></p>
+
+<p>也可以邮件鲸鱼图标，点击About Docker Desktop查看</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525110353043-2134905481.png" alt="" /></p>
+
+<h3 id="3部署本地mssql数据库"> 3.部署本地mssql数据库 </h3>
+
+<p>第一步：拉取 SQL Server 2019 Linux 容器镜像，打开命令行，输入docker pull mcr.microsoft.com/mssql/server:2019-latest</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525110817292-1935592792.png" alt="" /></p>
+
+<p>输入docker images查看镜像</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525111056462-1679777112.png" alt="" /></p>
+
+<p>第二步：1.运行容器镜像，命令行输入docker run -e “ACCEPT_EULA=Y” -e “SA_PASSWORD=MyStrongPwd!2#” -p 1433:1433 -d mcr.microsoft.com/mssql/server:2019-latest</p>
+
+<p>其中： ACCEPT_EULA=Y表示接受最终用户许可协议</p>
+
+<p>SA_PASSWORD=MyStrongPwd!2#表示账户名sa，密码MyStrongPwd!2#</p>
+
+<p>-p设置端口 1433:1433 前者表示对外提供的访问端口号，后者表示容器内部的端口号（如果这一步报错”docker: Error response from daemon: Ports are not available…“，这说明端口被占用了，一般是被sqlserver服务占用了，可以打开sqlserver配置管理器将Sql server服务停止即可）</p>
+
+<p>-d设置镜像名，设置为拉取的镜像mcr.microsoft.com/mssql/server:2019-latest</p>
+
+<p>还可以通过 –name xxxx 为容器指定一个自定义名称，通过–hostnam xxxx设置容器主机名，如果不设置docker会随机给容器命名。</p>
+
+<p>2.查看运行状况，命令行输入docker ps，可以看到正在运行</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525145046927-819294981.png" alt="" /></p>
+
+<p>3.另外也能在Docker Desktop-Container查看刚刚创建的容器</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525144958972-500228301.png" alt="" /></p>
+
+<h3 id="4使用vs验证">4.使用VS验证</h3>
+
+<p>打开vs的SQL Server对象资源管理器，点击左上角添加 SQL Server按钮，输入信息，点击连接</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525114413602-1839121205.png" alt="" /></p>
+
+<p>完成后在SQL Server实例列表里可以看到新增了一个localhost服务器，说明vs已经连接上docker创建的sql了</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2281532/202205/2281532-20220525141923418-1365685550.png" alt="" /></p>
+
+<p>因为还没有创建数据库，所以只能看到系统数据库，下一篇我们将使用EFCore创建并初始化数据库。</p>
+<blockquote>
+  <p>作者:飏大神
+原文:https://www.cnblogs.com/YKAndXLL520/p/16311541.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/27/%E4%BD%BF%E7%94%A8docker%E5%88%9B%E5%BB%BA%E5%92%8C%E8%BF%90%E8%A1%8C%E8%B7%A8%E5%B9%B3%E5%8F%B0%E7%9A%84%E5%AE%B9%E5%99%A8%E5%8C%96%E7%9A%84mssql%E6%95%B0%E6%8D%AE%E5%BA%93.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

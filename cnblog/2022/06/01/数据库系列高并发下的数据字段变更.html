@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>数据库系列：高并发下的数据字段变更 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="数据库系列：高并发下的数据字段变更" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="1 背景 经常会遇到这种情况，我们的业务已经稳定地运行一段时间了，并且流量渐渐已经上去了。这时候，却因为某些原因（比如功能调整或者业务扩展），你需要对数据表进行调整，加字段 or 修改表结构。 可能很多人说 alter table add column … / alter table modify …，轻轻松松就解决了。 这样其实是有风险的 ， 本人有过惨痛的教训，在一次业务上线过程中没有评估好数据规模，导致长时间业务数据写入不进来。 那么有什么办法对数据库的业务表进行无缝升级，让该表对用户透明无感呢？下面我们一个个来讨论。 2 新增关联表 最简单的一种办法，把新增的字段存储在另外一张辅表上，用外键关联到主表的主键。 存在的问题： 读取数据时， 并没有彻底的解决问题，之后有新增字段，照样面临是新增表还是修改原表的问题。 辅表的作用仅仅是" />
+<meta property="og:description" content="1 背景 经常会遇到这种情况，我们的业务已经稳定地运行一段时间了，并且流量渐渐已经上去了。这时候，却因为某些原因（比如功能调整或者业务扩展），你需要对数据表进行调整，加字段 or 修改表结构。 可能很多人说 alter table add column … / alter table modify …，轻轻松松就解决了。 这样其实是有风险的 ， 本人有过惨痛的教训，在一次业务上线过程中没有评估好数据规模，导致长时间业务数据写入不进来。 那么有什么办法对数据库的业务表进行无缝升级，让该表对用户透明无感呢？下面我们一个个来讨论。 2 新增关联表 最简单的一种办法，把新增的字段存储在另外一张辅表上，用外键关联到主表的主键。 存在的问题： 读取数据时， 并没有彻底的解决问题，之后有新增字段，照样面临是新增表还是修改原表的问题。 辅表的作用仅仅是" />
+<link rel="canonical" href="/cnblog/2022/06/01/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E5%88%97%E9%AB%98%E5%B9%B6%E5%8F%91%E4%B8%8B%E7%9A%84%E6%95%B0%E6%8D%AE%E5%AD%97%E6%AE%B5%E5%8F%98%E6%9B%B4.html" />
+<meta property="og:url" content="/cnblog/2022/06/01/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E5%88%97%E9%AB%98%E5%B9%B6%E5%8F%91%E4%B8%8B%E7%9A%84%E6%95%B0%E6%8D%AE%E5%AD%97%E6%AE%B5%E5%8F%98%E6%9B%B4.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-06-01T11:44:42+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="数据库系列：高并发下的数据字段变更" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-06-01T11:44:42+00:00","datePublished":"2022-06-01T11:44:42+00:00","description":"1 背景 经常会遇到这种情况，我们的业务已经稳定地运行一段时间了，并且流量渐渐已经上去了。这时候，却因为某些原因（比如功能调整或者业务扩展），你需要对数据表进行调整，加字段 or 修改表结构。 可能很多人说 alter table add column … / alter table modify …，轻轻松松就解决了。 这样其实是有风险的 ， 本人有过惨痛的教训，在一次业务上线过程中没有评估好数据规模，导致长时间业务数据写入不进来。 那么有什么办法对数据库的业务表进行无缝升级，让该表对用户透明无感呢？下面我们一个个来讨论。 2 新增关联表 最简单的一种办法，把新增的字段存储在另外一张辅表上，用外键关联到主表的主键。 存在的问题： 读取数据时， 并没有彻底的解决问题，之后有新增字段，照样面临是新增表还是修改原表的问题。 辅表的作用仅仅是","headline":"数据库系列：高并发下的数据字段变更","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/06/01/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E5%88%97%E9%AB%98%E5%B9%B6%E5%8F%91%E4%B8%8B%E7%9A%84%E6%95%B0%E6%8D%AE%E5%AD%97%E6%AE%B5%E5%8F%98%E6%9B%B4.html"},"url":"/cnblog/2022/06/01/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E5%88%97%E9%AB%98%E5%B9%B6%E5%8F%91%E4%B8%8B%E7%9A%84%E6%95%B0%E6%8D%AE%E5%AD%97%E6%AE%B5%E5%8F%98%E6%9B%B4.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">数据库系列：高并发下的数据字段变更</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-06-01T11:44:42+00:00" itemprop="datePublished">Jun 1, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h1 id="1-背景">1 背景</h1>
+
+<p>经常会遇到这种情况，我们的业务已经稳定地运行一段时间了，并且流量渐渐已经上去了。这时候，却因为某些原因（比如功能调整或者业务扩展），你需要对数据表进行调整，加字段 or 修改表结构。<br />
+ 可能很多人说 alter table add column … / alter table modify …，轻轻松松就解决了。 这样其实是有风险的<br />
+ ， 本人有过惨痛的教训，在一次业务上线过程中没有评估好数据规模，导致长时间业务数据写入不进来。<br />
+ 那么有什么办法对数据库的业务表进行无缝升级，让该表对用户透明无感呢？下面我们一个个来讨论。</p>
+
+<h1 id="2-新增关联表">2 新增关联表</h1>
+
+<p>最简单的一种办法，把新增的字段存储在另外一张辅表上，用外键关联到主表的主键。<br />
+ <img src="https://img2022.cnblogs.com/blog/167509/202205/167509-20220502160149204-1450092082.png" alt="image" title="点击查看大图" /><br />
+ 存在的问题：</p>
+
+<ul>
+  <li>读取数据时，</li>
+  <li>并没有彻底的解决问题，之后有新增字段，照样面临是新增表还是修改原表的问题。</li>
+  <li>辅表的作用仅仅是</li>
+</ul>
+
+<h1 id="3-新增通用列">3 新增通用列</h1>
+
+<p>假设我们原有表结构如下，为了保障业务的持续发展，后续不间断的会有字段扩展。这时候就需要考虑增加一个可自动扩缩的通用字段。<br />
+ <img src="https://img2022.cnblogs.com/blog/167509/202205/167509-20220503073940101-900182659.png" alt="image" title="点击查看大图" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>use test;
+DROP TABLE IF EXISTS `t_user`;
+CREATE TABLE "t_user" (
+  "id" bigint(20) NOT NULL AUTO_INCREMENT,
+  "name" varchar(20) NOT NULL,
+  "age" int(11) DEFAULT NULL,
+  "address" varchar(255) DEFAULT NULL,
+  "sex" int(11) DEFAULT '1',
+  "ext_data" json DEFAULT NULL COMMENT 'json字符串',
+  PRIMARY KEY ("id")
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8;
+
+-- ----------------------------
+-- Records of t_user
+-- ----------------------------
+INSERT INTO `t_user` VALUES ('1', 'brand', '21', 'fuzhou', '1', '{"tel": "13212345678", "name": "brand", "address": "fuzhou"}');
+</code></pre></div></div>
+
+<p>代码中 ext_data 采用Json数据类型，是一种可扩展的对象载体，存放被查询数据的信息补充。<br />
+ 同样的，MySQL提供的这种数据类型，也提供了很强大的Json函数进行操作。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>SELECT id,`name`,age,address FROM `t_user` WHERE json_extract(ext_data,'$.tel') = '13212345678';
+</code></pre></div></div>
+
+<p>结果如下：<br />
+ <img src="https://img2022.cnblogs.com/blog/167509/202205/167509-20220503075508782-71145049.png" alt="image" title="点击查看大图" /></p>
+
+<p>之前写MySQL系列的时候，博客园的一位读者留言要我归纳一下MySQL Json 的用法，一直没时间，大家可以看一下<a href="https://dev.mysql.com/doc/refman/8.0/en/json-functions.html" title="官网的文档">官网的文档</a>，还是比较清晰的。</p>
+
+<p>Json结构一般来说是向下兼容的，所以你<br />
+ 比如上文中我们的json包含三个属性，tel、name、address，之后的业务调整中，发现tel没用了，加了个age属性，那tel要不要删除？<br />
+ 有一种比较好的办法，是给表加上version属性，每个时期的业务对应一个version，每个version对应的Json数据结构也不一样。<br />
+ <img src="https://img2022.cnblogs.com/blog/167509/202205/167509-20220503080803232-1469889591.png" alt="image" title="点击查看大图" /></p>
+
+<p><strong>优点：</strong></p>
+
+<ul>
+  <li>可以随时动态扩展属性</li>
+  <li>新旧两种数据可以同时存在</li>
+  <li>迁移数据方便，写个程序将旧版本ext的改为新版本的ext，并修改version</li>
+</ul>
+
+<p><strong>不足：</strong></p>
+
+<ul>
+  <li></li>
+  <li>ext_data里的key会有大量空间占用，</li>
+  <li>从json中去。</li>
+  <li>查询相对效率较低，操作复杂。</li>
+  <li>，不适合存储业务逻辑复杂的数据。</li>
+  <li>，建议需要做报表的数据不要存json。</li>
+</ul>
+
+<p><strong>改进：</strong></p>
+
+<ul>
+  <li>如果ext里的属性有索引之类的需求，可能NoSql（如MongoDB）会更适合</li>
+</ul>
+
+<h1 id="4-新表数据迁移">4 新表+数据迁移</h1>
+
+<h2 id="41-利用触发器进行数据迁移">4.1 利用触发器进行数据迁移</h2>
+
+<p><img src="https://img2022.cnblogs.com/blog/167509/202205/167509-20220503122427145-1949005220.png" alt="image" title="点击查看大图" /><br />
+ 整个步骤如下：</p>
+
+<ul>
+  <li>新建一个表t_user_v1 (id, name, age, address, sex, ext_column)，包含了扩展字段 ext_column</li>
+  <li>在（主要INSERT、UPDATE、DELETE），都会触发操作，把数据转存到新表t_user_v1中</li>
+  <li>对于旧表中原有的数据，逐步的迁移直至完成</li>
+  <li>删掉触发器，把原表移走（默认是drop掉）</li>
+  <li>把新表t_user_v1重命名（rename）成原表t_user</li>
+</ul>
+
+<p>通过上述步骤，</p>
+
+<h2 id="42-利用binlog-进行数据迁移">4.2 利用Binlog 进行数据迁移</h2>
+
+<p>如果是MySQL数据库，可以通过复制binlog的操作进行数据迁移的，效果一样，比起触发器，更稳定一点。<br />
+ <img src="https://img2022.cnblogs.com/blog/167509/202205/167509-20220531142115669-1496419687.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/860" alt="image" title="点击查看大图" /></p>
+
+<h2 id="43-存在的问题">4.3 存在的问题</h2>
+
+<ul>
+  <li>操作繁琐，效率低下</li>
+  <li>数据迁移和数据表切换之间存在操作间隙，</li>
+  <li>对于大数据表，同步时间长</li>
+</ul>
+
+<h1 id="5-字段预留">5 字段预留</h1>
+
+<p>预留字段 和 字段与表格名称映射的办法。<br />
+ <img src="https://img2022.cnblogs.com/blog/167509/202205/167509-20220503125853935-805433192.png" alt="image" title="点击查看大图" /></p>
+
+<h2 id="51-存在的问题">5.1 存在的问题</h2>
+
+<ul>
+  <li>同样的，查询效率低</li>
+  <li>预设存在未知数，</li>
+  <li>。</li>
+  <li>该方法还是比较笨的，不适合程序员思维</li>
+</ul>
+
+<h1 id="6-多主模式和分级更新">6 多主模式和分级更新</h1>
+
+<p>如果业务流量比较小，可以直接在表上进行字段新增或者修改，短暂的写锁是可以承受的。但如果是高并发、集群化、分布式的系统，则从数据层面上就应该进行主从或者分库分表治理。<br />
+ 以下是典型的的多主要模式下，进行数据库表结构升级的过程。<br />
+ <img src="https://img2022.cnblogs.com/blog/167509/202205/167509-20220503145511923-1063947720.png" alt="image" title="点击查看大图" /></p>
+
+<ol>
+  <li>正常两主模式下，主主同步，</li>
+  <li>修改配置，让流量都切到其中一台上，然后对另外一台进行数据表升级（比如切DB1，只使用DB2）。</li>
+  <li>轮流这个操作，但是这时候不需要再升级DB2了，因为是主主同步。DB instance 1 已经是新的表结构了，这时候会连同架构包括数据一起更新到 DB2 上。</li>
+  <li>等两个数据库实例都一致了，修改配置，重设两个数据库实例的负载，恢复到之前的状态。
+    <blockquote>
+      <p>作者:Hello-Brand<br />
+原文:https://www.cnblogs.com/wzh2010/p/16099099.html</p>
+    </blockquote>
+  </li>
+</ol>
+
+  </div><a class="u-url" href="/cnblog/2022/06/01/%E6%95%B0%E6%8D%AE%E5%BA%93%E7%B3%BB%E5%88%97%E9%AB%98%E5%B9%B6%E5%8F%91%E4%B8%8B%E7%9A%84%E6%95%B0%E6%8D%AE%E5%AD%97%E6%AE%B5%E5%8F%98%E6%9B%B4.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

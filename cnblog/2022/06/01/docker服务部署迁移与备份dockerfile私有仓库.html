@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>docker服务部署、迁移与备份、dockerfile、私有仓库 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="docker服务部署、迁移与备份、dockerfile、私有仓库" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="今日内容概要 服务部署 迁移与备份 dockerfile 私有仓库" />
+<meta property="og:description" content="今日内容概要 服务部署 迁移与备份 dockerfile 私有仓库" />
+<link rel="canonical" href="/cnblog/2022/06/01/docker%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2%E8%BF%81%E7%A7%BB%E4%B8%8E%E5%A4%87%E4%BB%BDdockerfile%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93.html" />
+<meta property="og:url" content="/cnblog/2022/06/01/docker%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2%E8%BF%81%E7%A7%BB%E4%B8%8E%E5%A4%87%E4%BB%BDdockerfile%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-06-01T11:45:52+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="docker服务部署、迁移与备份、dockerfile、私有仓库" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-06-01T11:45:52+00:00","datePublished":"2022-06-01T11:45:52+00:00","description":"今日内容概要 服务部署 迁移与备份 dockerfile 私有仓库","headline":"docker服务部署、迁移与备份、dockerfile、私有仓库","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/06/01/docker%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2%E8%BF%81%E7%A7%BB%E4%B8%8E%E5%A4%87%E4%BB%BDdockerfile%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93.html"},"url":"/cnblog/2022/06/01/docker%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2%E8%BF%81%E7%A7%BB%E4%B8%8E%E5%A4%87%E4%BB%BDdockerfile%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">docker服务部署、迁移与备份、dockerfile、私有仓库</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-06-01T11:45:52+00:00" itemprop="datePublished">Jun 1, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <h1 id="今日内容概要">今日内容概要</h1>
+
+<ul>
+  <li>服务部署</li>
+  <li>迁移与备份</li>
+  <li>dockerfile</li>
+  <li>私有仓库</li>
+</ul>
+
+<h1 id="内容详细">内容详细</h1>
+
+<h2 id="1服务部署">1、服务部署</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 装 mysql  redis ---》源码编译安装--》启
+动
+# 有了docker后，容器操作系统+软件---》拉取一个redis镜像---》运行起来---》容器里就有 redis服务了---》做好端口映射---》就相当于在宿主机上装了个虚拟机，虚拟机里装了个redis
+
+# redis的部署-如果本地没有这个镜像---》运行镜像---》会先拉取--》然后在运行docker pull redis
+    -容器中的redis运行时候，有配置文件，用我写的配置文件，-v 映射 （宿主机写个配置文件，让容器中的redis用）
+    -redis运行产生数据--》放在容器中--》容器删除数据就没了---》数据映射到宿主机--&gt;以后删了容器，数据还在---》只要再启动起一个容器---》做好目录映射，数据自然都在了
+
+### 这个，数据目录没有映射出来，配置文件使用容器默认的---》但是这种不用
+docker run -di --name=myredis -p 6379:6379 redis
+
+##### 操作流程
+# 第一步：启动容器，名字叫 redis_6379，配置文件自己写，数据目录映射出来，两个目录映射：配置，数据目录，运行容器的时候，执行 redis-server /etc/redis/redis.conf 配置文件
+docker run -id -p 6379:6379 --name redis_6379 -v /root/s20/redis.conf:/etc/redis/redis.conf -v /root/s20/data:/data redis redis-server /etc/redis/redis.conf
+ 
+docker logs 容器名字  # 查看容器日志
+
+# 第二步：远程连接redis-存入数据bgsave
+
+# 第三步：删除容器docker rm id号
+
+# 第四：再启动reddis
+docker run -id -p 6379:6379 --name redis_6379 -v /root/s20/redis.conf:/etc/redis/redis.conf -v /root/s20/data:/data redis redis-server /etc/redis/redis.conf
+
+######### mysql 部署
+docker pull mysql:5.7
+    
+# -e 是环境变量---》容器运行时传入，看文档才知道有哪些参数
+# 使用了默认配置，把数据目录映射出来
+# root用户默认不允许远程登陆
+docker run -di --name=mysql -p 3306:3306 -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7
+        
+# 进去授权 允许远程登陆
+grant all privileges on *.* to 'root'@'%' identified by 'Lqz12345?';
+
+# 配置文件用宿主机的，数据目录映射出来到宿主机
+# mysql的配置文件 自行创建配置文件 my.cnf
+[mysqld]
+user=mysql
+character-set-server=utf8
+default_authentication_plugin=mysql_native_password
+secure_file_priv=/var/lib/mysql
+expire_logs_days=7
+sql_mode=STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+max_connections=1000
+
+# 运行容器
+docker run  -di -v /root/s20/mysql/data/:/var/lib/mysql -v /root/s20/mysql/conf.d:/etc/mysql/conf.d -v /root/s20/mysql/my.cnf:/etc/mysql/my.cnf -p 3306:3306 --name mysql5.7 -e MYSQL_ROOT_PASSWORD=123456 mysql:5.7
+          
+# nginx部署
+docker pull nginx
+docker run -di --name=mynginx -p 80:80 nginx
+</code></pre></div></div>
+
+<h2 id="2迁移与备份">2、迁移与备份</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># python容器--》装了django   容器反打包成镜像
+
+# 把容器做成镜像
+docker commit 容器名字 镜像名字
+docker commit django django2.2.2
+
+# 镜像打包成压缩包
+docker save -o django2.2.2.tar django2.2.2
+
+# cp给别人---》释放成镜像---》运行起容器
+docker load -i django2.2.2.tar
+</code></pre></div></div>
+
+<h2 id="3dockerfile-应用">3、dockerfile 应用</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># 把容器打包成镜像---》压成压缩文件--》复制给别人---》压缩包很大--》速度慢
+
+# 特别轻量级的方式，可以构建出镜像来，把一个特别小的文件复制给别人，别人一运行就有了镜像
+
+# 它就是一个固定的 Dockerfile  文件，里面写了一些命令
+# 通过 docker build -t='django2.0' . 把这个文件构建成镜像
+
+### dockerfile的命令
+FROM image_name:tag 	# 定义了使用哪个基础镜像启动构建流程
+MAINTAINER user_name 	# 声明镜像的创建者
+ENV key value 	# 设置环境变量 (可以写多条)
+RUN command 	# 是Dockerfile的核心部分(可以写多条)
+ADD source_dir/file dest_dir/file 	# 将宿主机的文件复制到容器内，如果是一个压缩文件，将会在复制后自动解压
+source_dir/file dest_dir/file 	# 和ADD相似，但是如果有压缩文件并不能解压
+WORKDIR path_dir 	# 设置工作目录
+
+# Dockerfile演示
+FROM python:3.8.13
+MAINTAINER lqz
+ENV pwd 123
+RUN pip install django==2.2.2 -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install requests -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN mkdir lqz
+ADD ./redis.conf /home/redis.conf
+WORKDIR /home   # 工作路径是哪
+
+docker build -t='django2.2.2' .  # 创建镜像
+</code></pre></div></div>
+
+<h2 id="4私有仓库">4、私有仓库</h2>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code># docker pull 都是从hub.docker.com 拉的
+
+# 我们公司自己做的镜像，在上面没有---（我可以传上去，不安全）
+
+# 自己搭建私有仓库
+https://www.cnblogs.com/liuqingzheng/p/16315254.html &gt; 作者:Deity_JGX   &gt; 原文:https://www.cnblogs.com/jgx0/p/16328261.html  
+</code></pre></div></div>
+
+  </div><a class="u-url" href="/cnblog/2022/06/01/docker%E6%9C%8D%E5%8A%A1%E9%83%A8%E7%BD%B2%E8%BF%81%E7%A7%BB%E4%B8%8E%E5%A4%87%E4%BB%BDdockerfile%E7%A7%81%E6%9C%89%E4%BB%93%E5%BA%93.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

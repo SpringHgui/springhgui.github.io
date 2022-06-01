@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>【摸鱼神器】一次搞定 vue3的 路由 + 菜单 + tabs | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="【摸鱼神器】一次搞定 vue3的 路由 + 菜单 + tabs" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="做一个管理后台，首先要设置路由，然后配置菜单（有时候还需要导航），再来一个动态tabs，最后加上权限判断。" />
+<meta property="og:description" content="做一个管理后台，首先要设置路由，然后配置菜单（有时候还需要导航），再来一个动态tabs，最后加上权限判断。" />
+<link rel="canonical" href="/cnblog/2022/05/26/%E6%91%B8%E9%B1%BC%E7%A5%9E%E5%99%A8-%E4%B8%80%E6%AC%A1%E6%90%9E%E5%AE%9A-vue3%E7%9A%84-%E8%B7%AF%E7%94%B1-+-%E8%8F%9C%E5%8D%95-+-tabs.html" />
+<meta property="og:url" content="/cnblog/2022/05/26/%E6%91%B8%E9%B1%BC%E7%A5%9E%E5%99%A8-%E4%B8%80%E6%AC%A1%E6%90%9E%E5%AE%9A-vue3%E7%9A%84-%E8%B7%AF%E7%94%B1-+-%E8%8F%9C%E5%8D%95-+-tabs.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-26T12:47:50+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="【摸鱼神器】一次搞定 vue3的 路由 + 菜单 + tabs" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-26T12:47:50+00:00","datePublished":"2022-05-26T12:47:50+00:00","description":"做一个管理后台，首先要设置路由，然后配置菜单（有时候还需要导航），再来一个动态tabs，最后加上权限判断。","headline":"【摸鱼神器】一次搞定 vue3的 路由 + 菜单 + tabs","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/26/%E6%91%B8%E9%B1%BC%E7%A5%9E%E5%99%A8-%E4%B8%80%E6%AC%A1%E6%90%9E%E5%AE%9A-vue3%E7%9A%84-%E8%B7%AF%E7%94%B1-+-%E8%8F%9C%E5%8D%95-+-tabs.html"},"url":"/cnblog/2022/05/26/%E6%91%B8%E9%B1%BC%E7%A5%9E%E5%99%A8-%E4%B8%80%E6%AC%A1%E6%90%9E%E5%AE%9A-vue3%E7%9A%84-%E8%B7%AF%E7%94%B1-+-%E8%8F%9C%E5%8D%95-+-tabs.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">【摸鱼神器】一次搞定 vue3的 路由 + 菜单 + tabs</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-26T12:47:50+00:00" itemprop="datePublished">May 26, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <blockquote>
+  <p>做一个管理后台，首先要设置路由，然后配置菜单（有时候还需要导航），再来一个动态tabs，最后加上权限判断。</p>
+</blockquote>
+
+<p>这个是不是有点繁琐？尤其是路由的设置和菜单的配置，是不是很雷同？那么能不能简单一点呢？如果可以实现设置一次就全部搞定的话，那么是不会很香呢？</p>
+
+<p>我们可以简单封装一下，实现这个愿望。</p>
+
+<h1 id="定义一个结构">定义一个结构</h1>
+
+<p>我们可以参考 vue-router 的设置 和 el-menu 的参数，设置一个适合我们需求的结构：</p>
+
+<ul>
+  <li>
+    <p>./router.js</p>
+
+    <p>import { createRouter } from ‘@naturefw/ui-elp’</p>
+
+    <p>import home from ‘../views/home.vue’</p>
+
+    <p>const router = {
+    /**
+     * 基础路径
+     */
+    baseUrl: baseUrl,</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+ * 首页
+ */
+home: home,
+
+menus: [
+  {
+    menuId: '1', // 相当于路由的 name
+    title: '全局状态', // 浏览器的标题
+    naviId: '0', // 导航ID
+    path: 'global', // 相当于 路由 的path
+    icon: FolderOpened, // 菜单里的图标
+    childrens: [ // 子菜单，不是子路由。
+      {
+        menuId: '1010', // 相当于路由的 name
+        title: '纯state',
+        path: 'state',
+        icon: Document,
+        // 加载的组件
+        component: () =&gt; import('../views/state-global/10-state.vue')
+        // 还可以有子菜单。 
+      },
+      {
+        menuId: '1020',
+        title: '一般的状态',
+        path: 'standard',
+        icon: Document,
+        component: () =&gt; import('../views/state-global/20-standard.vue')
+      } 
+    ]
+  },
+  {
+    menuId: '2000',
+    title: '局部状态',
+    naviId: '0',
+    path: 'loacl',
+    icon: FolderOpened,
+    childrens: [
+      {
+        menuId: '2010',
+        title: '父子组件',
+        path: 'parent-son',
+        icon: Document,
+        component: () =&gt; import('../views/state-loacl/10-parent.vue')
+      }
+    ]
+  } 
+]   }
+</code></pre></div>    </div>
+
+    <p>export default createRouter(router )</p>
+  </li>
+</ul>
+
+<p>在 Router 的配置的基础上，加上 title、icon等菜单需要的属性，基本就搞定了。</p>
+
+<ul>
+  <li>baseUrl：如果不能发布到根目录的话，需要设置一个基础URL。</li>
+  <li>home：默认显示的组件，比如大屏。</li>
+  <li>menus：路由、菜单集合。
+    <ul>
+      <li>naviId：导航ID。</li>
+      <li>menuId：相当于路由的 name。</li>
+      <li>path：相当于 路由 的path。</li>
+      <li>title：浏览器的标题。</li>
+      <li>icon： 菜单里的图标。</li>
+      <li>childrens：子菜单，不是子路由。</li>
+    </ul>
+  </li>
+</ul>
+
+<h1 id="main-里面加载">main 里面加载。</h1>
+
+<p>设置之后，我们在main里面挂载一下即可。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import { createApp } from 'vue'
+import App from './App.vue'
+
+// 简易路由
+import router from './router'
+
+createApp(App)
+  .use(router)
+  .mount('#app')
+</code></pre></div></div>
+
+<ul>
+  <li>看看效果</li>
+</ul>
+
+<p><img src="https://upload-images.jianshu.io/upload_images/25078225-df785a12c957bde2.png?imageMogr2/auto-orient/strip%7CimageView2/2/w/1240" alt="路由和菜单" /></p>
+
+<p><a href="https://naturefw-code.gitee.io/nf-rollup-state/class/object">https://naturefw-code.gitee.io/nf-rollup-state/class/object</a></p>
+
+<p>这样就搞定了，是不是很简单，因为我们把其他代码都封装成了组件。</p>
+
+<h1 id="封装-n级菜单">封装 n级菜单</h1>
+
+<p>我们可以基于 el-menu，封装一个动态n级菜单组件（nf-menu）。</p>
+
+<p>菜单组件可以基于 el-menu 封装，也可以基于其他组件封装，或者自己写一个，这里以el-menu为例，介绍一下封装方式：</p>
+
+<ul>
+  <li>
+    <p>父级菜单</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;el-menu
+  ref="domMenu"
+  class="el-menu-vertical-demo"
+  @select="select"
+  background-color="#6c747c"
+  text-color="#fff"
+  active-text-color="#ffd04b"
+&gt;
+  &lt;sub-menu1
+    :subMenu="menus"
+  /&gt;
+&lt;/el-menu&gt;
+</code></pre></div>    </div>
+  </li>
+</ul>
+
+<p>父级菜单比较简单，设置 el-menu 需要的属性，然后加载子菜单组件。</p>
+
+<ul>
+  <li>
+    <p>n级子菜单</p>
+
+    <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;template v-for="(item, index) in subMenu"&gt;
+  &lt;!--树枝--&gt;
+  &lt;template v-if="item.childrens &amp;&amp; item.childrens.length &gt; 0"&gt;
+    &lt;el-sub-menu
+      :key="item.menuId + '_' + index"
+      :index="item.menuId"
+      style="vertical-align: middle;"
+        
+    &gt;
+      &lt;template #title&gt;
+        &lt;component
+          :is="item.icon"
+          style="width: 1.5em; height: 1.5em; margin-right: 8px;vertical-align: middle;"
+        &gt;
+        &lt;/component&gt;
+        &lt;span&gt;&lt;/span&gt;
+      &lt;/template&gt;
+      &lt;!--递归子菜单--&gt;
+      &lt;my-sub-menu2
+        :subMenu="item.childrens"
+      /&gt;
+    &lt;/el-sub-menu&gt;
+  &lt;/template&gt;
+  &lt;!--树叶--&gt;
+  &lt;el-menu-item v-else
+    :index="item.menuId"
+    :key="item.menuId + 'son_' + index"
+      
+  &gt;
+    &lt;template #title&gt;
+      &lt;span style="float: left;"&gt;
+        &lt;component
+          :is="item.icon"
+          style="width: 1.5em; height: 1.5em; margin-right: 8px;vertical-align: middle;"
+        &gt;
+        &lt;/component&gt;
+        &lt;span &gt;&lt;/span&gt;
+      &lt;/span&gt;
+    &lt;/template&gt;
+  &lt;/el-menu-item&gt;
+&lt;/template&gt;
+</code></pre></div>    </div>
+  </li>
+  <li>树枝：含有子菜单的菜单，使用 el-sub-menu 实现，不加载组件。</li>
+  <li>树叶：没有子菜单，使用 el-menu-item 实现，加载组件的菜单。</li>
+  <li>图标：使用 component 加载图标组件。</li>
+</ul>
+
+<p>然后设置属性即可，这样一个n级菜单就搞定了。</p>
+
+<h1 id="封装一个动态tabs">封装一个动态tabs</h1>
+
+<p>菜单有了，下一步就是tabs，为了满足不同的需求，这里封装两个组件，一个单tab的，一个是动态多tabs的。</p>
+
+<ul>
+  <li>单 tab</li>
+</ul>
+
+<p>参考 Router 的 router-view 封装一个组件 nf-router-view：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  &lt;component :is="$router.getComponent()"&gt;
+  &lt;/component&gt;
+</code></pre></div></div>
+
+<p>直接使用 component 加载组件即可。</p>
+
+<ul>
+  <li>动态多tabs</li>
+</ul>
+
+<p>基于 el-tabs 封装一个动态多tabs组件 nf-router-view-tabs：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  &lt;el-tabs
+    v-model="$router.currentRoute.key"
+    type="border-card"
+  &gt;
+    &lt;el-tab-pane label="桌面" name="home"&gt;
+      &lt;component :is="$router.home"&gt;
+      &lt;/component&gt;
+    &lt;/el-tab-pane&gt;
+    &lt;el-tab-pane
+      v-for="key in $router.tabs"
+      :key="key"
+      :label="$router.menuList[key].title"
+      :name="key"
+    &gt;
+     &lt;template #label&gt;
+        &lt;span&gt; &amp;nbsp; 
+          &lt;circle-close-filled
+            style="width: 1.0em; height: 1.0em; margin-top: 8px;"
+            @click.stop="$router.removeTab(key)" /&gt;
+        &lt;/span&gt;
+      &lt;/template&gt;
+      &lt;component :is="$router.menuList[key].component"&gt;
+      &lt;/component&gt;
+    &lt;/el-tab-pane&gt;
+  &lt;/el-tabs&gt;
+</code></pre></div></div>
+
+<p>为了保持状态，这里采用了一个笨办法，点击菜单加载的组件都放在 el-tab-pane 里面，通过切换 tab 的方式显示组件。</p>
+
+<p>源码：<a href="https://gitee.com/naturefw-code/nf-rollup-ui-controller">https://gitee.com/naturefw-code/nf-rollup-ui-controller</a></p>
+
+<h1 id="做一个简单的路由">做一个简单的路由</h1>
+
+<p>看了半天，你有没有发现，似乎缺少了一个重要环节？</p>
+
+<p>你猜对了，路由的封装还没有介绍。</p>
+
+<p>这里并不想设计一个像 vue-router那样的全能路由，而是设计一个适合管理后台的简易路由。</p>
+
+<p>菜单是多级的，url 也是多级的和菜单对应，但是路由是单级的，不嵌套。</p>
+
+<p>也就是说，点击任意一级的（树叶）菜单，加载的都是同级的组件。</p>
+
+<p>另外暂时不考虑加载组件后的路由的设置。我觉得，这个可以交给加载的组件自行实现。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>import { defineAsyncComponent, reactive, watch, inject } from 'vue'
+
+const flag = Symbol('nf-router-menu___')
+
+/**
+ * 一个简单的路由
+ * @param { string } baseUrl 基础路径
+ * @param { components } home 基础路径
+ * @param { array } menus 路由设置，数组，多级
+ * * [{
+ * * *  menuId: '菜单ID'
+ * * *  naviId: '0', // 导航ID，可以不设置
+ * * *  title: '标题',
+ * * *  path: '路径',
+ * * *  icon: Edit, // 图标组件
+ * * *  component: () =&gt; import('./views/xxx.vue') // 要加载的组件，可以不设置
+ * * *  childrens: [ // 子菜单，可以多级
+ * * * *  {
+ * * * * *  menuId: '菜单ID' 
+ * * * * *  title: '标题',
+ * * * * *  path: '路径',
+ * * * * *  icon: Edit, // 图标组件
+ * * * * *  component: () =&gt; import('./views/xxx.vue') // 要加载的组件
+ * * * * }
+ * * * ]
+ * * },
+ * * 其他菜单
+ * * ]
+ * @returns 
+ */
+class Router {
+  constructor (info) {
+    // 设置当前选择的路由
+    this.currentRoute = reactive({
+      key: 'home', // 默认的首页
+      paths: [] // 记录打开的多级菜单的信息 
+    })
+    this.baseUrl = info.baseUrl // 基础路径，应对网站的二级目录
+    this.baseTitle = document.title // 初始的标题
+    this.isRefresh = false // 是否刷新进入
+    this.home = info.home // 默认的首页
+    this.menus = reactive(info.menus) // 菜单集合，数组形式，支持多级，可以设置导航ID
+    this.menuList = {} // 变成单层的树，便于用key查找。
+    this.tabs = reactive(new Set([])) // 点击过且没有关闭的二级菜单，做成动态tab标签
+   
+    this.setup()
+  }
+
+  /**
+   * 初始化设置
+   */
+  setup = () =&gt; {
+    // 监听当前路由，设置 tabs 和标题、url
+    watch(() =&gt; this.currentRoute.key, (key) =&gt; {
+      略
+    })
+  }
+
+   /**
+   * 添加新路由，主要是实现根据用户权限加载对应的菜单。
+   */
+  addRoute = (newMenus, props = {}) =&gt; {
+      略
+  }
+
+  /**
+   * 删除路由
+   * @param { array } path 菜单的路径，[] 表示根菜单
+   * @param { string | number } id 要删除的菜单ID
+   */
+  removeRoute = (path = [], id = '') =&gt; {
+      略
+  }
+
+  /**
+   * 刷新时依据url加载组件
+   */
+  refresh = () =&gt; {
+     略
+  }
+
+  /**
+   * 加载路由指定的组件
+   * @returns 
+   */
+  getComponent = () =&gt; {
+    if (this.currentRoute.key === '' || this.currentRoute.key === 'home') {
+      return this.home
+    } else {
+      return this.menuList[this.currentRoute.key].component
+    }
+  }
+
+  /**
+   * 删除tab
+   * @param { string } key 
+   * @returns 
+   */
+  removeTab = (key) =&gt; {
+    略
+  }
+
+  /**
+   * 安装插件
+   * @param {*} app 
+   */
+  install = (app) =&gt; {
+    // 便于模板获取
+    app.config.globalProperties.$router = this
+    // 便于代码获取
+    app.provide(flag, this)
+  }
+}
+
+/**
+ * 创建简易路由
+ */
+const createRouter = (info) =&gt; {
+  // 创建路由，
+  const router = new Router(info)
+  // 判断url，是否需要加载组件
+  setTimeout(() =&gt; {
+    router.refresh()
+  }, 300)
+  // 使用vue的插件，设置全局路由
+  return router
+}
+
+/**
+ * 获取路由
+ * @returns 
+ */
+const useRouter = () =&gt; {
+  return inject(flag)
+}
+
+export {
+  createRouter,
+  useRouter
+}
+</code></pre></div></div>
+
+<p>篇幅有限，这里只介绍了路由的整体结构，具体实现方式可以看源码：</p>
+
+<p>源码：<a href="https://gitee.com/naturefw-code/nf-rollup-ui-controller">https://gitee.com/naturefw-code/nf-rollup-ui-controller</a></p>
+
+<h1 id="菜单与权限">菜单与权限</h1>
+
+<p>上面是静态的路由和导航的设置方式，对于管理后台，必备的一个需求就是，根据用户的权限来加载路由和菜单。</p>
+
+<p>所以我们提供了一个 addRoute 方法，实现动态添加路由的功能，这样可以等用户登录之后，得到用户的权限，然后按照权限加载路由和菜单。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>  const router = useRouter()
+
+   router.addRoute([
+      {
+        menuId: 'dt-100',
+        title: '添加根菜单',
+        naviId: '0',
+        path: 'new-router',
+        icon: FolderOpened,
+        childrens: [
+          {
+            menuId: '100-10',
+            title: '动态菜单',
+            path: 'ui',
+            icon: Document,
+            component: () =&gt; import('../ui/base/c-01html.vue')
+          }
+        ]
+      }
+    ], { index: 1 })
+</code></pre></div></div>
+
+<p>同时也可以加上权限判断。菜单是基于 el-menu 实现的，可以加上 select 事件，然后在事件里面判断权限，如果没有权限可以跳转到登录组件。</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>const router = useRouter()
+
+const myselect = (index, indexPath) =&gt; {
+  // 验证权限，如果没有权限，加载登录组件
+  if (没有权限) {
+    router.currentRoute.paths = ''
+    router.currentRoute.key = '登录组件的key'
+  }
+}
+</code></pre></div></div>
+
+<h1 id="示例项目">示例项目</h1>
+
+<p><a href="https://gitee.com/naturefw-code/nf-rollup-state">https://gitee.com/naturefw-code/nf-rollup-state</a></p>
+<blockquote>
+  <p>作者:金色海洋（jyk）
+原文:https://www.cnblogs.com/jyk/p/16308015.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/26/%E6%91%B8%E9%B1%BC%E7%A5%9E%E5%99%A8-%E4%B8%80%E6%AC%A1%E6%90%9E%E5%AE%9A-vue3%E7%9A%84-%E8%B7%AF%E7%94%B1-+-%E8%8F%9C%E5%8D%95-+-tabs.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

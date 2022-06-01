@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>发现一个开源项目优化点，点进来就是你的了 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="发现一个开源项目优化点，点进来就是你的了" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="hello，大家好呀，我是小楼。 最近无聊（摸）闲逛（鱼）github时，发现了一个阿里开源项目可以贡献代码的地方。 不是写单测、改代码格式那种，而是比较有挑战的性能优化，最关键的是还不难，仔细看完本文后，有点基础就能写出来的那种，话不多说，发车！ 相信大家在日常写代码获取时间戳时，会写出如下代码:" />
+<meta property="og:description" content="hello，大家好呀，我是小楼。 最近无聊（摸）闲逛（鱼）github时，发现了一个阿里开源项目可以贡献代码的地方。 不是写单测、改代码格式那种，而是比较有挑战的性能优化，最关键的是还不难，仔细看完本文后，有点基础就能写出来的那种，话不多说，发车！ 相信大家在日常写代码获取时间戳时，会写出如下代码:" />
+<link rel="canonical" href="/cnblog/2022/05/26/%E5%8F%91%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E4%BC%98%E5%8C%96%E7%82%B9-%E7%82%B9%E8%BF%9B%E6%9D%A5%E5%B0%B1%E6%98%AF%E4%BD%A0%E7%9A%84%E4%BA%86.html" />
+<meta property="og:url" content="/cnblog/2022/05/26/%E5%8F%91%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E4%BC%98%E5%8C%96%E7%82%B9-%E7%82%B9%E8%BF%9B%E6%9D%A5%E5%B0%B1%E6%98%AF%E4%BD%A0%E7%9A%84%E4%BA%86.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-26T12:47:40+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="发现一个开源项目优化点，点进来就是你的了" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-26T12:47:40+00:00","datePublished":"2022-05-26T12:47:40+00:00","description":"hello，大家好呀，我是小楼。 最近无聊（摸）闲逛（鱼）github时，发现了一个阿里开源项目可以贡献代码的地方。 不是写单测、改代码格式那种，而是比较有挑战的性能优化，最关键的是还不难，仔细看完本文后，有点基础就能写出来的那种，话不多说，发车！ 相信大家在日常写代码获取时间戳时，会写出如下代码:","headline":"发现一个开源项目优化点，点进来就是你的了","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/26/%E5%8F%91%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E4%BC%98%E5%8C%96%E7%82%B9-%E7%82%B9%E8%BF%9B%E6%9D%A5%E5%B0%B1%E6%98%AF%E4%BD%A0%E7%9A%84%E4%BA%86.html"},"url":"/cnblog/2022/05/26/%E5%8F%91%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E4%BC%98%E5%8C%96%E7%82%B9-%E7%82%B9%E8%BF%9B%E6%9D%A5%E5%B0%B1%E6%98%AF%E4%BD%A0%E7%9A%84%E4%BA%86.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">发现一个开源项目优化点，点进来就是你的了</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-26T12:47:40+00:00" itemprop="datePublished">May 26, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p>hello，大家好呀，我是小楼。</p>
+
+<p>最近无聊（摸）闲逛（鱼）github时，发现了一个阿里开源项目可以贡献代码的地方。</p>
+
+<p>不是写单测、改代码格式那种，而是比较有挑战的<code class="language-plaintext highlighter-rouge">性能优化</code>，最关键的是还不难，仔细看完本文后，有点基础就能写出来的那种，话不多说，发车！</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141006987-806605194.png" alt="image" /></p>
+
+<p>相信大家在日常写代码获取时间戳时，会写出如下代码:</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>long ts = System.currentTimeMillis();
+</code></pre></div></div>
+
+<p>读者中还有一些Gopher，我们用Go也写一遍：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>UnixTimeUnitOffset = uint64(time.Millisecond / time.Nanosecond)
+ts := uint64(time.Now().UnixNano()) / UnixTimeUnitOffset
+</code></pre></div></div>
+
+<p>在一般情况下这么写，或者说在99%的情况下这么写一点问题都没有，但有位大佬研究了Java下时间戳的获取：</p>
+
+<blockquote>
+  <p><a href="http://pzemtsov.github.io/2017/07/23/the-slow-currenttimemillis.html">http://pzemtsov.github.io/2017/07/23/the-slow-currenttimemillis.html</a></p>
+</blockquote>
+
+<p>他得出了一个结论：并发越高，获取时间戳越慢！</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141013063-1292691432.png" alt="image" /></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141017974-1607641751.png" alt="image" /></p>
+
+<p>具体到细节咱也不是很懂，大概原因是由于只有一个全局时钟源，高并发或频繁访问会造成严重的争用。</p>
+
+<h3 id="缓存时间戳">缓存时间戳</h3>
+
+<p>我最早接触到用缓存时间戳的方式来优化是在Cobar这个项目中：</p>
+
+<blockquote>
+  <p><a href="https://github.com/alibaba/cobar">https://github.com/alibaba/cobar</a></p>
+</blockquote>
+
+<p>由于Cobar是一款数据库中间件，它的QPS可能会非常高，所以才有了这个优化，我们瞅一眼他的实现：</p>
+
+<ul>
+  <li>起一个单独的线程每隔20ms获取一次时间戳并缓存起来</li>
+  <li>使用时间戳时直接取缓存</li>
+</ul>
+
+<blockquote>
+  <p><a href="https://github.com/alibaba/cobar/blob/master/server/src/main/server/com/alibaba/cobar/util/TimeUtil.java">https://github.com/alibaba/cobar/blob/master/server/src/main/server/com/alibaba/cobar/util/TimeUtil.java</a></p>
+</blockquote>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+ * 弱精度的计时器，考虑性能不使用同步策略。
+ * 
+ * @author xianmao.hexm 2011-1-18 下午06:10:55
+ */
+public class TimeUtil {
+    private static long CURRENT_TIME = System.currentTimeMillis();
+
+    public static final long currentTimeMillis() {
+        return CURRENT_TIME;
+    }
+
+    public static final void update() {
+        CURRENT_TIME = System.currentTimeMillis();
+    }
+}
+</code></pre></div></div>
+
+<blockquote>
+  <p><a href="https://github.com/alibaba/cobar/blob/master/server/src/main/server/com/alibaba/cobar/CobarServer.java">https://github.com/alibaba/cobar/blob/master/server/src/main/server/com/alibaba/cobar/CobarServer.java</a></p>
+</blockquote>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>timer.schedule(updateTime(), 0L, TIME_UPDATE_PERIOD); // TIME_UPDATE_PERIOD 是 20ms
+...
+// 系统时间定时更新任务
+private TimerTask updateTime() {
+    return new TimerTask() {
+        @Override
+        public void run() {
+            TimeUtil.update();
+        }
+    };
+}
+</code></pre></div></div>
+
+<p>Cobar之所以这么干，一是因为往往他的QPS非常高，这样可以减少获取时间戳的CPU消耗或者耗时；其次是这个时间戳在Cobar内部只做统计使用，就算不准确也并无大碍，从实现上看也确实是<code class="language-plaintext highlighter-rouge">弱精度</code>。</p>
+
+<p>后来我也在其他的代码中看到了类似的实现，比如Sentinel（不是Redis的Sentinel，而是阿里开源的限流熔断利器Sentinel）。</p>
+
+<p>Sentinel作为一款限流熔断的工具，自然是自身的开销越小越好，于是同样都是出自阿里的Sentinel也用了和Cobar类似的实现：<code class="language-plaintext highlighter-rouge">缓存时间戳</code>。</p>
+
+<p>原因也很简单，尽可能减少对系统资源的消耗，获取时间戳的性能要更优秀，但又不能和Cobar那样搞个弱精度的时间戳，因为Sentinel获取到的时间戳很可能就决定了一次请求是否被限流、熔断。</p>
+
+<p>所以解决办法也很简单，直接将缓存时间戳的间隔改成<code class="language-plaintext highlighter-rouge">1毫秒</code></p>
+
+<p>去年我还写过一篇文章<a href="https://mp.weixin.qq.com/s/hs11xUNF7Vh-zO6zeaXXmw">《低开销获取时间戳》</a>，里面有Sentinel这段代码：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141202570-280556206.png" alt="image" /></p>
+
+<p>甚至后来的Sentinel-Go也采取了一模一样的逻辑：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141211327-305149091.png" alt="image" /></p>
+
+<p>以前没有多想，认为这样并没有什么不妥。</p>
+
+<p>直到前两天晚上，没事在Sentinel-Go社区中瞎逛，看到了一个issue，大受震撼：</p>
+
+<blockquote>
+  <p><a href="https://github.com/alibaba/sentinel-golang/issues/441">https://github.com/alibaba/sentinel-golang/issues/441</a></p>
+</blockquote>
+
+<p>提出这位issue的大佬在第一段就给出了非常有见解的观点：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141217355-1969219486.png" alt="image" /></p>
+
+<p>说的比较委婉，什么叫「负向收益」？</p>
+
+<p>我又搜索了一下，找到了这个issue：</p>
+
+<blockquote>
+  <p><a href="https://github.com/alibaba/Sentinel/issues/1702">https://github.com/alibaba/Sentinel/issues/1702</a></p>
+</blockquote>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141223432-1833963998.png" alt="image" /></p>
+
+<p>TimeUtil吃掉了50%的CPU，这就是「负向收益」，还是比较震惊的！</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141229858-1299067375.png" alt="image" /></p>
+
+<p>看到这个issue，我简单地想了下：</p>
+
+<ul>
+  <li>耗时：获取时间戳在一般情况下耗时几乎都不会影响到系统，尤其是我们常写的业务系统</li>
+  <li>CPU：假设每毫秒缓存一次时间戳，抛开其他开销不说，每秒就有1000次获取时间戳的调用，如果每次请求中只有1次获取时间戳的操作，那么至少得有1000QPS的请求，才能填平缓存时间戳的开销，况且还有其他开销</li>
+</ul>
+
+<p>但这只是我们的想当然，如果有数据支撑就又说服力了。为此前面提出「负向收益」的大佬做了一系列分析和测试，我们白嫖一下他的成果：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141236995-1076781077.png" alt="image" /></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141242617-210272225.png" alt="image" /></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141248000-1873439133.png" alt="image" /></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141253340-1586378033.png" alt="image" /></p>
+
+<p>看完后我跪在原地，久久不能起身。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141259058-1215791583.png" alt="image" /></p>
+
+<p>课代表来做个总结：</p>
+
+<ul>
+  <li>缓存时间戳开销最大的地方是sleep和获取时间戳</li>
+  <li>理论上来说单机QPS需要大于4800才会有正向收益，真实测试结果也是在4000QPS以内都没有正向收益</li>
+  <li>如果不要这个缓存时间戳，获取时间戳耗时会增加，但这在可接受范围内</li>
+  <li>鉴于常规情况下QPS很少会达到4K，所以最后结论是在Sentinel-Go中默认禁用这个特性</li>
+</ul>
+
+<p>这一顿操作下来，连Sentinel社区的大佬也觉得很棒，竖起来大拇指：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141305293-1555412375.png" alt="image" /></p>
+
+<p>然而做了这么多测试，最后的修改就只是把true改成false：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141310666-1028438906.png" alt="image" /></p>
+
+<h3 id="自适应算法">自适应算法</h3>
+
+<p>本来我以为看到这位大佬的测试已经是非常有收获了，没想到接下去的闲逛又让我发现了一个更了不得的东西。</p>
+
+<p>既然上面分析出来，在QPS比较高的情况下，收益才能抵消被抵消，那么有没有可能实现一个自适应的算法，在QPS较低的时候直接从系统获取，QPS较高时，从缓存获取。</p>
+
+<p>果不其然，Sentinel（Java版，版本&gt;=1.8.2）已经实现了！</p>
+
+<blockquote>
+  <p>issue参考：<a href="https://github.com/alibaba/Sentinel/pull/1746">https://github.com/alibaba/Sentinel/pull/1746</a></p>
+</blockquote>
+
+<p>我们捋一下它的实现：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141322359-1287601181.png" alt="image" /></p>
+
+<p>我们首先看最核心的缓存时间戳的循环（每毫秒执行1次），在这个循环中，它将缓存时间戳分成了三个状态：</p>
+
+<ul>
+  <li>RUNNING：运行态，执行缓存时间戳策略，并统计写时间戳的QPS（把对缓存时间戳的读写QPS分开统计）</li>
+  <li>IDLE：空闲态（初始状态），什么都不做，只休眠300毫秒</li>
+  <li>PREPARE：准备态，缓存时间戳，但不统计QPS</li>
+</ul>
+
+<p>这三个状态怎么流转呢？答案在开头调用的<code class="language-plaintext highlighter-rouge">check</code>方法中：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141329561-275270340.png" alt="image" /></p>
+
+<p>首先check逻辑有个间隔，也就是每隔一段时间（3秒）来做一次状态转换；</p>
+
+<p>其次如果当前状态是<code class="language-plaintext highlighter-rouge">空闲态</code>并且读QPS大于<code class="language-plaintext highlighter-rouge">HITS_UPPER_BOUNDARY</code>（1200），则切换为<code class="language-plaintext highlighter-rouge">准备态</code>。</p>
+
+<p>如果当前状态是<code class="language-plaintext highlighter-rouge">运行态</code>且读QPS小于<code class="language-plaintext highlighter-rouge">HITS_LOWER_BOUNDARY</code>（800），则切换为<code class="language-plaintext highlighter-rouge">空闲态</code>。</p>
+
+<p>发现似乎少了切换到<code class="language-plaintext highlighter-rouge">运行态</code>的分支，看上面的循环中，第三个<code class="language-plaintext highlighter-rouge">准备态</code>的分支运行一次就将状态切换为<code class="language-plaintext highlighter-rouge">运行态</code>了。</p>
+
+<p>这是为啥？其实<code class="language-plaintext highlighter-rouge">准备态</code>只是为了让程序从<code class="language-plaintext highlighter-rouge">空闲态</code>切换到<code class="language-plaintext highlighter-rouge">运行态</code>时过渡的更平滑，因为<code class="language-plaintext highlighter-rouge">空闲态</code>下缓存时间戳不再更新，如果没有过渡直接切换到<code class="language-plaintext highlighter-rouge">运行态</code>，那可能切换后获取的时间戳是有误差的。</p>
+
+<p>文字可能不直观，我们画一个状态流转图：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141335827-1634684648.png" alt="image" /></p>
+
+<p>最后这些准备好了，获取时需要做两件事：一是统计读时间戳的QPS，二是获取时间戳；如果是<code class="language-plaintext highlighter-rouge">空闲态</code>或<code class="language-plaintext highlighter-rouge">准备态</code>则直接获取系统时间返回，如果是<code class="language-plaintext highlighter-rouge">运行态</code>则从缓存中拿时间戳。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141342035-900273630.png" alt="image" /></p>
+
+<p>当程序比较空闲时，不会缓存时间戳，降低CPU的消耗，QPS较高时缓存时间戳，也能降低CPU的消耗，并且能降低获取时间戳的时延，可谓是一举两得。</p>
+
+<p>但这中间我有个疑问，这里QPS的高低边界不知道是如何得出的，是拍脑袋还是压测出来的，不过这个数值似乎并不一定绝对准确，可能和机器的配置也有关系，所以我倾向这个值可以配置，而不是在代码中写死，关于这点，这段代码的作者也解释了原因：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141349288-314368247.png" alt="image" /></p>
+
+<p>最后可能你会问，这QPS咋统计呀？</p>
+
+<p>这可是Sentinel的强项，利用<code class="language-plaintext highlighter-rouge">LeapArray</code>统计，由于这不是本文重点，就不展开了，有兴趣可以参考我之前的文章<a href="https://mp.weixin.qq.com/s/csBmNsAXu7GJXeFfXD8M0w">《Sentinel-Go 源码系列（三）滑动时间窗口算法的工程实现》</a>，虽然文章是Go的，但算法和Java的是一模一样，甚至实现都是照搬。</p>
+
+<p>有没有测试数据支撑呢？有另一位大佬在评论区贴出了他的测试数据，我们看一下：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141355705-829040024.png" alt="image" /></p>
+
+<p>在低负载下，CPU消耗降低的特别明显，高负载则没什么变化，这也符合我们的预期。</p>
+
+<p>看到这里你是不是觉得该点题了？没错，Sentinel-Go还没实现上述的自适应算法，这是个绝佳的机会，有技术含量，又有参考（Java版），是不是心动了？</p>
+
+<p>社区中也有该issue：</p>
+
+<blockquote>
+  <p><a href="https://github.com/alibaba/sentinel-golang/issues/419">https://github.com/alibaba/sentinel-golang/issues/419</a></p>
+</blockquote>
+
+<p><img src="https://img2022.cnblogs.com/blog/2379072/202205/2379072-20220525141402184-1266321862.png" alt="image" /></p>
+
+<p>这个issue在2021年8月有个哥们认领了，但截止目前还没贡献代码，四舍五入等于他放弃了，所以你懂我意思吧？</p>
+
+<h3 id="最后说一句">最后说一句</h3>
+
+<p>如果你觉得文章还可以，麻烦动动小手，点个<code class="language-plaintext highlighter-rouge">关注</code>、<code class="language-plaintext highlighter-rouge">在看</code>、<code class="language-plaintext highlighter-rouge">赞</code>，你的鼓励是我持续创作的动力！</p>
+
+<p>对了，如果觉得还不过瘾，可以再看看这些相关文章：</p>
+
+<ul>
+  <li><a href="https://mp.weixin.qq.com/s/QHFHtglQ0rB-FBcjv6ML8Q">《参与开源项目很难吗？》</a></li>
+  <li><a href="https://mp.weixin.qq.com/s/JdJwlAZoVBHjh0Vwz7sxgw">《Sentinel-Go 源码系列（一）｜开篇》</a></li>
+  <li><a href="https://mp.weixin.qq.com/s/F54zAu2gnX4a0YUQXTnZdA">《Sentinel-Go 源码系列（二）｜初始化流程和责任链设计模式》</a></li>
+  <li><a href="https://mp.weixin.qq.com/s/csBmNsAXu7GJXeFfXD8M0w">《Sentinel-Go 源码系列（三）滑动时间窗口算法的工程实现》</a></li>
+  <li><a href="https://mp.weixin.qq.com/s/AHJKyIwwsRUy_SlIruZTiQ">《Sentinel在docker中获取CPU利用率的一个BUG》</a></li>
+  <li><a href="https://mp.weixin.qq.com/s/hs11xUNF7Vh-zO6zeaXXmw">《低开销获取时间戳》</a></li>
+</ul>
+
+<p>感谢阅读，我们下期再见~</p>
+
+<hr />
+
+<blockquote>
+  <p>搜索关注微信公众号”捉虫大师”，后端技术分享，架构设计、性能优化、源码阅读、问题排查、踩坑实践。
+作者:捉虫大师
+原文:https://www.cnblogs.com/zhuochongdashi/p/16309130.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/26/%E5%8F%91%E7%8E%B0%E4%B8%80%E4%B8%AA%E5%BC%80%E6%BA%90%E9%A1%B9%E7%9B%AE%E4%BC%98%E5%8C%96%E7%82%B9-%E7%82%B9%E8%BF%9B%E6%9D%A5%E5%B0%B1%E6%98%AF%E4%BD%A0%E7%9A%84%E4%BA%86.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

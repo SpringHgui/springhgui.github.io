@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>定制ASP.NET 6.0的应用配置 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="定制ASP.NET 6.0的应用配置" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="大家好，我是张飞洪，感谢您的阅读，我会不定期和你分享学习心得，希望我的文章能成为你成长路上的垫脚石，让我们一起精进。" />
+<meta property="og:description" content="大家好，我是张飞洪，感谢您的阅读，我会不定期和你分享学习心得，希望我的文章能成为你成长路上的垫脚石，让我们一起精进。" />
+<link rel="canonical" href="/cnblog/2022/05/27/%E5%AE%9A%E5%88%B6ASP.NET-6.0%E7%9A%84%E5%BA%94%E7%94%A8%E9%85%8D%E7%BD%AE.html" />
+<meta property="og:url" content="/cnblog/2022/05/27/%E5%AE%9A%E5%88%B6ASP.NET-6.0%E7%9A%84%E5%BA%94%E7%94%A8%E9%85%8D%E7%BD%AE.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-27T08:36:40+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="定制ASP.NET 6.0的应用配置" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-27T08:36:40+00:00","datePublished":"2022-05-27T08:36:40+00:00","description":"大家好，我是张飞洪，感谢您的阅读，我会不定期和你分享学习心得，希望我的文章能成为你成长路上的垫脚石，让我们一起精进。","headline":"定制ASP.NET 6.0的应用配置","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/27/%E5%AE%9A%E5%88%B6ASP.NET-6.0%E7%9A%84%E5%BA%94%E7%94%A8%E9%85%8D%E7%BD%AE.html"},"url":"/cnblog/2022/05/27/%E5%AE%9A%E5%88%B6ASP.NET-6.0%E7%9A%84%E5%BA%94%E7%94%A8%E9%85%8D%E7%BD%AE.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">定制ASP.NET 6.0的应用配置</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-27T08:36:40+00:00" itemprop="datePublished">May 27, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <blockquote>
+  <p>大家好，我是张飞洪，感谢您的阅读，我会不定期和你分享学习心得，希望我的文章能成为你成长路上的垫脚石，让我们一起精进。</p>
+</blockquote>
+
+<p>本文的主题是应用程序配置。要介绍的是如何使用配置、如何自定义配置，以采用不同的方式配置。也许您已经有了现有的XML配置，或者希望在不同的应用上共享YAML配置文件，或者从数据库中读取配置值，总之，配置是我们绕不开的话题。</p>
+
+<p>本文，我们将讨论以下主题：</p>
+
+<ul>
+  <li>设置配置文件</li>
+  <li>使用类型化配置</li>
+  <li>使用初始化（INI）文件进行配置</li>
+  <li>配置提供程序</li>
+</ul>
+
+<p>本文中的主题仍然是处在<code class="language-plaintext highlighter-rouge">ASP.NET Core</code>的<code class="language-plaintext highlighter-rouge">Host</code>层：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/127185/202205/127185-20220525093129922-88245136.png" alt="" /></p>
+
+<h2 id="21设置配置文件">2.1设置配置文件</h2>
+
+<p>让我们从各种配置选项开始，自<code class="language-plaintext highlighter-rouge">ASP.NET Core2.0</code>http://ASP.NET ，为了确保<code class="language-plaintext highlighter-rouge">Startup.cs</code>的干净和简单，配置被隐藏在<code class="language-plaintext highlighter-rouge">WebHostBuilder</code>的默认配置中，不再是<code class="language-plaintext highlighter-rouge">Startup.cs</code>的一部分。</p>
+
+<p>在<code class="language-plaintext highlighter-rouge">ASP.NET Core3.1到ASP.NET Core 5.0</code>，代码如下所示：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class Program {     
+public static void Main(string[] args)
+{
+    CreateWebHostBuilder(args).Build().Run();     
+}     
+
+public static IHostBuilder CreateHostBuilder(string[] args) =&gt; 
+    Host.CreateDefaultBuilder(args).
+    ConfigureWebHostDefaults(webBuilder =&gt;{ 
+        webBuilder.UseStartup(); 
+    }
+}
+</code></pre></div></div>
+
+<p>在<code class="language-plaintext highlighter-rouge">ASP.NET Core 6.0</code>中，为了进一步的简化，<code class="language-plaintext highlighter-rouge">Microsoft</code>引入了最小应用程序编程接口（API）方法：去除<code class="language-plaintext highlighter-rouge">Startup.cs</code>文件，把所有的配置放在在<code class="language-plaintext highlighter-rouge">Program.cs</code>文件中，让我们看看是什么样子：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Var builder = WebApplication.CreateBuilder(args); 
+// Add services to the container. 
+builder.Services.AddControllersWithViews(); 
+var app = builder.Build();
+</code></pre></div></div>
+
+<p>上面两个版本都自带默认配置，也支持自定义配置。我们可以使用<code class="language-plaintext highlighter-rouge">ConfigureAppConfiguration()</code>方法扩展了<code class="language-plaintext highlighter-rouge">IWebHostBuilder</code>。</p>
+
+<p>下面是<code class="language-plaintext highlighter-rouge">ASP.NET Core3.1到ASP.NET Core 5.0中的</code>使用最小API方法时的定制代码：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>Host.CreateDefaultBuilder(args).ConfigureWebHostDefaults(webBuilder =&gt;
+{         
+    webBuilder.ConfigureAppConfiguration((builderContext,config) =&gt;
+    {             
+        //这里是配置内容     
+    }).UseStartup();     
+});
+</code></pre></div></div>
+
+<p>您还可以使用<code class="language-plaintext highlighter-rouge">ConfigureAppConfiguration</code>来配置应用程序配置：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>builder.WebHost.ConfigureAppConfiguration((builderContext, config) =&gt; 
+{     
+    //这里是配置内容
+});
+</code></pre></div></div>
+
+<p>还有一种更简单的方法，通过访问<code class="language-plaintext highlighter-rouge">builder</code>的<code class="language-plaintext highlighter-rouge">Configuration</code>属性：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>builder.Configuration.AddJsonFile("appsettings.json",optional: false,reloadOnChange: true);
+</code></pre></div></div>
+
+<p>当我们创建<code class="language-plaintext highlighter-rouge">ASP.NET Core</code>项目，会生成一些默认的配置文件，比如<code class="language-plaintext highlighter-rouge">appsettings.json</code>和<code class="language-plaintext highlighter-rouge">appsettings.Development.json</code>，大多数<code class="language-plaintext highlighter-rouge">ASP.NET Core</code>开发人员会使用默认的配置文件来配置。</p>
+
+<p>以下展示了一段用于读取<code class="language-plaintext highlighter-rouge">appsettings.json</code>的默认代码：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>var env = builder.Environment; 
+builder.Configuration.SetBasePath(env.ContentRootPath); 
+builder.Configuration.AddJsonFile("appsettings.json",optional: false,reloadOnChange:true); 
+builder.Configuration.AddJsonFile($"appsettings.{env.EnvironmentName}.json",optional:true,reloadOnChange:true); 
+builder.Configuration.AddEnvironmentVariables();
+</code></pre></div></div>
+
+<p>该配置通过环境变量设置了应用程序的基本路径，这里使用<code class="language-plaintext highlighter-rouge">AddEnvironmentVariables()</code>配置方法是一种最佳实践。另外，配置顺序也很重要，后添加的配置将覆盖之前添加的配置，这里的环境变量始终做最后的覆盖。</p>
+
+<p><code class="language-plaintext highlighter-rouge">IConfigurationBuilder</code>有很多扩展方法可以添加更多配置，例如XML或INI配置文件和内存配置，甚至您也可以在社区了找到的其他配置提供程序，以读取YAML文件、数据库值等。</p>
+
+<h2 id="22-使用类型化配置">2.2 使用类型化配置</h2>
+
+<p>在尝试读取<code class="language-plaintext highlighter-rouge">INI</code>文件之前，有必要了解如何使用类型化配置，而不是通过<code class="language-plaintext highlighter-rouge">IConfiguration</code>逐键读取配置。要读取类型化配置，需要定义待配置的类型。假设我们创建一个名为<code class="language-plaintext highlighter-rouge">AppSettings</code>的类，如下所示：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>namespace ConfigureSample; 
+public class AppSettings {     
+    public int Foo { get; set; }     
+    public string Bar { get; set; }
+}
+</code></pre></div></div>
+
+<p>这是一个简单的POCO类，然后，我们可以在<code class="language-plaintext highlighter-rouge">Startup.cs</code>的<code class="language-plaintext highlighter-rouge">ConfigureServices</code>方法内填充这些类。直到ASP。NET Core 5.0：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>services.Configure&lt;AppSettings&gt;(Configuration.GetSection("AppSettings"));
+</code></pre></div></div>
+
+<p>使用迷你API（<code class="language-plaintext highlighter-rouge">minimal API</code>）方法，配置如下所示：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>builder.Services.Configure&lt;AppSettings&gt;(builder.Configuration.GetSection("AppSettings"));
+</code></pre></div></div>
+
+<p>这样，类型化配置也可以在依赖注入（DI）容器中注册为服务，并且可以在应用程序中的任何地方使用。您可以为每个配置创建不同的配置类型。在大多数情况下，一个配置足以应对，但有时为了需要会将配置划分为不同的配置。</p>
+
+<p>下面的代码演示了如何在MVC控制器中使用类型配置：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>using Microsoft.Extensions.Options; 
+// ... 
+public class HomeController : Controller {     
+    private readonly AppSettings _options;     
+    public HomeController(IOptions&lt;AppSettings&gt; options)     
+    {         
+        _options = options.Value;     
+    }     
+    public IActionResult Index()     
+    {         
+        ViewData["Message"] = _options.Bar;         
+        return View();     
+    }
+}
+</code></pre></div></div>
+
+<p><code class="language-plaintext highlighter-rouge">IOptions</code>是<code class="language-plaintext highlighter-rouge">AppSettings</code>类型的包装器，<code class="language-plaintext highlighter-rouge">Value</code>属性包含<code class="language-plaintext highlighter-rouge">AppSettings</code>类的实例，包括配置文件中的值。</p>
+
+<p>要读取设置，需要先在<code class="language-plaintext highlighter-rouge">appsettings.json</code>文件中配置<code class="language-plaintext highlighter-rouge">AppSettings</code>部分，否则值将为<code class="language-plaintext highlighter-rouge">null</code>或未设置。现在，让我们将该部分添加到<code class="language-plaintext highlighter-rouge">appsettings.json</code>文件，如下所示：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>{
+    "Logging": { "LogLevel": { "Default": "Warning" }},
+    "AllowedHosts": "*", 
+    "AppSettings": {"Foo": 123,"Bar": "Bar"} 
+}
+</code></pre></div></div>
+
+<h2 id="23-使用ini文件进行配置">2.3 使用INI文件进行配置</h2>
+
+<p>要使用<code class="language-plaintext highlighter-rouge">INI</code>文件来配置应用程序，您需要在<code class="language-plaintext highlighter-rouge">Program.cs</code>的<code class="language-plaintext highlighter-rouge">ConfigureAppConfiguration()</code>方法中添加<code class="language-plaintext highlighter-rouge">INI</code>配置，如下所示：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>builder.Configuration.AddIniFile("appsettings.ini",optional: false,reloadOnChange: true); 
+builder.Configuration.AddJsonFile($"appsettings.{env.EnvironmentName}.ini", optional: true, reloadOnChange: true);
+</code></pre></div></div>
+
+<p>此代码以与<code class="language-plaintext highlighter-rouge">JSON</code>配置文件加载方式相同。第一行是必需的配置，第二行是可选的配置，具体取决于当前运行时环境。</p>
+
+<p>INI文件可能如下所示：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>[AppSettings] Bar="FooBar"
+</code></pre></div></div>
+
+<p>此文件包含一个名为<code class="language-plaintext highlighter-rouge">AppSettings</code>和一个名为<code class="language-plaintext highlighter-rouge">Bar</code>的属性。</p>
+
+<p>前面我们说过，配置的顺序很重要。如果通过<code class="language-plaintext highlighter-rouge">JSON</code>文件进行配置之后再添加两行有关<code class="language-plaintext highlighter-rouge">INI</code>文件的配置，<code class="language-plaintext highlighter-rouge">INI</code>文件将覆盖<code class="language-plaintext highlighter-rouge">JSON</code>文件中的设置，<code class="language-plaintext highlighter-rouge">Bar</code>属性值将被<code class="language-plaintext highlighter-rouge">FooBar</code>覆盖。此外，<code class="language-plaintext highlighter-rouge">INI</code>文件中的值将通过之前创建的类型化配置提供。</p>
+
+<p>其他所有配置提供程序都将以相同的机制工作。</p>
+
+<h2 id="24-配置提供程序">2.4 配置提供程序</h2>
+
+<p>配置提供程序是<code class="language-plaintext highlighter-rouge">IConfigurationProvider</code>的实现，它是由配置源创建的（配置源是<code class="language-plaintext highlighter-rouge">IConfigurationSource</code>的实现）。配置提供程序从配置源头读取数据，并通过字典对外提供数据。</p>
+
+<p>将自定义或第三方配置提供程序添加到<code class="language-plaintext highlighter-rouge">ASP.NET Core</code>中，您需要调用<code class="language-plaintext highlighter-rouge">ConfigurationBuilder</code>上的<code class="language-plaintext highlighter-rouge">Add</code>方法添加配置源：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// add new configuration source 
+builder.Configuration.Add(new MyCustomConfigurationSource { 
+    SourceConfig = //配置数据来源     
+    Optional = false,  
+    ReloadOnChange = true 
+});
+</code></pre></div></div>
+
+<p>通常，我们会创建一个扩展方法来更优雅地添加配置源，如下所示：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>builder.Configuration.AddMyCustomSource("source", optional: false, reloadOnChange: true);
+</code></pre></div></div>
+
+<h2 id="24-回顾">2.4 回顾</h2>
+
+<p>其实在大多数情况下，我们不需要添加其他配置提供程序或创建自己的配置提供程序，但是为了以防万一，但最好知道如何定制它。此外，使用类型化配置是读取和提供设置的好方法。在经典的<code class="language-plaintext highlighter-rouge">ASP.NET</code>中，我们往往使用手动的方式读取配置，现在，我们只需提供一个类型即可自动完成此操作，因为该类型将通过DI自动实例化。</p>
+
+<p>+</p>
+
+<h2 id="_打个赏喝个咖啡_">(^_^)打个赏喝个咖啡(^_^)</h2>
+
+<p><img src="https://images.cnblogs.com/cnblogs_com/jackyfei/1334006/o_wx.png" alt="微信支付" /></p>
+<blockquote>
+  <p>作者:张飞洪[厦门]
+原文:https://www.cnblogs.com/jackyfei/p/16308134.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/27/%E5%AE%9A%E5%88%B6ASP.NET-6.0%E7%9A%84%E5%BA%94%E7%94%A8%E9%85%8D%E7%BD%AE.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

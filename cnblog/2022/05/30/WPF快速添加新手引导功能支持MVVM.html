@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>WPF 快速添加新手引导功能（支持MVVM） | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="WPF 快速添加新手引导功能（支持MVVM）" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="阅读导航 前言" />
+<meta property="og:description" content="阅读导航 前言" />
+<link rel="canonical" href="/cnblog/2022/05/30/WPF%E5%BF%AB%E9%80%9F%E6%B7%BB%E5%8A%A0%E6%96%B0%E6%89%8B%E5%BC%95%E5%AF%BC%E5%8A%9F%E8%83%BD%E6%94%AF%E6%8C%81MVVM.html" />
+<meta property="og:url" content="/cnblog/2022/05/30/WPF%E5%BF%AB%E9%80%9F%E6%B7%BB%E5%8A%A0%E6%96%B0%E6%89%8B%E5%BC%95%E5%AF%BC%E5%8A%9F%E8%83%BD%E6%94%AF%E6%8C%81MVVM.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-30T09:03:08+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="WPF 快速添加新手引导功能（支持MVVM）" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-30T09:03:08+00:00","datePublished":"2022-05-30T09:03:08+00:00","description":"阅读导航 前言","headline":"WPF 快速添加新手引导功能（支持MVVM）","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/30/WPF%E5%BF%AB%E9%80%9F%E6%B7%BB%E5%8A%A0%E6%96%B0%E6%89%8B%E5%BC%95%E5%AF%BC%E5%8A%9F%E8%83%BD%E6%94%AF%E6%8C%81MVVM.html"},"url":"/cnblog/2022/05/30/WPF%E5%BF%AB%E9%80%9F%E6%B7%BB%E5%8A%A0%E6%96%B0%E6%89%8B%E5%BC%95%E5%AF%BC%E5%8A%9F%E8%83%BD%E6%94%AF%E6%8C%81MVVM.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">WPF|快速添加新手引导功能（支持MVVM）</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-30T09:03:08+00:00" itemprop="datePublished">May 30, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p><strong>阅读导航</strong></p>
+
+<ol>
+  <li>前言</li>
+</ol>
+
+<ul>
+  <li>案例一</li>
+  <li>案例二</li>
+  <li>案例三（本文介绍的方式）</li>
+</ul>
+
+<ol>
+  <li>如何使用？</li>
+  <li>控件如何开发的？</li>
+  <li>总结</li>
+</ol>
+
+<h2 id="1-前言">1. 前言</h2>
+
+<h3 id="案例一">案例一</h3>
+
+<p>站长分享过 <a href="https://www.cnblogs.com/ZXdeveloper/">眾尋</a> 大佬的一篇 <a href="https://www.cnblogs.com/ZXdeveloper/p/8391864.html">WPF 简易新手引导</a> 一文，新手引导的效果挺不错的，如下图：</p>
+
+<p><img src="https://img1.dotnet9.com/2022/05/5001.gif" alt="" /></p>
+
+<p>该文给出的代码未使用 <a href="https://docs.microsoft.com/zh-cn/archive/msdn-magazine/2009/february/patterns-wpf-apps-with-the-model-view-viewmodel-design-pattern">MVVM</a> 的开发方式，提示框使用的用户控件、蒙版窗体样式与后台代码未分离，但给大家分享了开发新手引导功能的一个参考。</p>
+
+<h3 id="案例二">案例二</h3>
+
+<p>开源项目 <a href="https://gitee.com/akwkevin/aistudio.-wpf.-controls">AIStudio.Wpf.Controls</a>，它的新手引导效果如下：</p>
+
+<p><img src="https://img1.dotnet9.com/2022/05/5202.gif" alt="" /></p>
+
+<p>此开源项目也有参考上文（<a href="https://www.cnblogs.com/ZXdeveloper/p/8391864.html">WPF 简易新手引导</a>），并且重构为 <a href="https://docs.microsoft.com/zh-cn/archive/msdn-magazine/2009/february/patterns-wpf-apps-with-the-model-view-viewmodel-design-pattern">MVVM</a> 版本，方便绑定使用。</p>
+
+<p>并且提示框显示的位置还跟随目标控件在主窗体中的位置灵活变换，不至于显示在蒙版窗体之外，如下图所示：</p>
+
+<blockquote>
+  <p>当目标控件右侧空间足够显示引导提示框时，引导提示框就显示在目标控件右侧；在右侧空间不足时，则将引导提示框显示在目标控件左侧：</p>
+</blockquote>
+
+<p><img src="https://img1.dotnet9.com/2022/05/5203.png" alt="" /></p>
+
+<h3 id="案例三本文介绍的方式">案例三（本文介绍的方式）</h3>
+
+<p>站长根据上面的开源项目 <a href="https://gitee.com/akwkevin/aistudio.-wpf.-controls">AIStudio.Wpf.Controls</a> 做了一个自己的版本 <a href="https://github.com/dotnet9/Dotnet9WPFControls">Dotnet9WPFControls</a>，去掉了上一步按钮、增加标题绑定、下一步按钮内容绑定、提示框样式修改等，效果如下：</p>
+
+<p><img src="https://img1.dotnet9.com/2022/05/5201.gif" alt="" /></p>
+
+<p>后面段落就介绍 怎么使用 <a href="https://github.com/dotnet9/Dotnet9WPFControls">Dotnet9WPFControls</a> 添加新手引导功能，并简单提及这个自定义控件的开发细节，主要原理还是看上文 <a href="https://www.cnblogs.com/ZXdeveloper/p/8391864.html">WPF 简易新手引导</a> 哈。</p>
+
+<p>希望对有需要给自己的项目添加新手引导功能的朋友有一定帮助，通过此文你也能修改出满足自己需求的效果。</p>
+
+<h2 id="2-如何使用">2. 如何使用？</h2>
+
+<h3 id="21-创建一个wpf项目">2.1 创建一个WPF项目</h3>
+
+<table>
+  <tbody>
+    <tr>
+      <td>使用 .NET 6</td>
+      <td>7 创建一个名为 “NewbieGuideDemo” 的 WPF 解决方案：</td>
+    </tr>
+  </tbody>
+</table>
+
+<p><img src="https://img1.dotnet9.com/2022/05/5204.png" alt="" /></p>
+
+<h3 id="22-引入nuget包">2.2 引入nuget包</h3>
+
+<ul>
+  <li>添加Nuget包1： <strong>Dotnet9WPFControls</strong></li>
+</ul>
+
+<p>该包提供引导控件及其样式，记得勾选“包括预发行版”，然后点击安装。</p>
+
+<p><img src="https://img1.dotnet9.com/2022/05/5205.png" alt="" /></p>
+
+<ul>
+  <li>添加Nuget包2：<strong>Prism.DryIoc</strong></li>
+</ul>
+
+<p>使用该包，主要是使用 <a href="https://github.com/PrismLibrary/Prism">Prism</a> 封装的一些 <a href="https://docs.microsoft.com/zh-cn/archive/msdn-magazine/2009/february/patterns-wpf-apps-with-the-model-view-viewmodel-design-pattern">MVVM</a>、<a href="https://prismplugins.com/containers/dryioc/">IOC</a> 功能，方便协助开发。</p>
+
+<p>添加上述两个Nuget包后，项目工程文件定义如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;Project Sdk="Microsoft.NET.Sdk"&gt;   &lt;PropertyGroup&gt;    &lt;OutputType&gt;WinExe&lt;/OutputType&gt;    &lt;TargetFramework&gt;net6.0-windows&lt;/TargetFramework&gt;    &lt;Nullable&gt;enable&lt;/Nullable&gt;    &lt;UseWPF&gt;true&lt;/UseWPF&gt;  &lt;/PropertyGroup&gt;   &lt;ItemGroup&gt;    &lt;PackageReference Include="Dotnet9WPFControls" Version="0.1.0-preview.2" /&gt;    &lt;PackageReference Include="Prism.DryIoc" Version="8.1.97" /&gt;  &lt;/ItemGroup&gt; &lt;/Project&gt;
+</code></pre></div></div>
+
+<h3 id="23-添加样式文件">2.3 添加样式文件</h3>
+
+<p>打开 <code class="language-plaintext highlighter-rouge">App.xaml</code> 文件，引入 <a href="https://github.com/dotnet9/Dotnet9WPFControls">Dotnet9WPFControls</a> 默认主题文件：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;prism:PrismApplication    x:Class="NewbieGuideDemo.App"    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"    xmlns:prism="http://prismlibrary.com/"&gt;    &lt;prism:PrismApplication.Resources&gt;         &lt;ResourceDictionary&gt;            &lt;ResourceDictionary.MergedDictionaries&gt;                &lt;ResourceDictionary Source="pack://application:,,,/Dotnet9WPFControls;component/Themes/Dotnet9WPFControls.xaml" /&gt;            &lt;/ResourceDictionary.MergedDictionaries&gt;        &lt;/ResourceDictionary&gt;    &lt;/prism:PrismApplication.Resources&gt;&lt;/prism:PrismApplication&gt;
+</code></pre></div></div>
+
+<p>注意上面的根节点 <code class="language-plaintext highlighter-rouge">&lt;prism:PrismApplication /&gt;</code>，同时修改<code class="language-plaintext highlighter-rouge">App.xaml.cs</code>文件，这里不做过多说明，具体使用请参考 <a href="https://github.com/PrismLibrary/Prism">Prism</a>：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>using Prism.DryIoc;using Prism.Ioc;using System.Windows; namespace NewbieGuideDemo{    public partial class App : PrismApplication    {        protected override void RegisterTypes(IContainerRegistry containerRegistry)        {        }         protected override Window CreateShell()        {            return Container.Resolve&lt;MainWindow&gt;();        }    }}
+</code></pre></div></div>
+
+<h3 id="24-定义引导信息">2.4 定义引导信息</h3>
+
+<p>给主窗体 <code class="language-plaintext highlighter-rouge">MainWindow</code> 添加一个 ViewModel 类：<code class="language-plaintext highlighter-rouge">MainWindowViewModel.cs</code>：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>using Dotnet9WPFControls.Controls;using Prism.Mvvm;using System.Collections.Generic; namespace NewbieGuideDemo{    public class MainWindowViewModel : BindableBase    {        private GuideInfo? _guide;         public GuideInfo Guide =&gt;            _guide ??= new GuideInfo("快速添加新手引导", "这样添加新手引导，或许比较优雅");         public List&lt;GuideInfo&gt; Guides =&gt; new() {Guide};    }}
+</code></pre></div></div>
+
+<p>在上面的 ViewModel 中，定义了一个引导属性 <code class="language-plaintext highlighter-rouge">Guide</code>，这个属性是与提示框绑定展示：</p>
+
+<p><img src="https://img1.dotnet9.com/2022/05/5206.png" alt="" /></p>
+
+<ul>
+  <li>第一个参数定义了引导提示框的标题 <code class="language-plaintext highlighter-rouge">“快速添加新手引导”</code></li>
+  <li>第二个参数定义了引导提示框的提示内容 <code class="language-plaintext highlighter-rouge">“这样添加新手引导，或许比较优雅”</code></li>
+</ul>
+
+<p>第二个属性 <code class="language-plaintext highlighter-rouge">Guides</code>, 是一个引导信息列表，可绑定多个引导信息，点击按钮即会查看下一个引导，本示例为了演示，只写了一个引导。</p>
+
+<h3 id="25-界面绑定引导信息">2.5 界面绑定引导信息</h3>
+
+<p>先贴上 <code class="language-plaintext highlighter-rouge">MainWindow.xaml</code> 所有代码：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;Window    x:Class="NewbieGuideDemo.MainWindow"    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"    xmlns:prism="http://prismlibrary.com/"    xmlns:i="http://schemas.microsoft.com/xaml/behaviors"    xmlns:dotnet9="https://dotnet9.com"    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"    Title="Dotnet9 WPF新手引导功能" Width="800" Height="450"    prism:ViewModelLocator.AutoWireViewModel="True"    AllowsTransparency="True" Background="Transparent" WindowStyle="None"     WindowStartupLocation="CenterScreen"    mc:Ignorable="d"&gt;    &lt;Window.Resources&gt;        &lt;dotnet9:BindControlToGuideConverter x:Key="BindControlToGuideConverter" /&gt;    &lt;/Window.Resources&gt;    &lt;Border        Background="White" BorderBrush="#ccc" BorderThickness="1" MouseLeftButtonDown="Border_MouseDown"&gt;        &lt;Grid&gt;            &lt;Button HorizontalAlignment="Center" VerticalAlignment="Center" Content="点击测试新手引导"&gt;                &lt;dotnet9:GuideHelper.GuideInfo&gt;                    &lt;MultiBinding Converter="{StaticResource BindControlToGuideConverter}"&gt;                        &lt;Binding RelativeSource="{RelativeSource Self}" /&gt;                        &lt;Binding Path="Guide" /&gt;                    &lt;/MultiBinding&gt;                &lt;/dotnet9:GuideHelper.GuideInfo&gt;                &lt;i:Interaction.Triggers&gt;                    &lt;i:EventTrigger EventName="Click"&gt;                        &lt;i:ChangePropertyAction PropertyName="Display" TargetName="GuideControl" Value="True" /&gt;                    &lt;/i:EventTrigger&gt;                &lt;/i:Interaction.Triggers&gt;            &lt;/Button&gt;             &lt;dotnet9:GuideControl x:Name="GuideControl" Guides="{Binding Guides}"&gt;                &lt;i:Interaction.Triggers&gt;                    &lt;i:EventTrigger EventName="Loaded"&gt;                        &lt;i:ChangePropertyAction PropertyName="Display" Value="True" /&gt;                    &lt;/i:EventTrigger&gt;                &lt;/i:Interaction.Triggers&gt;            &lt;/dotnet9:GuideControl&gt;        &lt;/Grid&gt;    &lt;/Border&gt;&lt;/Window&gt;
+</code></pre></div></div>
+
+<p>下面快速过一遍。</p>
+
+<h4 id="251-引入的命名空间说明">2.5.1 引入的命名空间说明</h4>
+
+<p>看上面的代码，引入了 <code class="language-plaintext highlighter-rouge">dotnet9</code> 和 <code class="language-plaintext highlighter-rouge">prism</code>、<code class="language-plaintext highlighter-rouge">i</code>三个命名空间：</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">dotnet9</code> 命名空间</li>
+</ul>
+
+<p>引入引导控件 <code class="language-plaintext highlighter-rouge">GuideControl</code> 及 转换器 <code class="language-plaintext highlighter-rouge">BindControlToGuideConverter</code>。</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">prism</code> 命名空间</li>
+</ul>
+
+<p>主要用途在 <code class="language-plaintext highlighter-rouge">prism:ViewModelLocator.AutoWireViewModel="True"</code> 这句代码，将视图 <code class="language-plaintext highlighter-rouge">MainWindow.xaml</code> 与 <code class="language-plaintext highlighter-rouge">MainWindowViewModel.cs</code>进行绑定，有兴趣可以看 <a href="https://github.com/PrismLibrary/Prism">Prism</a> 源码，了解视图是如何发现ViewModel的约定规则。</p>
+
+<ul>
+  <li><code class="language-plaintext highlighter-rouge">i</code> 命名空间</li>
+</ul>
+
+<p>主要用此命名空间下的触发器，事件触发属性更改。</p>
+
+<h4 id="252-几处关键代码简单说明">2.5.2 几处关键代码简单说明</h4>
+
+<p>上面代码贴的是引导控件（自定义控件）的使用方式（<strong>站长注</strong>：<a href="https://github.com/dotnet9/Dotnet9WPFControls">Dotnet9WPFControls</a> 中还有引导窗体的方式，本文不做说明，要不然太占篇幅了，请查看控件Demo <a href="https://github.com/dotnet9/Dotnet9WPFControls/blob/main/src/Dotnet9WPFControls.Demo/Views/GuideWindowView.xaml">GuideWindowView</a>)。</p>
+
+<p><strong>a: 将引导控件加到容器最上层</strong></p>
+
+<p>先关注后面的几行代码：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;Grid&gt;    &lt;!--这里省略业务控件布局--&gt;    &lt;dotnet9:GuideControl x:Name="GuideControl" Guides="{Binding Guides}"&gt;        &lt;i:Interaction.Triggers&gt;            &lt;i:EventTrigger EventName="Loaded"&gt;                &lt;i:ChangePropertyAction PropertyName="Display" Value="True" /&gt;            &lt;/i:EventTrigger&gt;        &lt;/i:Interaction.Triggers&gt;    &lt;/dotnet9:GuideControl&gt;&lt;/Grid&gt;
+</code></pre></div></div>
+
+<ul>
+  <li>将引导控件加到 <code class="language-plaintext highlighter-rouge">Grid</code> 容器最后，意图是让引导控件显示在所有控件的最上层（同一层级添加了多个控件，如果位置重叠，那么后加入的控件会显示在先添加的控件上方，呈现遮挡效果）；</li>
+  <li>绑定了前面 <code class="language-plaintext highlighter-rouge">MainWindowViewModel</code> 中定义的引导信息列表 <code class="language-plaintext highlighter-rouge">Guides</code>，点击下一步按钮（本文显示为<code class="language-plaintext highlighter-rouge">我知道了</code>）时，会按列表添加顺序切换引导信息；</li>
+  <li>使用 <code class="language-plaintext highlighter-rouge">i:Interaction.Triggers</code>实现控件加载完成时，自动显示引导提示信息，见上面的 示例三效果；</li>
+</ul>
+
+<p><strong>b：绑定目标控件与引导属性</strong></p>
+
+<p><code class="language-plaintext highlighter-rouge">目标控件的引导属性与目标控件引用绑定</code>，引导界面显示时通过目标控件计算出目标控件的位置和大小，准确将目标控件标识出来，引导提示框定位也才能正确设置：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>&lt;dotnet9:BindControlToGuideConverter x:Key="BindControlToGuideConverter" /&gt;
+
+&lt;Button HorizontalAlignment="Center" VerticalAlignment="Center" Content="点击测试新手引导"&gt;    &lt;dotnet9:GuideHelper.GuideInfo&gt;        &lt;MultiBinding Converter="{StaticResource BindControlToGuideConverter}"&gt;            &lt;Binding RelativeSource="{RelativeSource Self}" /&gt;            &lt;Binding Path="Guide" /&gt;        &lt;/MultiBinding&gt;    &lt;/dotnet9:GuideHelper.GuideInfo&gt;    &lt;i:Interaction.Triggers&gt;        &lt;i:EventTrigger EventName="Click"&gt;            &lt;i:ChangePropertyAction PropertyName="Display" TargetName="GuideControl" Value="True" /&gt;        &lt;/i:EventTrigger&gt;    &lt;/i:Interaction.Triggers&gt;&lt;/Button&gt;
+</code></pre></div></div>
+
+<p>如上代码引入 <code class="language-plaintext highlighter-rouge">BindControlToGuideConverter 转换器</code>, 该转换器是个黏合类，将目标控件的引用添加到引导对象上，转换器具体定义如下：</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class BindControlToGuideConverter : IMultiValueConverter{    public object? Convert(object[] values, Type targetType, object parameter, CultureInfo culture)    {        if (values.Length &lt; 2)        {            return null;        }         var element = values[0] as FrameworkElement;        var guide = values[1] as GuideInfo;        if (guide != null)        {            guide.TargetControl = element;        }         return guide;    }     public object[] ConvertBack(object value, Type[] targetTypes, object parameter, CultureInfo culture)    {        throw new NotImplementedException();    }}
+</code></pre></div></div>
+
+<p>目标控件的引用赋值给引导对象的 <code class="language-plaintext highlighter-rouge">TargetControl</code> 属性。</p>
+
+<p>Demo代码完毕，直接运行项目，效果如下，源码在这 <a href="https://github.com/dotnet9/TerminalMACS.ManagerForWPF/tree/master/src/NewbieGuideDemo">NewbieGuideDemo</a>：</p>
+
+<p><img src="https://img1.dotnet9.com/2022/05/5207.gif" alt="" /></p>
+
+<h2 id="3-控件如何开发的">3. 控件如何开发的？</h2>
+
+<p>关于原理，<a href="https://www.cnblogs.com/ZXdeveloper/p/8391864.html">WPF 简易新手引导</a> 这篇介绍的不错，可以先看看。</p>
+
+<p>关于本示例的实现方式，暂时不做太多说明，详细请直接查看源码 <a href="https://github.com/dotnet9/Dotnet9WPFControls/tree/main/src/Dotnet9WPFControls">Dotnet9WPFControls</a>，本文后半截大概提一下。</p>
+
+<p>代码组织结构如下：</p>
+
+<p><img src="https://img1.dotnet9.com/2022/05/5208.png" alt="" /></p>
+
+<ul>
+  <li>GuideInfo：定义引导信息类，如标题、内容、下一步按钮显示内容。</li>
+  <li>GuideHintControl：引导提示框控件，显示引导标题、引导内容、下一步按钮，即 <code class="language-plaintext highlighter-rouge">GuideInfo</code> 绑定的控件。</li>
+  <li>GuideControl：引导控件，用于目标控件无法获取到自己的窗体这种（即无法获取在窗体中的位置），比如您开发的程序为第三方程序插件这种，上面的代码即是使用此引导控件实现的效果。</li>
+  <li>GuideWindow：引导窗体，<code class="language-plaintext highlighter-rouge">GuideControl</code> 引导控件的相互补充。</li>
+  <li>GuideControlBase：引导控件辅助类</li>
+  <li>BindControlToGuideConverter：引导信息与引导的目标控件绑定转换器</li>
+  <li>GuideHelper：引导帮助类，绑定目标控件的引导信息使用，外加一个显示 <a href="https://github.com/dotnet9/Dotnet9WPFControls/blob/main/src/Dotnet9WPFControls.Demo/Views/GuideWindowView.xaml">引导窗体</a> 的静态命令。</li>
+  <li>Guide.xaml：定义引导遮罩层(<code class="language-plaintext highlighter-rouge">GuideControl</code> 和 <code class="language-plaintext highlighter-rouge">GuideWindow</code>)、引导提示框(<code class="language-plaintext highlighter-rouge">GuideHintControl</code>)样式的资源文件，定义外观请改这个文件</li>
+</ul>
+
+<p><strong>重点：</strong></p>
+
+<p><code class="language-plaintext highlighter-rouge">a)</code> GuideControlBase</p>
+
+<p><code class="language-plaintext highlighter-rouge">GuideControlBase</code> 是 <code class="language-plaintext highlighter-rouge">GuideControl</code> 和 <code class="language-plaintext highlighter-rouge">GuideWindow</code> 的辅助类，因为这两个类实现的功能是类似的，所以封装大部分功能在 <code class="language-plaintext highlighter-rouge">GuideControlBase</code> 中，比如将目标控件区域从遮罩层 <a href="https://docs.microsoft.com/zh-cn/dotnet/api/system.windows.uielement.clip?redirectedfrom=MSDN&amp;view=windowsdesktop-6.0#System_Windows_UIElement_Clip">Clip</a> 出来，并将 <code class="language-plaintext highlighter-rouge">GuideHintControl</code> 提示框控件添加到遮罩层之上，显示出新手引导的效果。</p>
+
+<p><code class="language-plaintext highlighter-rouge">b)</code> GuideControl 和 GuideWindow</p>
+
+<p><code class="language-plaintext highlighter-rouge">GuideControl</code> 是用于显示在包含目标控件的容器内使用的，<code class="language-plaintext highlighter-rouge">GuideControl</code>放置的容器不一定是目标控件的直接容器，可以有嵌套，比如目标控件在<code class="language-plaintext highlighter-rouge">ListBox</code>子项<code class="language-plaintext highlighter-rouge">ListBoxItem</code>内，而引导控件<code class="language-plaintext highlighter-rouge">GuideControl</code>可以在<code class="language-plaintext highlighter-rouge">ListBox</code>的外层容器之上；</p>
+
+<p><code class="language-plaintext highlighter-rouge">GuideWindow</code> 用于贴在目标控件所在的窗体上，<code class="language-plaintext highlighter-rouge">GuideWindow</code> 作为目标控件窗体的子窗体，<code class="language-plaintext highlighter-rouge">Show()</code>在目标控件窗体上，不能使用<code class="language-plaintext highlighter-rouge">ShowDialog()</code>的方式（为啥？<code class="language-plaintext highlighter-rouge">ShowDialog()</code>会使除引导窗体之外的窗体处于无效状态（disable））。</p>
+
+<p>这两种方式（GuideControl 和 GuideWindow）总体呈现效果是一样的，目标控件所在的窗体是自定义窗体，Demo能正常显示下面的效果，普通窗体需要对目标控件 <a href="https://docs.microsoft.com/zh-cn/dotnet/api/system.windows.uielement.clip?redirectedfrom=MSDN&amp;view=windowsdesktop-6.0#System_Windows_UIElement_Clip">Clip</a> 的位置和提示框的位置进行偏移处理，修改位置见 <code class="language-plaintext highlighter-rouge">GuideControl</code> 和 <code class="language-plaintext highlighter-rouge">GuideWindow</code>的方法 <code class="language-plaintext highlighter-rouge">ShowGuide(FrameworkElement? targetControl, GuideInfo guide)</code>。</p>
+
+<p>控件带的两个新手引导Demo如下：</p>
+
+<p><strong>新手引导Demo一</strong></p>
+
+<p>GuideControl方式，站长推荐，即以控件的方式显示新手引导，<a href="https://github.com/dotnet9/Dotnet9WPFControls/blob/main/src/Dotnet9WPFControls.Demo/Views/GuideControlView.xaml">点击看代码</a>：</p>
+
+<p><img src="https://img1.dotnet9.com/2022/05/5209.gif" alt="" /></p>
+
+<p><strong>新手引导Demo二</strong></p>
+
+<p>GuideWindow方式，即以子窗体的方式显示新手引导，<a href="https://github.com/dotnet9/Dotnet9WPFControls/blob/main/src/Dotnet9WPFControls.Demo/Views/GuideWindowView.xaml">点击看代码</a>：</p>
+
+<p><img src="https://img1.dotnet9.com/2022/05/5210.gif" alt="" /></p>
+
+<p>详细开发不展开说了，一切都在代码中。</p>
+
+<h2 id="4-总结">4. 总结</h2>
+
+<p>前面写了不少，其实不多，谢谢开源带来的力量。</p>
+
+<ul>
+  <li>参考文章：<a href="https://www.cnblogs.com/ZXdeveloper/p/8391864.html">WPF 简易新手引导</a></li>
+  <li>参考开源项目：<a href="https://gitee.com/akwkevin/aistudio.-wpf.-controls">AIStudio.Wpf.Controls</a></li>
+  <li>本文Demo <code class="language-plaintext highlighter-rouge">NewbieGuideDemo</code>：<a href="https://github.com/dotnet9/TerminalMACS.ManagerForWPF/tree/master/src/NewbieGuideDemo">Github</a>、<a href="https://gitee.com/dotnet9/TerminalMACS.ManagerForWPF/tree/master/src/NewbieGuideDemo">Gitee</a></li>
+  <li>Dotnet9Controls 新手引导Demo一 源码：<a href="https://github.com/dotnet9/Dotnet9WPFControls/blob/main/src/Dotnet9WPFControls.Demo/Views/GuideControlView.xaml">Github</a>、<a href="https://gitee.com/dotnet9/Dotnet9WPFControls/blob/main/src/Dotnet9WPFControls.Demo/Views/GuideControlView.xaml">Gitee</a></li>
+  <li>Dotnet9Controls 新手引导Demo二 源码 <code class="language-plaintext highlighter-rouge">GuideWindowView</code>：<a href="https://github.com/dotnet9/Dotnet9WPFControls/blob/main/src/Dotnet9WPFControls.Demo/Views/GuideWindowView.xaml">Github</a>、<a href="https://gitee.com/dotnet9/Dotnet9WPFControls/blob/main/src/Dotnet9WPFControls.Demo/Views/GuideWindowView.xaml">Gitee</a></li>
+  <li>Dotnet9Controls控件：<a href="https://github.com/dotnet9/Dotnet9WPFControls">Github</a>、<a href="https://gitee.com/dotnet9/Dotnet9WPFControls">Gitee</a>
+    <blockquote>
+      <p>作者:Dotnet9个人博客<br />
+原文:https://www.cnblogs.com/Dotnet9-com/p/16322473.html</p>
+    </blockquote>
+  </li>
+</ul>
+
+  </div><a class="u-url" href="/cnblog/2022/05/30/WPF%E5%BF%AB%E9%80%9F%E6%B7%BB%E5%8A%A0%E6%96%B0%E6%89%8B%E5%BC%95%E5%AF%BC%E5%8A%9F%E8%83%BD%E6%94%AF%E6%8C%81MVVM.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

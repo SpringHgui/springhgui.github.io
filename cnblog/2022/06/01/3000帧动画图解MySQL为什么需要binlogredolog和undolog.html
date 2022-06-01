@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>3000帧动画图解MySQL为什么需要binlog、redo log和undo log | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="3000帧动画图解MySQL为什么需要binlog、redo log和undo log" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="全文建立在MySQL的存储引擎为InnoDB的基础上" />
+<meta property="og:description" content="全文建立在MySQL的存储引擎为InnoDB的基础上" />
+<link rel="canonical" href="/cnblog/2022/06/01/3000%E5%B8%A7%E5%8A%A8%E7%94%BB%E5%9B%BE%E8%A7%A3MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81binlogredolog%E5%92%8Cundolog.html" />
+<meta property="og:url" content="/cnblog/2022/06/01/3000%E5%B8%A7%E5%8A%A8%E7%94%BB%E5%9B%BE%E8%A7%A3MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81binlogredolog%E5%92%8Cundolog.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-06-01T11:44:40+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="3000帧动画图解MySQL为什么需要binlog、redo log和undo log" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-06-01T11:44:40+00:00","datePublished":"2022-06-01T11:44:40+00:00","description":"全文建立在MySQL的存储引擎为InnoDB的基础上","headline":"3000帧动画图解MySQL为什么需要binlog、redo log和undo log","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/06/01/3000%E5%B8%A7%E5%8A%A8%E7%94%BB%E5%9B%BE%E8%A7%A3MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81binlogredolog%E5%92%8Cundolog.html"},"url":"/cnblog/2022/06/01/3000%E5%B8%A7%E5%8A%A8%E7%94%BB%E5%9B%BE%E8%A7%A3MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81binlogredolog%E5%92%8Cundolog.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">3000帧动画图解MySQL为什么需要binlog、redo log和undo log</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-06-01T11:44:40+00:00" itemprop="datePublished">Jun 1, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <blockquote>
+  <p>全文建立在MySQL的存储引擎为InnoDB的基础上</p>
+</blockquote>
+
+<p>先看一条SQL如何入库的：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224743947-1393798479.gif" alt="" /></p>
+
+<p>这是一条很简单的更新SQL，从MySQL服务端接收到SQL到落盘，先后经过了MySQL Server层和InnoDB存储引擎。</p>
+
+<ol>
+  <li>Server层就像一个产品经理，分析客户的需求，并给出实现需求的方案。</li>
+  <li>InnoDB就像一个基层程序员，实现产品经理给出的具体方案。</li>
+</ol>
+
+<p>在MySQL”分析需求，实现方案“的过程中，还夹杂着内存操作和磁盘操作，以及记录各种日志。</p>
+
+<p>他们到底有什么用处？他们之间到底怎么配合的？MySQL又为什么要分层呢？InnoDB里面的那一块Buffer Pool又是什么？</p>
+
+<p>我们慢慢分析。</p>
+
+<h2 id="分层结构">分层结构</h2>
+
+<p>MySQL为什么要分为Server层和存储引擎两层呢？</p>
+
+<p>这个问题官方也没有给出明确的答案，但是也不难猜，简单来说就是为了“解耦”。</p>
+
+<p>Server层和存储引擎各司其职，分工明确，用户可以根据不同的需求去使用合适的存储引擎，多好的设计，对不对？</p>
+
+<p>后来的发展也验证了“分层设计”的优越性：MySQL最初搭载的存储引擎是自研的只支持简单查询的MyISAM的前身ISAM，后来与Sleepycat合作研发了Berkeley DB引擎，支持了事务。江山代有才人出，技术后浪推前浪，MySQL在持续的升级着自己的存储引擎的过程中，遇到了横空出世的InnoDB，InnoDB的功能强大让MySQL倍感压力。</p>
+
+<p>自己的存储引擎打不过InnoDB怎么办？</p>
+
+<p>打不过就加入！</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224744002-1119704524.jpg" alt="" /></p>
+
+<p>MySQL选择了和InnoDB合作。正是因为MySQL存储引擎的插件化设计，两个公司合作的非常顺利，MySQL也在合作后不久就发布了正式支持nnoDB的4.0版本以及经典的4.1版本。</p>
+
+<p>MySQL兼并天下模式也成为MySQL走向繁荣的一个重要因素。这能让MySQL长久地保持着极强竞争力。时至今日，MySQL依然占据着极高数据库市场份额，仅次于王牌数据库Oracle。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224743989-1286175651.png" alt="" /></p>
+
+<h2 id="buffer-pool">Buffer Pool</h2>
+
+<p>在InnoDB里，有一块非常重要的结构——Buffer Pool。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224743983-224958371.png" alt="" /></p>
+
+<p>Buffer Pool是个什么东西呢？</p>
+
+<p>Buffer Pool就是一块用于缓存MySQL磁盘数据的内存空间。</p>
+
+<p>为什么要缓存MySQL磁盘数据呢？</p>
+
+<p>我们通过一个例子说明，我们先假设没有Buffer Pool，user表里面只有一条记录，记录的age = 1，假设需要执行三条SQL：</p>
+
+<ol>
+  <li>事务A：update user set age = 2</li>
+  <li>事务B：update user set age = 3</li>
+  <li>事务C：update user set age = 4</li>
+</ol>
+
+<p>如果没有Buffer Pool，那执行就是这样的：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224743922-1708249288.gif" alt="" /></p>
+
+<p>从图上可以看出，每次更新都需要从磁盘拿数据（1次IO），修改完了需要刷到磁盘（1次IO），也就是每次更新都需要2次磁盘IO。三次更新需要6次磁盘IO。</p>
+
+<p>而有了Buffer Pool，执行就成了这样：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224743952-1876348635.gif" alt="" /></p>
+
+<p>从图上可以看出，只需要在第一次执行的时候将数据从磁盘拿到Buffer Pool（1次IO），第三次执行完将数据刷回磁盘（1次IO），整个过程只需要2次磁盘IO，比没有Buffer Pool节省了4次磁盘IO的时间。</p>
+
+<p>当然，Buffer Pool真正的运转流程没有这么简单，具体实现细节和优化技巧还有很多，由于篇幅有限，本文不做详细描述。</p>
+
+<p>我想表达的是：Buffer Pool就是将磁盘IO转换成了内存操作，节省了时间，提高了效率。</p>
+
+<p>Buffer Pool是提高了效率没错，但是出现了一个问题，Buffer Pool是基于内存的，而只要一断电，内存里面的数据就会全部丢失。</p>
+
+<p>如果断电的时候Buffer Pool的数据还没来得及刷到磁盘，那么这些数据就丢失了吗？</p>
+
+<p>还是上面的那个例子，如果三个事务执行完毕，在age = 4还没有刷到磁盘的时候，突然断电，数据就全部丢掉了：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224744232-1956568571.gif" alt="" /></p>
+
+<p>试想一下，如果这些丢失的数据是核心的用户交易数据，那用户能接受吗？</p>
+
+<p>答案是否定的。</p>
+
+<p>那InnoDB是如何做到数据不会丢失的呢？</p>
+
+<p>今天的第一个日志——redo log登场了。</p>
+
+<h2 id="恢复---redo-log">恢复 - redo log</h2>
+
+<p>顾名思义，redo是重做的意思，redo log就是重做日志的意思。</p>
+
+<p>redo log是如何保证数据不会丢失的呢？</p>
+
+<p>就是在修改之后，先将修改后的值记录到磁盘上的redo log中，就算突然断电了，Buffer Pool中的数据全部丢失了，来电的时候也可以根据redo log恢复Buffer Pool，这样既利用到了Buffer Pool的内存高效性，也保证了数据不会丢失。</p>
+
+<p>我们通过一个例子说明，我们先假设没有Buffer Pool，user表里面只有一条记录，记录的age = 1，假设需要执行一条SQL：</p>
+
+<ol>
+  <li>事务A：update user set age = 2</li>
+</ol>
+
+<p>执行过程如下：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224744215-1557344602.gif" alt="" /></p>
+
+<p>如上图，有了redo log之后，将age修改成2之后，马上将age = 2写到redo log里面，如果这个时候突然断电内存数据丢失，在来电的时候，可以将redo log里面的数据读出来恢复数据，用这样的方式保证了数据不会丢失。</p>
+
+<p>你可能会问，redo log文件也在磁盘上，数据文件也在磁盘上，都是磁盘操作，何必多此一举？为什么不直接将修改的数据写到数据文件里面去呢？</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224744253-1336967421.jpg" alt="" /></p>
+
+<p>傻瓜，因为redo log是磁盘顺序写，数据刷盘是磁盘随机写，磁盘的顺序写比随机写高效的多啊。</p>
+
+<p>这种先预写日志后面再将数据刷盘的机制，有一个高大上的专业名词——WAL（Write-ahead logging），翻译成中文就是预写式日志。</p>
+
+<p>虽然磁盘顺序写已经很高效了，但是和内存操作还是有一定的差距。</p>
+
+<p>那么，有没有办法进一步优化一下呢？</p>
+
+<p>答案是可以。那就是给redo log也加一个内存buffer，也就是redo log buffer，用这种套娃式的方法进一步提高效率。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224744257-809341793.png" alt="" /></p>
+
+<p>redo log buffer具体是怎么配合刷盘呢？</p>
+
+<p>在这个问题之前之前，我们先来捋一下MySQL服务端和操作系统的关系：</p>
+
+<p>MySQL服务端是一个进程，它运行于操作系统之上。也就是说，操作系统挂了MySQL一定挂了，但是MySQL挂了操作系统不一定挂。</p>
+
+<p>所以MySQL挂了有两种情况：</p>
+
+<ol>
+  <li>MySQL挂了，操作系统也挂了，也就是常说的服务器宕机了。这种情况Buffer Pool里面的数据会全部丢失，操作系统的os cache里面的数据也会丢失。</li>
+  <li>MySQL挂了，操作系统没有挂。这种情况Buffer Pool里面的数据会全部丢失，操作系统的os cache里面的数据不会丢失。</li>
+</ol>
+
+<p>OK，了解了MySQL服务端和操作系统的关系之后，再来看redo log的落盘机制。redo log的刷盘机制由参数innodb_flush_log_at_trx_commit控制，这个参数有3个值可以设置：</p>
+
+<ol>
+  <li>innodb_flush_log_at_trx_commit  = 1：实时写，实时刷</li>
+  <li>innodb_flush_log_at_trx_commit  = 0：延迟写，延迟刷</li>
+  <li>innodb_flush_log_at_trx_commit  = 2：实时写，延迟刷</li>
+</ol>
+
+<p>写可以理解成写到操作系统的缓存（os cache），刷可以理解成把操作系统里面的缓存刷到磁盘。</p>
+
+<p>这三种策略的区别，我们分开讨论：</p>
+
+<h3 id="innodb_flush_log_at_trx_commit---1实时写实时刷">innodb_flush_log_at_trx_commit  = 1：实时写，实时刷</h3>
+
+<p>这种策略会在每次事务提交之前，每次都会将数据从redo log刷到磁盘中去，理论上只要磁盘不出问题，数据就不会丢失。</p>
+
+<p>总结来说，这种策略效率最低，但是丢数据风险也最低。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224744265-1807620516.gif" alt="" /></p>
+
+<h3 id="innodb_flush_log_at_trx_commit---0延迟写延迟刷">innodb_flush_log_at_trx_commit  = 0：延迟写，延迟刷</h3>
+
+<p>这种策略在事务提交时，只会把数据写到redo log buffer中，然后让后台线程定时去将redo log buffer里面的数据刷到磁盘。</p>
+
+<p>这种策略是最高效的，但是我们都知道，定时任务是有间隙的，但是如果事务提交后，后台线程没来得及将redo log刷到磁盘，这个时候不管是MySQL进程挂了还是操作系统挂了，这一部分数据都会丢失。</p>
+
+<p>总结来说这种策略效率最高，丢数据的风险也最高。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224744255-857293556.gif" alt="" /></p>
+
+<h3 id="innodb_flush_log_at_trx_commit---2实时写延迟刷">innodb_flush_log_at_trx_commit  = 2：实时写，延迟刷</h3>
+
+<p>这种策略在事务提交之前会把redo log写到os cache中，但并不会实时地将redo log刷到磁盘，而是会每秒执行一次刷新磁盘操作。</p>
+
+<p>这种情况下如果MySQL进程挂了，操作系统没挂的话，操作系统还是会将os cache刷到磁盘，数据不会丢失，如下图：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224744265-627429287.gif" alt="" /></p>
+
+<p>但如果MySQL所在的服务器挂掉了，也就是操作系统都挂了，那么os cache也会被清空，数据还是会丢失。如下图：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224744287-1663042406.gif" alt="" /></p>
+
+<p>所以，这种redo log刷盘策略是上面两种策略的折中策略，效率比较高，丢失数据的风险比较低，绝大多情况下都推荐这种策略。</p>
+
+<p>总结一下，redo log的作用是用于恢复数据，写redo log的过程是磁盘顺序写，有三种刷盘策略，有innodb_flush_log_at_trx_commit  参数控制，推荐设置成2。</p>
+
+<h2 id="回滚---undo-log">回滚 - undo log</h2>
+
+<p>我们都知道，InnoDB是支持事务的，而事务是可以回滚的。</p>
+
+<p>假如一个事务将age=1修改成了age=2，在事务还没有提交的时候，后台线程已经将age=2刷入了磁盘。这个时候，不管是内存还是磁盘上，age都变成了2，如果事务要回滚，找不到修改之前的age=1，无法回滚了。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224744233-475428853.gif" alt="" /></p>
+
+<p>那怎么办呢？</p>
+
+<p>很简单，把修改之前的age=1存起来，回滚的时候根据存起来的age=1回滚就行了。</p>
+
+<p>MySQL确实是这么干的！这个记录修改之前的数据的过程，叫做记录undo log。undo翻译成中文是撤销、回滚的意思，undo log的主要作用也就是回滚数据。</p>
+
+<p>如何回滚呢？看下面这个图：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224744257-404519101.gif" alt="" /></p>
+
+<p>MySQL在将age = 1修改成age = 2之前，先将age = 1存到undo log里面去，这样需要回滚的时候，可以将undo log里面的age = 1读出来回滚。</p>
+
+<p>需要注意的是，undo log默认存在全局表空间里面，你可以简单的理解成undo log也是记录在一个MySQL的表里面，插入一条undo log和插入一条普通数据是类似。也就是说，写undo log的过程中同样也是要写入redo log的。</p>
+
+<h2 id="归档---binlog">归档 - binlog</h2>
+
+<p>undo log记录的是修改之前的数据，提供回滚的能力。</p>
+
+<p>redo log记录的是修改之后的数据，提供了崩溃恢复的能力。</p>
+
+<p>那binlog是干什么的呢？</p>
+
+<p>binlog记录的是修改之后的数据，用于归档。</p>
+
+<p>和redo log日志类似，binlog也有着自己的刷盘策略，通过sync_binlog参数控制：</p>
+
+<ul>
+  <li>sync_binlog = 0 ：每次提交事务前将binlog写入os cache，由操作系统控制什么时候刷到磁盘</li>
+  <li>sync_binlog =1 ：采用同步写磁盘的方式来写binlog，不使用os cache来写binlog</li>
+  <li>sync_binlog = N ：当每进行n次事务提交之后，调用一次fsync将os cache中的binlog强制刷到磁盘</li>
+</ul>
+
+<p>那么问题来了，binlog和redo log都是记录的修改之后的值，这两者有什么区别呢？有redo log为什么还需要binlog呢？</p>
+
+<p>首先看两者的一些区别：</p>
+
+<ul>
+  <li>binlog是逻辑日志，记录的是对哪一个表的哪一行做了什么修改；redo log是物理日志，记录的是对哪个数据页中的哪个记录做了什么修改，如果你还不了解数据页，你可以理解成对磁盘上的哪个数据做了修改。</li>
+  <li>binlog是追加写；redo log是循环写，日志文件有固定大小，会覆盖之前的数据。</li>
+  <li>binlog是Server层的日志；redo log是InnoDB的日志。如果不使用InnoDB引擎，是没有redo log的。</li>
+</ul>
+
+<p>但说实话，我觉得这些区别并不是redo log不能取代binlog的原因，MySQL官方完全可以调整redo log让他兼并binlog的能力，但他没有这么做，为什么呢？</p>
+
+<p>我认为不用redo log取代binlog最大的原因是“没必要”。</p>
+
+<p>为什么这么说呢？</p>
+
+<p>第一点，binlog的生态已经建立起来。MySQL高可用主要就是依赖binlog复制，还有很多公司的数据分析系统和数据处理系统，也都是依赖的binlog。取代binlog去改变一个生态费力了不讨好。</p>
+
+<p>第二点，binlog并不是MySQL的瓶颈，花时间在没有瓶颈的地方没必要。</p>
+
+<h2 id="总结">总结</h2>
+
+<p>总结一下：</p>
+
+<ol>
+  <li>Buffer Pool是MySQL进程管理的一块内存空间，有减少磁盘IO次数的作用。</li>
+  <li>redo log是InnoDB存储引擎的一种日志，主要作用是崩溃恢复，有三种刷盘策略，有innodb_flush_log_at_trx_commit  参数控制，推荐设置成2。</li>
+  <li>undo log是InnoDB存储引擎的一种日志，主要作用是回滚。</li>
+  <li>binlog是MySQL Server层的一种日志，主要作用是归档。</li>
+  <li>MySQL挂了有两种情况：操作系统挂了MySQL进程跟着挂了；操作系统没挂，但是MySQL进程挂了。</li>
+</ol>
+
+<p>最后，再用一张图总结一下全文的知识点：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2253739/202205/2253739-20220530224744292-1976334229.png" alt="" /></p>
+
+<h2 id="写在最后">写在最后</h2>
+
+<p>这篇文章写在一年之前，本来觉得是一篇水文没想要发，最近无聊修改了一下发了出来，希望能够用动图的形式帮助到MySQL基础不太好的朋友，大神忽略就好。</p>
+
+<p>需要强调的一点是，由于作者水平有限，本文只是浅显的从无到有地阐述了MySQL几种日志的大致作用，过程中省略了很多细节，比如Buffer Pool的实现细节，比如undo log和MVCC的关系，比如binlog buffer、change buffer的存在，比如redo log的两阶段提交。</p>
+
+<p>如果您有任何问题，我们可以探讨，如果您在文中发现错误，还望您指出，万分感谢！</p>
+
+<p>好了，今天的文章就到这里了。</p>
+
+<p>感谢你的阅读！我是CoderW，我们下期再见。</p>
+
+<blockquote>
+  <p>最后，欢迎关注我的公众号“CoderW”一起探讨进步~~~~</p>
+</blockquote>
+
+<h2 id="参考资料">参考资料</h2>
+
+<ul>
+  <li>《MySQL实战45讲》</li>
+  <li>《从根儿上理解MySQL》</li>
+  <li>《MySQL技术内幕—InnoDB存储引擎》第2版</li>
+</ul>
+
+<p><img src="https://img2020.cnblogs.com/blog/2253739/202102/2253739-20210201190612311-707036612.png" alt="image-20210131205854199" /></p>
+<blockquote>
+  <p>作者:CoderW喜欢写博客<br />
+原文:https://www.cnblogs.com/coderw/p/16328691.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/06/01/3000%E5%B8%A7%E5%8A%A8%E7%94%BB%E5%9B%BE%E8%A7%A3MySQL%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81binlogredolog%E5%92%8Cundolog.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>

@@ -1,0 +1,1332 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1"><!-- Begin Jekyll SEO tag v2.8.0 -->
+<title>订单及其状态机的设计实现 | dotnet之美</title>
+<meta name="generator" content="Jekyll v4.2.2" />
+<meta property="og:title" content="订单及其状态机的设计实现" />
+<meta property="og:locale" content="en_US" />
+<meta name="description" content="状态机简介：" />
+<meta property="og:description" content="状态机简介：" />
+<link rel="canonical" href="/cnblog/2022/05/31/%E8%AE%A2%E5%8D%95%E5%8F%8A%E5%85%B6%E7%8A%B6%E6%80%81%E6%9C%BA%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%AE%9E%E7%8E%B0.html" />
+<meta property="og:url" content="/cnblog/2022/05/31/%E8%AE%A2%E5%8D%95%E5%8F%8A%E5%85%B6%E7%8A%B6%E6%80%81%E6%9C%BA%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%AE%9E%E7%8E%B0.html" />
+<meta property="og:site_name" content="dotnet之美" />
+<meta property="og:type" content="article" />
+<meta property="article:published_time" content="2022-05-31T08:41:14+00:00" />
+<meta name="twitter:card" content="summary" />
+<meta property="twitter:title" content="订单及其状态机的设计实现" />
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"BlogPosting","dateModified":"2022-05-31T08:41:14+00:00","datePublished":"2022-05-31T08:41:14+00:00","description":"状态机简介：","headline":"订单及其状态机的设计实现","mainEntityOfPage":{"@type":"WebPage","@id":"/cnblog/2022/05/31/%E8%AE%A2%E5%8D%95%E5%8F%8A%E5%85%B6%E7%8A%B6%E6%80%81%E6%9C%BA%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%AE%9E%E7%8E%B0.html"},"url":"/cnblog/2022/05/31/%E8%AE%A2%E5%8D%95%E5%8F%8A%E5%85%B6%E7%8A%B6%E6%80%81%E6%9C%BA%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%AE%9E%E7%8E%B0.html"}</script>
+<!-- End Jekyll SEO tag -->
+<link rel="stylesheet" href="/assets/main.css"><link type="application/atom+xml" rel="alternate" href="/feed.xml" title="dotnet之美" /></head>
+<body><header class="site-header" role="banner">
+
+  <div class="wrapper"><a class="site-title" rel="author" href="/">dotnet之美</a><nav class="site-nav">
+        <input type="checkbox" id="nav-trigger" class="nav-trigger" />
+        <label for="nav-trigger">
+          <span class="menu-icon">
+            <svg viewBox="0 0 18 15" width="18px" height="15px">
+              <path d="M18,1.484c0,0.82-0.665,1.484-1.484,1.484H1.484C0.665,2.969,0,2.304,0,1.484l0,0C0,0.665,0.665,0,1.484,0 h15.032C17.335,0,18,0.665,18,1.484L18,1.484z M18,7.516C18,8.335,17.335,9,16.516,9H1.484C0.665,9,0,8.335,0,7.516l0,0 c0-0.82,0.665-1.484,1.484-1.484h15.032C17.335,6.031,18,6.696,18,7.516L18,7.516z M18,13.516C18,14.335,17.335,15,16.516,15H1.484 C0.665,15,0,14.335,0,13.516l0,0c0-0.82,0.665-1.483,1.484-1.483h15.032C17.335,12.031,18,12.695,18,13.516L18,13.516z"/>
+            </svg>
+          </span>
+        </label>
+
+        <div class="trigger"><a class="page-link" href="/about/">About</a></div>
+      </nav></div>
+</header>
+<main class="page-content" aria-label="Content">
+      <div class="wrapper">
+        <article class="post h-entry" itemscope itemtype="http://schema.org/BlogPosting">
+
+  <header class="post-header">
+    <h1 class="post-title p-name" itemprop="name headline">订单及其状态机的设计实现</h1>
+    <p class="post-meta">
+      <time class="dt-published" datetime="2022-05-31T08:41:14+00:00" itemprop="datePublished">May 31, 2022
+      </time></p>
+  </header>
+
+  <div class="post-content e-content" itemprop="articleBody">
+    <p><strong>状态机简介：</strong></p>
+
+<p>状态机是有限状态自动机的简称，是现实事物运行规则抽象而成的一个数学模型。<strong>【规则的抽象】</strong></p>
+
+<p>有限状态机一般都有以下特点：</p>
+
+<p>（1）可以用状态来描述事物，并且任一时刻，事物总是处于一种状态；</p>
+
+<p>（2）事物拥有的状态总数是有限的；</p>
+
+<p>（3）通过触发事物的某些行为，可以导致事物从一种状态过渡到另一种状态；</p>
+
+<p>（4）事物状态变化是有规则的，A状态可以变换到B，B可以变换到C，A却不一定能变换到C；</p>
+
+<p>（5）同一种行为，可以将事物从多种状态变成同种状态，但是不能从同种状态变成多种状态。</p>
+
+<p>状态机这种描述客观世界的方式就是将事物抽象成若干状态，然后所有的事件和规则导致事物在这些状态中游走。最终使得事物“自圆其说”。</p>
+
+<p>很多通信协议的开发都必须用到状态机；一个健壮的状态机可以让你的程序，不论发生何种突发事件都不会突然进入一个不可预知的程序分支。</p>
+
+<ul>
+  <li><strong>状态机示例：</strong></li>
+</ul>
+
+<p><img src="https://img2022.cnblogs.com/blog/2733151/202205/2733151-20220504180913478-1404429951.png" alt="" /></p>
+
+<p><strong>四大概念：</strong></p>
+
+<p>| 状态（state） | 一个状态机至少要包含两个状态。<br />
+<br />分为：现态（源状态）、次态（目标状态）<br />
+<br />状态可以理解为一种结果，一种稳态形式，没有扰动会保持不变的。<br />
+<br /><br />
+<br />状态命名形式：<br />
+<br />1.副词+动词；例如：待审批、待支付、待收货<br />
+<br />这种命名方式体现了：状态机就是事件触发状态不断迁徙的本质。表达一种待触发的感觉。<br />
+<br />2.动词+结果；例如：审批完成、支付完成<br />
+<br />3.已+动词形式；例如：已发货、已付款<br />
+<br />以上两种命名方式体现了：状态是一种结果或者稳态的本质。表达了一种已完成的感觉。<br />
+<br /><br />
+<br />角色很多的时候，为了表示清晰，可以加上角色名：例如：待财务审批、主管已批准<br />
+<br />命名考虑从用户好理解角度出发。 |
+| — | — |</p>
+
+<p>| 事件（event）<br />
+<br />or<br />
+<br />触发条件 | 又称为“条件”，就是某个操作动作的触发条件或者口令。当一个条件满足时，就会触发一个动作，或者执行一次状态迁徙<br />
+<br />这个事件可以是外部调用、监听到消息、或者各种定时到期等触发的事件。<br />
+<br />对于灯泡，“打开开关”就是一个事件。<br />
+<br />条件命名形式：动词+结果；例如：支付成功、下单时间&gt;5分钟 |</p>
+
+<p>| 动作（action） | 事件发生以后要执行动作。例如：事件=“打开开关指令”，动作=“开灯”。一般就对应一个函数。<br />
+<br />条件满足后执行动作。动作执行完毕后，可以迁移到新的状态，也可以仍旧保持原状态。<br />
+<br />动作不是必需的，当条件满足后，也可以不执行任何动作，直接迁移到新状态。<br />
+<br />那么如何区分“动作”和“状态”？<br />
+<br />“动作”是不稳定的，即使没有条件的触发，“动作”一旦执行完毕就结束了；<br />
+<br />而“状态”是相对稳定的，如果没有外部条件的触发，一个状态会一直持续下去。 |</p>
+
+<table>
+  <tbody>
+    <tr>
+      <td>变换（transition）</td>
+      <td>即从一个状态变化到另外一个状态<br /></td>
+    </tr>
+    <tr>
+      <td><br />例如：“开灯过程”就是一个变化</td>
+      <td> </td>
+    </tr>
+  </tbody>
+</table>
+
+<p><strong>状态机其他表达方式：</strong></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2733151/202205/2733151-20220501205903936-1546869519.png" alt="" /></p>
+
+<p><strong>状态机的设计：</strong></p>
+
+<p>信息系统中有很多状态机，例如：业务订单的状态。</p>
+
+<p><strong>状态机的设计存在的问题：什么是状态？到底有多少个状态？要细分到什么程度？</strong></p>
+
+<p>信息系统是现实世界一种抽象和描述。<strong>而业务领域中那些已经发生的事件就是事实</strong>，<strong>信息系统就是将这些事实以信息的形式存储到数据库中</strong>，即：<strong>信息就是一组事实</strong></p>
+
+<p>信息系统就是存储这些事实，对这些事实进行管理与追踪，进而起到提供提高工作效率的作用。</p>
+
+<p>信息系统就是记录已经发生的事实，信息系统中的状态机基本和事实匹配。即：标识某个事实的完成度。</p>
+
+<p>业务系统，根据实际业务，具体会有哪些发生的事实需要记录，基本这些事实就至少对应一个状态。需要记录的事实就是一种稳态，一种结果。</p>
+
+<p>例如：【待支付】-&gt;【已支付】-&gt;【已收货】-&gt;【已评价】</p>
+
+<p>这些都是系统需要记录的已发生的客观事实。而这些事实就对应了状态，而发生这些事实的事件就对应了触发状态机的转换的事件。</p>
+
+<p>根据自己的业务实际进行分析，并画出状态图即可。</p>
+
+<p><strong>状态机实现方式：状态模式</strong></p>
+
+<p>下面使经典的自动贩卖机例子来说明状态模式的用法，状态图如下：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2733151/202205/2733151-20220504175725949-413816871.png" alt="" /></p>
+
+<p>分析一个这个状态图：</p>
+
+<p>a、包含4个状态（我们使用4个int型常量来表示）<br />
+b、包含3个暴露在外的方法（投币、退币、转动手柄、(发货动作是内部方法，售卖机未对外提供方法，售卖机自动调用)）<br />
+c、我们需要处理每个状态下，用户都可以触发这三个动作。</p>
+
+<p>我们可以做没有意义的事情，在【未投币】状态，试着退币，或者同时投币两枚，此时机器会提示我们不能这么做。</p>
+
+<p><strong>实现逻辑：</strong></p>
+
+<p><strong>任何一个可能的动作，我们都要检查，看看我们所处的状态和动作是否合适。</strong></p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/**
+ * 自动售货机
+ * 
+ * 
+ */
+public class VendingMachine
+{
+ 
+    /**
+     * 已投币
+     */
+    private final static int HAS_MONEY = 0;
+    /**
+     * 未投币
+     */
+    private final static int NO_MONEY = 1;
+    /**
+     * 售出商品
+     */
+    private final static int SOLD = 2;
+    /**
+     * 商品售罄
+     */
+    private final static int SOLD_OUT = 3;
+    /**
+     * 商品数量
+     */
+    private int count = 0;
+    
+         // 当前状态，开机模式是没钱
+    private int currentStatus = NO_MONEY;
+ 
+        // 开机设置商品数量，初始化状态
+    public VendingMachine(int count)
+    {
+        this.count = count;
+        if (count &gt; 0)
+        {
+            currentStatus = NO_MONEY;
+        }
+    }
+ 
+    /**
+     * 投入硬币，任何状态用户都可能投币
+     */
+    public void insertMoney()
+    {
+        switch (currentStatus)
+        {
+        case NO_MONEY:
+            currentStatus = HAS_MONEY;
+            System.out.println("成功投入硬币");
+            break;
+        case HAS_MONEY:
+            System.out.println("已经有硬币，无需投币");
+            break;
+        case SOLD:
+            System.out.println("请稍等...");
+            break;
+        case SOLD_OUT:
+            System.out.println("商品已经售罄，请勿投币");
+            break;
+ 
+    }
+    }
+ 
+    /**
+     * 退币，任何状态用户都可能退币
+     */
+    public void backMoney()
+    {
+        switch (currentStatus)
+        {
+        case NO_MONEY:
+            System.out.println("您未投入硬币");
+            break;
+        case HAS_MONEY:
+            currentStatus = NO_MONEY;
+            System.out.println("退币成功");
+            break;
+        case SOLD:
+            System.out.println("您已经买了糖果...");
+            break;
+        case SOLD_OUT:
+            System.out.println("您未投币...");
+            break;
+        }
+    }
+ 
+    /**
+     * 转动手柄购买,任何状态用户都可能转动手柄
+     */
+    public void turnCrank()
+    {
+        switch (currentStatus)
+        {
+        case NO_MONEY:
+            System.out.println("请先投入硬币");
+            break;
+        case HAS_MONEY:
+            System.out.println("正在出商品....");
+            currentStatus = SOLD;
+            dispense();
+            break;
+        case SOLD:
+            System.out.println("连续转动也没用...");
+            break;
+        case SOLD_OUT:
+            System.out.println("商品已经售罄");
+            break;
+ 
+    }
+    }
+ 
+    /**
+     * 发放商品
+     */
+    private void dispense()
+    {
+ 
+    switch (currentStatus)
+    {
+    case NO_MONEY:
+    case HAS_MONEY:
+    case SOLD_OUT:
+        throw new IllegalStateException("非法的状态...");
+    case SOLD:
+        count--;
+        System.out.println("发出商品...");
+        if (count == 0)
+        {
+            System.out.println("商品售罄");
+            currentStatus = SOLD_OUT;
+        } else
+        {
+            currentStatus = NO_MONEY;
+        }
+        break;
+ 
+    }
+ 
+    }
+}
+</code></pre></div></div>
+
+<p>状态机使用if-else或switch实现</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>// 测试自动售卖机
+class Test
+{
+    public static void main(String[] args)
+    {
+        VendingMachine machine = new VendingMachine(10);
+        machine.insertMoney();
+        machine.backMoney();
+ 
+    System.out.println("-----------");
+ 
+    machine.insertMoney();
+    machine.turnCrank();
+    
+    System.out.println("-----------");
+    machine.insertMoney();
+    machine.insertMoney();
+    machine.turnCrank();
+    machine.turnCrank();
+    machine.backMoney();
+    machine.turnCrank();
+ 
+    }
+}
+</code></pre></div></div>
+
+<p>测试自动售卖机</p>
+
+<p>使用if-else/switch的方式实现状态有如下问题：</p>
+
+<ul>
+  <li>没有遵守【开闭】原则，没有【封装变化】，所以没有弹性，应对需求变更非常吃力。</li>
+</ul>
+
+<p>例如：现在增加一个状态。每个方法都需要添加if-else语句。</p>
+
+<ul>
+  <li>状态如何转换看得不是很清楚，隐藏在if-else/switch逻辑中。</li>
+</ul>
+
+<p><strong>升级策略：</strong></p>
+
+<p>【封装变化】，局部化每个状态的行为，将每个状态的行为放到各自类中，每个状态只要实现自己的动作就可以了。</p>
+
+<p><strong>贩卖机只要将动作委托给代表当前状态的状态对象即可。</strong></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2733151/202205/2733151-20220504200513909-1019606081.png" alt="" /></p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public interface State
+{
+    /**
+     * 放钱
+     */
+    public void insertMoney();
+    /**
+     * 退钱
+     */
+    public void backMoney();
+    /**
+     * 转动曲柄
+     */
+    public void turnCrank();
+    /**
+     * 出商品
+     */
+    public void dispense();
+}
+</code></pre></div></div>
+
+<p>State</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class NoMoneyState implements State
+{
+ 
+    private VendingMachine machine;
+ 
+    public NoMoneyState(VendingMachine machine)
+    {
+        this.machine = machine;
+        
+    }
+    
+    @Override
+    public void insertMoney()
+    {
+        System.out.println("投币成功");
+        machine.setState(machine.getHasMoneyState());
+    }
+ 
+    @Override
+    public void backMoney()
+    {
+        System.out.println("您未投币，想退钱？...");
+    }
+ 
+    @Override
+    public void turnCrank()
+    {
+        System.out.println("您未投币，想拿东西么？...");
+    }
+ 
+    @Override
+    public void dispense()
+    {
+        throw new IllegalStateException("非法状态！");
+    }
+ 
+}
+</code></pre></div></div>
+
+<p>NoMoneyState</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class HasMoneyState implements State
+{
+ 
+    private VendingMachine machine;
+ 
+    public HasMoneyState(VendingMachine machine)
+    {
+        this.machine = machine;
+    }
+ 
+    @Override
+    public void insertMoney()
+    {
+        System.out.println("您已经投过币了，无需再投....");
+    }
+ 
+    @Override
+    public void backMoney()
+    {
+        System.out.println("退币成功");
+            machine.setState(machine.getNoMoneyState());
+    }
+ 
+    @Override
+    public void turnCrank()
+    {
+        System.out.println("你转动了手柄");
+        machine.setState(machine.getSoldState());
+    }
+ 
+    @Override
+    public void dispense()
+    {
+        throw new IllegalStateException("非法状态！");
+    }
+ 
+}
+</code></pre></div></div>
+
+<p>HasMoneyState</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class SoldOutState implements State
+{
+ 
+    private VendingMachine machine;
+ 
+    public SoldOutState(VendingMachine machine)
+    {
+        this.machine = machine;
+    }
+ 
+    @Override
+    public void insertMoney()
+    {
+        System.out.println("投币失败，商品已售罄");
+    }
+ 
+    @Override
+    public void backMoney()
+    {
+        System.out.println("您未投币，想退钱么？...");
+    }
+ 
+    @Override
+    public void turnCrank()
+    {
+        System.out.println("商品售罄，转动手柄也木有用");
+    }
+ 
+    @Override
+    public void dispense()
+    {
+        throw new IllegalStateException("非法状态！");
+    }
+ 
+}
+</code></pre></div></div>
+
+<p>SoldOutState</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class SoldState implements State
+{
+ 
+    private VendingMachine machine;
+ 
+    public SoldState(VendingMachine machine)
+    {
+        this.machine = machine;
+    }
+ 
+    @Override
+    public void insertMoney()
+    {
+        System.out.println("正在出货，请勿投币");
+    }
+ 
+    @Override
+    public void backMoney()
+    {
+        System.out.println("正在出货，没有可退的钱");
+    }
+ 
+    @Override
+    public void turnCrank()
+    {
+        System.out.println("正在出货，请勿重复转动手柄");
+    }
+ 
+    @Override
+    public void dispense()
+    {
+        machine.releaseBall();
+        if (machine.getCount() &gt; 0)
+        {
+            machine.setState(machine.getNoMoneyState());
+        } else
+        {
+            System.out.println("商品已经售罄");
+            machine.setState(machine.getSoldOutState());
+        }
+    }
+}
+</code></pre></div></div>
+
+<p>SoldState</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class VendingMachine
+{
+    private State noMoneyState;
+    private State hasMoneyState;
+    private State soldState;
+    private State soldOutState;
+    private State winnerState ; 
+
+    private int count = 0;
+    private State currentState = noMoneyState;
+ 
+    public VendingMachine(int count)
+    {
+        noMoneyState = new NoMoneyState(this);
+        hasMoneyState = new HasMoneyState(this);
+        soldState = new SoldState(this);
+        soldOutState = new SoldOutState(this);
+        winnerState = new WinnerState(this);
+ 
+              if (count &gt; 0)
+             {
+            this.count = count;
+            currentState = noMoneyState;
+             }
+    }
+ 
+       //将这些动作委托给当前状态.
+    public void insertMoney()
+    {
+        currentState.insertMoney();
+    }
+ 
+    public void backMoney()
+    {
+        currentState.backMoney();
+    }
+       
+        // 机器不用提供dispense动作,因为这是一个内部动作.用户不可以直 
+        //接要求机器发放糖果.我们在状态对象的turnCrank()方法中调用 
+        //dispense方法;
+
+       //dispense无论如何，即使在nomoney状态也会被执行.
+       //让不合法的情形下，dispense抛出异常处理。
+    public void turnCrank()
+    {
+        currentState.turnCrank();
+            currentState.dispense();
+    }
+
+    public void releaseBall()
+    {
+        System.out.println("发出一件商品...");
+        if (count != 0)
+        {
+            count -= 1;
+        }
+    }
+ 
+    public void setState(State state)
+    {
+        this.currentState = state;
+    }
+ 
+    //getter setter omitted ...
+ 
+}
+</code></pre></div></div>
+
+<p>VendingMachine</p>
+
+<p>我们之前说过，if-else/switch实现方式没有弹性，那现在按照这种实现模式，需求变更修改起来会轻松点吗？</p>
+
+<p>红色部分标记了我们的需求变更：当用户每次转动手柄的时候，有10%的几率赠送一瓶。</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2733151/202205/2733151-20220504211628177-46367581.png" alt="" /></p>
+
+<p><strong>实现方式：</strong></p>
+
+<p>我们遵守了【开闭】原则，只要新建一个WinnerState的类即可。然后有限的修改has_money的转向即可。</p>
+
+<p><strong><em>为什么WinnerState要独立成一个状态，其实它和sold状态一模一样。我把代码写在SoldState中不行吗？</em></strong></p>
+
+<ul>
+  <li>第一个原因就是上面说的信息系统的本质就是记录【事实】，中奖是需要记录的事实，它应该是一个状态。</li>
+  <li>第二个原因：【单一职责】问题，我们一个类的责任是明确的。</li>
+</ul>
+
+<p>如果sold需求变化不一定影响到winner代码实现，winner需求变化时，也不一定要修改sold，比如促销方案结束了，中奖概率变了等。</p>
+
+<p>如果他们的变化不是一定互相影响到彼此的，那我们就该将他们分离，即是【隔离变化】也是遵守【单一职责】的原则。</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class WinnerState implements State
+{
+ 
+    private VendingMachine machine;
+ 
+    public WinnerState(VendingMachine machine)
+    {
+        this.machine = machine;
+    }
+ 
+    @Override
+    public void insertMoney()
+    {
+        throw new IllegalStateException("非法状态");
+    }
+ 
+    @Override
+    public void backMoney()
+    {
+        throw new IllegalStateException("非法状态");
+    }
+ 
+    @Override
+    public void turnCrank()
+    {
+        throw new IllegalStateException("非法状态");
+    }
+ 
+    @Override
+    public void dispense()
+    {
+        System.out.println("你中奖了，恭喜你，将得到2件商品");
+        machine.releaseBall();
+ 
+    if (machine.getCount() == 0)
+    {
+        System.out.println("商品已经售罄");
+        machine.setState(machine.getSoldOutState());
+    } else
+    {
+        machine.releaseBall();
+        if (machine.getCount() &gt; 0)
+        {
+            machine.setState(machine.getNoMoneyState());
+        } else
+        {
+            System.out.println("商品已经售罄");
+            machine.setState(machine.getSoldOutState());
+        }
+        
+    }
+ 
+    }
+ 
+}
+</code></pre></div></div>
+
+<p>WinnerState</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public class HasMoneyState implements State
+{
+ 
+    private VendingMachine machine;
+    private Random random = new Random();
+ 
+    public HasMoneyState(VendingMachine machine)
+    {
+        this.machine = machine;
+    }
+ 
+    @Override
+    public void insertMoney()
+    {
+        System.out.println("您已经投过币了，无需再投....");
+    }
+ 
+    @Override
+    public void backMoney()
+    {
+        System.out.println("退币成功");
+ 
+    machine.setState(machine.getNoMoneyState());
+    }
+ 
+    @Override
+    public void turnCrank()
+    {
+        System.out.println("你转动了手柄");
+        int winner = random.nextInt(10);
+        if (winner == 0 &amp;&amp; machine.getCount() &gt; 1)
+        {
+            machine.setState(machine.getWinnerState());
+        } else
+        {
+            machine.setState(machine.getSoldState());
+        }
+    }
+ 
+    @Override
+    public void dispense()
+    {
+        throw new IllegalStateException("非法状态！");
+    }
+ 
+}
+</code></pre></div></div>
+
+<p>HasMoneyState</p>
+
+<p><strong>总结状态模式：</strong></p>
+
+<p>状态模式：允许对象在内部状态改变时改变它的行为，对象看起来好像修改了他的类。</p>
+
+<p>解释：</p>
+
+<p>状态模式将状态封装成为独立的类,并将动作委托到代表当前状态的对象。<br />
+所以行为会随着内部状态改变而改变。<br />
+我们通过组合简单引用不同状态对象来造成类改变的假象.</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2733151/202205/2733151-20220529164012650-1827225581.png" alt="" /></p>
+
+<p>| 状态模式 | 策略模式 |
+| — | — |</p>
+
+<p>| 1.行为封装的n个状态中，不同状态不用行为。<br />
+<br />2.context的行为委托到不同状态中。<br />
+<br />3.[当前状态]在n个状态中游走，context的行为也随之[当前状态]的改变而改变。<br />
+<br />4.用户对context的状态改变浑然不知。<br />
+<br />5.客户不会直接和state交互，只能通过context暴露的方法交互，state转换是context内部事情。<br />
+<br />6.state可以是接口也可以是抽象类，取决于有没公共功能可以放进抽象类中。抽象类方便，因为可以后续加方法。<br />
+<br />可以将重复代码放入抽象类中。例如:”你已投入25元，不能重复投” 这种通用代码放入抽象类中。<br />
+<br />7.context可以决定状态流转，如果这个状态流转是固定的，就适合放在context中进行。但是如果状态流转是动态的就适合放在状态中进行。<br />
+<br />例如通过商品的剩余数目来决定流向[已售完]或[等待投币]，这个时候放在状态类中，因为dispense要根据状态判断流转。<br />
+<br />这个写法决定了，有新需求时候，你是改context还是改state类。<br />
+<br />8.可以共享所有的state对象，但是需要修改context的时候时候，需要handler中传入context引用 | <em>1.context主动指定需要组合的策略对象是哪一个。</em>
+<br />2.可以在启动的时候通过工厂动态指定具体是哪个策略对象，但是没有在策略对象之间游走，即:只组合了一个策略对象。<br />
+<br />3.策略作为继承之外一种弹性替代方案。因为继承导致子类继承不适用的方法，且每个类都要维护，策略模式通过不同对象组合来改变行为。<br />
+<br />4.策略模式聚焦的是互换的算法来创建业务。 |</p>
+
+<p><strong>状态机典型应用：订单状态控制</strong></p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2733151/202205/2733151-20220529151754096-105252114.png" alt="" /></p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET NAMES utf8 */;
+/*!50503 SET NAMES utf8mb4 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+
+CREATE TABLE IF NOT EXISTS `tbl_sapo_biz_param` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `create_time` datetime(3) NOT NULL COMMENT '创建时间',
+  `biz_type` varchar(255) NOT NULL COMMENT '业务类别(使用时定义)',
+  `biz_code` varchar(255) NOT NULL COMMENT '业务数据编码',
+  `para_key` varchar(255) NOT NULL COMMENT '参数key',
+  `para_value` varchar(255) NOT NULL COMMENT '参数值',
+  `para_desc` varchar(255) NOT NULL COMMENT '参数描述',
+  `level` varchar(64) DEFAULT NULL COMMENT '参数级别；ABCD',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uni_idx_biz_param_biz_type_biz_code_para_key` (`biz_type`,`biz_code`,`para_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='业务参数表';
+
+CREATE TABLE IF NOT EXISTS `tbl_sapo_order` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `order_no` varchar(100) NOT NULL COMMENT '订单号',
+  `create_time` datetime(3) NOT NULL COMMENT '创建时间',
+  `last_update_time` datetime(3) DEFAULT NULL COMMENT '最后更新时间',
+  `xx_code` varchar(100) NOT NULL COMMENT '业务实体code',
+  `status` int(10) unsigned NOT NULL DEFAULT 3 COMMENT '状态:3-已取消，4-已接单，5-待支付，6-已支付，7-待执行，8-执行中，9-执行完成',
+  `cancel_reason` int(10) unsigned DEFAULT NULL COMMENT '订单取消的原因。1-未支付(支付取消或过期)，2-未准备(准备失败)，3-未执行(启动过期)，4-未完成(执行中取消)',
+  `refund_count` int(10) unsigned NOT NULL DEFAULT 0 COMMENT '退款次数',
+  `expire_time` datetime(3) DEFAULT NULL ON UPDATE current_timestamp(3) COMMENT '失效时间',
+  `invoice_flag` int(10) unsigned NOT NULL DEFAULT 0 COMMENT '是否开过发票标识,0-未开发票,1-已开发票',
+  `total_fee` int(10) unsigned NOT NULL DEFAULT 0 COMMENT '订单总价,单位:分',
+  `pay_fee` int(10) unsigned NOT NULL DEFAULT 0 COMMENT '最终支付金额(单位:分)',
+  `trace_no` varchar(255) DEFAULT NULL COMMENT '日志追踪标识',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uni_idx_order_order_no` (`order_no`),
+  KEY `idx_order_xx_code` (`xx_code`),
+  KEY `idx_order_expire_time` (`expire_time`),
+  CONSTRAINT `fk_order_xx_code` FOREIGN KEY (`xx_code`) REFERENCES `tbl_sapo_xx` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='业务订单';
+
+CREATE TABLE IF NOT EXISTS `tbl_sapo_order_coupon` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `create_time` datetime(3) NOT NULL COMMENT '创建时间',
+  `user_coupon_uuid` varchar(100) NOT NULL COMMENT '用户优惠券uuid,tbl_sapo_user_coupon表uuid',
+  `order_id` int(10) unsigned NOT NULL COMMENT '业务订单id,tbl_sapo_order表id',
+  `status` int(10) unsigned NOT NULL DEFAULT 1 COMMENT '状态：0-无效，1-有效',
+  PRIMARY KEY (`id`),
+  KEY `idx_order_coupon_user_coupon_uuid` (`user_coupon_uuid`),
+  KEY `idx_order_coupon_order_id` (`order_id`),
+  CONSTRAINT `fk_order_coupon_order_id` FOREIGN KEY (`order_id`) REFERENCES `tbl_sapo_order` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='订单优惠券';
+
+CREATE TABLE IF NOT EXISTS `tbl_sapo_order_status_log` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `create_time` datetime(3) NOT NULL COMMENT '创建时间',
+  `order_type` int(10) unsigned NOT NULL DEFAULT 4 COMMENT '订单类型：4-业务订单，5-支付订单，6-退款订单',
+  `order_id` int(10) unsigned NOT NULL COMMENT '订单id',
+  `status` int(10) unsigned NOT NULL COMMENT '状态',
+  `remark` varchar(255) DEFAULT NULL COMMENT '操作备注',
+  PRIMARY KEY (`id`),
+  KEY `idx_order_status_log_order_id` (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='订单状态记录';
+
+CREATE TABLE IF NOT EXISTS `tbl_sapo_pay` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '物理主键',
+  `requester_no` varchar(255) NOT NULL COMMENT '请求流水号',
+  `create_time` datetime(3) NOT NULL COMMENT '创建时间',
+  `last_update_time` datetime(3) DEFAULT NULL COMMENT '最后更新时间',
+  `order_id` int(10) unsigned NOT NULL COMMENT '业务订单标识，tbl_sapo_order表id',
+  `status` int(10) unsigned NOT NULL DEFAULT 4 COMMENT '状态：3-撤销，4-申请，5-待支付，6-已支付，7-失败',
+  `expire_time` datetime(3) DEFAULT NULL ON UPDATE current_timestamp(3) COMMENT '失效时间',
+  `payment_complete_time` datetime(3) DEFAULT NULL COMMENT '支付完成时间',
+  `remark` varchar(255) DEFAULT NULL COMMENT '备注',
+  `account_no` varchar(255) NOT NULL COMMENT '统一支付渠道',
+  `requester_code` varchar(255) NOT NULL COMMENT '统一支付服务编码',
+  `body` varchar(255) DEFAULT NULL COMMENT '统一支付商品描述',
+  `total_fee` int(10) unsigned NOT NULL COMMENT '金额(单位：分)',
+  `trade_type` varchar(64) DEFAULT NULL COMMENT '交易类型',
+  `pay_info` varchar(1024) DEFAULT NULL COMMENT '支付参数',
+  `payment_pay_no` varchar(255) DEFAULT NULL COMMENT '统一支付平台支付流水号(请求支付后返回)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uni_idx_pay_requester_no` (`requester_no`),
+  UNIQUE KEY `uni_idx_pay_payment_pay_no` (`payment_pay_no`),
+  KEY `idx_pay_order_id` (`order_id`),
+  CONSTRAINT `fk_pay_order_id` FOREIGN KEY (`order_id`) REFERENCES `tbl_sapo_order` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='支付订单';
+
+CREATE TABLE IF NOT EXISTS `tbl_sapo_refund` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '物理主键',
+  `requester_refund_no` varchar(255) NOT NULL COMMENT '请求服务退款流水',
+  `create_time` datetime(3) NOT NULL COMMENT '创建时间',
+  `last_update_time` datetime(3) DEFAULT NULL COMMENT '最后更新时间',
+  `order_id` int(10) unsigned NOT NULL COMMENT '业务订单标识，tbl_sapo_order表id',
+  `payment_id` int(10) unsigned NOT NULL COMMENT '支付订单id,tbl_sapo_payment表id',
+  `expire_time` datetime(3) DEFAULT NULL ON UPDATE current_timestamp(3),
+  `status` int(10) unsigned NOT NULL DEFAULT 4 COMMENT '状态：3-撤销，4-申请，5-退款中，6-已退款，7-失败',
+  `requester_code` varchar(255) NOT NULL COMMENT '服务编码',
+  `requester_pay_no` varchar(255) NOT NULL COMMENT '请求服务支付流水',
+  `refund_fee` int(10) unsigned NOT NULL COMMENT '金额(单位：分)',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uni_idx_refund_requester_refund_no` (`requester_refund_no`),
+  KEY `idx_refund_payment_id` (`payment_id`),
+  KEY `idx_refund_order_id` (`order_id`),
+  KEY `idx_refund_requester_pay_no` (`requester_pay_no`),
+  CONSTRAINT `fk_refund_order_id` FOREIGN KEY (`order_id`) REFERENCES `tbl_sapo_order` (`id`),
+  CONSTRAINT `fk_refund_payment_id` FOREIGN KEY (`payment_id`) REFERENCES `tbl_sapo_pay` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 ROW_FORMAT=DYNAMIC COMMENT='退款订单';
+
+CREATE TABLE IF NOT EXISTS `tbl_sapo_sys_param` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `create_time` datetime(3) NOT NULL COMMENT '创建时间',
+  `para_key` varchar(255) NOT NULL COMMENT '配置键',
+  `para_value` varchar(1024) NOT NULL COMMENT '配置值',
+  `para_desc` varchar(255) NOT NULL COMMENT '配置描述',
+  `level` varchar(64) NOT NULL DEFAULT 'A' COMMENT '参数等级。ABCD',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uni_idx_sys_param_para_key` (`para_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='系统配置表';
+
+CREATE TABLE IF NOT EXISTS `tbl_sapo_xx` (
+  `id` int(10) unsigned NOT NULL AUTO_INCREMENT COMMENT '主键',
+  `code` varchar(100) NOT NULL COMMENT '唯一编码',
+  `create_time` datetime(3) NOT NULL COMMENT '创建时间',
+  `last_update_time` datetime(3) DEFAULT NULL COMMENT '最后更新时间',
+  `name` varchar(255) NOT NULL COMMENT '名称',
+  `detail` varchar(255) DEFAULT NULL COMMENT '详情',
+  `status` int(10) unsigned NOT NULL DEFAULT 2 COMMENT '状态:0-无效，1-有效，2-编辑',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uni_idx_xx_code` (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='业务实体';
+
+/*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
+/*!40014 SET FOREIGN_KEY_CHECKS=IFNULL(@OLD_FOREIGN_KEY_CHECKS, 1) */;
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40111 SET SQL_NOTES=IFNULL(@OLD_SQL_NOTES, 1) */;
+</code></pre></div></div>
+
+<p>建表语句</p>
+
+<p>如上图所示：</p>
+
+<p>一种典型的订单设计。业务订单和支付退款订单组合，他们分别有自己的状态机。</p>
+
+<ul>
+  <li>业务订单状态机负责业务逻辑，并和支付退款状态机联动。</li>
+  <li>一切以业务状态机为主。例如：业务状态已经【关单】，此时收到支付成功通知，需要进行退款</li>
+  <li>每个状态有自己的过期时间。异常订单的捞取通过过期时间判断。</li>
+</ul>
+
+<p><strong>状态机模式实现订单状态机：</strong></p>
+
+<p>日常开发过程中，状态机模式应用场景之一的就是订单模型中的状态控制。但是区别于状态模式的点有以下几个：</p>
+
+<ul>
+  <li>状态模式，所有的操作都在内存。而订单状态机是要落库的。为了防止订单的并发操作，更新订单的时候需要使用乐观锁机制。</li>
+  <li>状态模式的状态对象是新建状态机的时候初始化进去的。在实际开发中，状态对象要复用，被spring管理。</li>
+  <li>而订单状态机对象对应了一条数据库中实体的订单，是要每次从数据库中查出来的即时新建对象，所以必须将该新建的订单状态机对象传入到状态对象中。使用状态对象处理该订单状态机对象。</li>
+</ul>
+
+<p>以支付订单为例：</p>
+
+<p><img src="https://img2022.cnblogs.com/blog/2733151/202205/2733151-20220528231116037-396668088.png" alt="" /></p>
+
+<p>javascript:void%280%29;</p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>/*
+   Title: PaymentInfo Description:　　支付订单状态机
+   该类不可被spring管理，需要new出来，一个类就对应一条数据库中支付订单记录   本文来自博客园，作者：wanglifeng，转载请注明原文链接：https://www.cnblogs.com/wanglifeng717/p/16214122.html
+      @author wanglifeng
+ */
+public class PaymentStateMachine {
+
+    // 数据库中当前支付订单实体
+    private SapoPayment payment;
+
+    // 当前状态
+    private PaymentState currentState;
+
+    // 需要更新入库的支付订单实体。与payment属性配合，payment为当前数据库中订单实体,用于乐观锁的前置内容校验。
+    private SapoPayment paymentForUpdate;
+
+    /* 将最新内容(含状态)更新入库，并当前状态机状态 */
+    public void updateStateMachine() {
+
+        // 从Spring容器中获取操作数据的dao
+        SapoDao dao = SpringUtil.getBean(SapoDao.class);
+
+        // 更新数据库，乐观锁机制：带前置内容数据校验，其中payment为前置内容，paymentForUpdate为要更新的内容，如果更新结果=0，说明该订单被其他线程修改过。抛异常，放弃此次修改。
+        dao.updateSapoPaymentByNull(paymentForUpdate, payment);
+
+        // 记录订单操作流水
+        dao.insertSapoOrderStatusLog(SapoOrderStatusLog.getInstance().setOrderId(paymentForUpdate.getId())
+                .setOrderType(SapoOrderStatusLog.ORDER_TYPE_PAYMENT).setStatus(paymentForUpdate.getStatus()));
+
+        // 更新当前PaymentStateMachine状态机
+        this.setPayment(paymentForUpdate);
+        this.setCurrentState(paymentForUpdate.getStatus());
+    }
+
+    // 通过条件获取一个支付订单PaymentStateMachine实体
+    public static PaymentStateMachine getInstance(SapoPayment sapoPaymentForQuery) {
+        // 1.从spring容器中获取dao；
+        SapoDao dao = SpringUtil.getBean(SapoDao.class);
+
+        // 2.查出该支付订单
+        SapoPayment paymentResult = dao.getSapoPayment(sapoPaymentForQuery);
+
+        // 3.初始化订单状态机
+        PaymentStateMachine paymentStateMachine = new PaymentStateMachine();
+        paymentStateMachine.setPayment(paymentResult);
+        paymentStateMachine.setCurrentState(paymentResult.getStatus());
+        paymentStateMachine.setPaymentForUpdate(SapoPayment.getInstance(paymentResult));
+
+        return paymentStateMachine;
+    }
+
+    // 设置当前状态机的状态。输入数据库中status字段，映射成对应的状态类实体。
+    public void setCurrentState(Integer status) {
+
+        PaymentState currentState = null;
+
+        // status数字，映射成对应的状态类实体
+        if (SapoPayment.STATUS_APPLY.equals(status)) {
+            currentState = SpringUtil.getBean(PaymentStateApply.class);
+        } else if (SapoPayment.STATUS_WAIT_PAY.equals(status)) {
+            currentState = SpringUtil.getBean(PaymentStateWaitPay.class);
+        } else if (SapoPayment.STATUS_PAY_FINISH.equals(status)) {
+            currentState = SpringUtil.getBean(PaymentStatePayFinish.class);
+        } else if (SapoPayment.STATUS_FAIL.equals(status)) {
+            currentState = SpringUtil.getBean(PaymentStateFail.class);
+        } else if (SapoPayment.STATUS_CANCEL.equals(status)) {
+            currentState = SpringUtil.getBean(PaymentStateCancel.class);
+        } else {
+            throw new BusinessException(ResultInfo.SYS_INNER_ERROR.getCode(),
+                    "status not in state machine ,status: " + status);
+        }
+
+        this.currentState = currentState;
+    }
+
+    // TODO 待实现，申请支付订单
+    public void apply() {
+        // 委托给当前状态执行,将当前订单状态机对象传进去，使用状态对象处理订单
+        currentState.apply(this);
+    }
+
+    // TODO 待实现，通知支付结果
+    public void resultNotify() {
+        // 委托给当前状态执行
+        currentState.resultNotify(this);
+    }
+
+    // TODO 同步给当前状态执行
+    public void sync() {
+        // 委托给当前状态执行
+        currentState.sync(this);
+    }
+
+    // 取消订单
+    public void cancel() {
+        // 委托给当前状态执行
+        currentState.cancel(this);
+    }
+
+}
+</code></pre></div></div>
+
+<p>javascript:void%280%29;</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>public  interface PaymentState {
+
+    public void apply(PaymentStateMachine paymentStateMachine);
+
+    public void resultNotify(PaymentStateMachine paymentStateMachine);
+    
+    public void sync(PaymentStateMachine paymentStateMachine);
+    
+    public void cancel(PaymentStateMachine paymentStateMachine);
+
+}
+</code></pre></div></div>
+
+<p>PaymentState状态接口</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Service
+public class PaymentStateApply extends BaseLogger implements PaymentState {
+
+    @Autowired
+    FmPayClientService fmPayClientService;
+
+    @Autowired
+    SapoDao dao;
+
+    @Autowired
+    private JacksonComponent jacksonComponent;
+
+    public void apply(PaymentStateMachine paymentStateMachine) {
+
+    }
+
+    public void sync(PaymentStateMachine paymentStateMachine) {
+
+    }
+
+    public void resultNotify(PaymentStateMachine paymentStateMachine) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void cancel(PaymentStateMachine paymentStateMachine) {
+        
+        SapoPayment sapoPaymentForUpdate = paymentStateMachine.getPaymentForUpdate();
+        sapoPaymentForUpdate.setStatus(SapoPayment.STATUS_CANCEL);
+        sapoPaymentForUpdate.setExpireTime(null);
+        
+        paymentStateMachine.updateStateMachine();
+
+    }
+
+}
+</code></pre></div></div>
+
+<p>PaymentStateApply</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Service
+public class PaymentStateCancel extends BaseLogger implements PaymentState {
+
+    public void apply(PaymentStateMachine paymentStateMachine) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void resultNotify(PaymentStateMachine paymentStateMachine) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void sync(PaymentStateMachine paymentStateMachine) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void cancel(PaymentStateMachine paymentStateMachine) {
+        // TODO Auto-generated method stub
+
+    }
+
+}
+</code></pre></div></div>
+
+<p>PaymentStateCancel</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Service
+public class PaymentStateFail extends BaseLogger implements PaymentState {
+
+    public void apply(PaymentStateMachine paymentStateMachine) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void resultNotify(PaymentStateMachine paymentStateMachine) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void sync(PaymentStateMachine paymentStateMachine) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void cancel(PaymentStateMachine paymentStateMachine) {
+        throw new BusinessException(ResultInfo.SYS_INNER_ERROR.getCode(), "fail status can not cancel");
+
+    }
+
+}
+</code></pre></div></div>
+
+<p>PaymentStateFail</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Service
+public class PaymentStatePayFinish extends BaseLogger implements PaymentState {
+
+    public void apply(PaymentStateMachine paymentStateMachine) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void resultNotify(PaymentStateMachine paymentStateMachine) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void sync(PaymentStateMachine paymentStateMachine) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void cancel(PaymentStateMachine paymentStateMachine) {
+        throw new BusinessException(ResultInfo.SYS_INNER_ERROR.getCode(), "payfinish status can not cancel");
+
+    }
+
+}
+</code></pre></div></div>
+
+<p>PaymentStatePayFinish</p>
+
+<p><img src="https://images.cnblogs.com/OutliningIndicators/ContractedBlock.gif" alt="" /><img src="https://images.cnblogs.com/OutliningIndicators/ExpandedBlockStart.gif" alt="" /></p>
+
+<div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>@Service
+public class PaymentStateWaitPay extends BaseLogger implements PaymentState {
+
+    @Autowired
+    FmPayClientService fmPayClientService;
+
+    @Autowired
+    SapoDao dao;
+
+    @Autowired
+    private JacksonComponent jacksonComponent;
+
+    public void payResultNotify() {
+        // TODO implement here
+    }
+
+    public void apply(PaymentStateMachine paymentStateMachine) {
+        throw new BusinessException(ResultInfo.SYS_INNER_ERROR.getCode(),
+                "applyPayPlatform not match payment state machine,currentStatus:"
+                        + paymentStateMachine.getPayment().getStatus());
+
+    }
+
+    public void sync(PaymentStateMachine paymentStateMachine) {
+
+        // TODO 过期去统一支付查询
+
+        String payStatus = queryPayResultResponse.getPayStatus();
+
+        // 1：初始化输入 2：支付中 3：支付成功 4：支付失败 5：撤销
+        if (QueryPayResultResponse.PAY_STATUS_INIT.equals(payStatus)) {
+            throw new BusinessException(ResultInfo.SYS_INNER_ERROR.getCode(),
+                    "FMpay queryPay return init status ,we are waitpay");
+        }
+
+        if (QueryPayResultResponse.PAY_STATUS_ING.equals(payStatus)) {
+            return;
+        }
+
+        SapoPayment sapoPaymentForUpdate = paymentStateMachine.getPaymentForUpdate();
+
+        if (QueryPayResultResponse.PAY_STATUS_CANCEL.equals(payStatus)) {
+            sapoPaymentForUpdate.setStatus(SapoPayment.STATUS_CANCEL);
+
+        } else if (QueryPayResultResponse.PAY_STATUS_FAIL.equals(payStatus)) {
+            sapoPaymentForUpdate.setStatus(SapoPayment.STATUS_FAIL);
+
+        } else if (QueryPayResultResponse.PAY_STATUS_SUCCESS.equals(payStatus)) {
+            sapoPaymentForUpdate.setStatus(SapoPayment.STATUS_PAY_FINISH);
+
+        }
+        sapoPaymentForUpdate.setExpireTime(null);
+
+        paymentStateMachine.updateStateMachine();
+
+    }
+
+    public void resultNotify(PaymentStateMachine paymentStateMachine) {
+        // TODO Auto-generated method stub
+
+    }
+
+    public void cancel(PaymentStateMachine paymentStateMachine) {
+        throw new BusinessException(ResultInfo.SYS_INNER_ERROR.getCode(), "wait pay status can not cancel");
+
+    }
+
+}
+</code></pre></div></div>
+
+<p>PaymentStateWaitPay</p>
+
+<p><a href="https://www.cnblogs.com/wanglifeng717/p/16214122.html">本文来自博客园，作者：wanglifeng，转载请注明原文链接：https://www.cnblogs.com/wanglifeng717/p/16214122.html</a></p>
+<blockquote>
+  <p>作者:王李峰<br />
+原文:https://www.cnblogs.com/wanglifeng717/p/16214122.html</p>
+</blockquote>
+
+  </div><a class="u-url" href="/cnblog/2022/05/31/%E8%AE%A2%E5%8D%95%E5%8F%8A%E5%85%B6%E7%8A%B6%E6%80%81%E6%9C%BA%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%AE%9E%E7%8E%B0.html" hidden></a>
+</article>
+
+      </div>
+    </main><footer class="site-footer h-card">
+  <data class="u-url" href="/"></data>
+
+  <div class="wrapper">
+
+    <h2 class="footer-heading">dotnet之美</h2>
+
+    <div class="footer-col-wrapper">
+      <div class="footer-col footer-col-1">
+        <ul class="contact-list">
+          <li class="p-name">dotnet之美</li><li><a class="u-email" href="mailto:springhgui@outlook.com">springhgui@outlook.com</a></li></ul>
+      </div>
+
+      <div class="footer-col footer-col-2"><ul class="social-media-list"></ul>
+</div>
+
+      <div class="footer-col footer-col-3">
+        <p>分享dotnet技术.</p>
+      </div>
+    </div>
+
+  </div>
+
+</footer>
+</body>
+
+</html>
